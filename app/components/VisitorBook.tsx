@@ -102,10 +102,10 @@ export function VisitorBook() {
   }
 
   return (
-    <div className="glass rounded-xl p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <BookOpen className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-mono font-bold text-foreground">
+    <div className="glass-card rounded-xl p-8">
+      <div className="flex items-center gap-3 mb-8">
+        <BookOpen className="h-7 w-7 text-primary" />
+        <h2 className="text-2xl font-mono font-bold gradient-text">
           Visitor Book
         </h2>
         {totalVisitorsCount !== undefined && (
@@ -115,7 +115,7 @@ export function VisitorBook() {
         )}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div>
           <textarea
             value={message}
@@ -142,11 +142,11 @@ export function VisitorBook() {
 
       {/* Visitors List */}
       {visitors.length > 0 && (
-        <div className="mt-8">
-          <h3 className="text-lg font-mono font-bold text-foreground mb-4">
+        <div className="mt-10">
+          <h3 className="text-lg font-mono font-bold gradient-text mb-6">
             Recent Visitors
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <AnimatePresence>
               {visitors.map((visitor, index) => (
                 <motion.div
