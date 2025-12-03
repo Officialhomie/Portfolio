@@ -16,12 +16,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Web3 Portfolio Protocol | Full-Stack Blockchain Developer",
+  title: "OneTrueHomie Portfolio Protocol | Full-Stack Blockchain Developer",
   description: "Interactive Web3 portfolio showcasing blockchain projects, smart contracts, and decentralized technologies. Connect your wallet to explore.",
   keywords: ["Web3", "Blockchain", "Solidity", "Smart Contracts", "DeFi", "NFT", "Portfolio"],
-  authors: [{ name: "Officialhomie" }],
+  authors: [{ name: "OneTrueHomie" }],
   openGraph: {
-    title: "Web3 Portfolio Protocol",
+    title: "OneTrueHomie Portfolio Protocol",
     description: "Interactive Web3 portfolio showcasing blockchain projects",
     type: "website",
   },
