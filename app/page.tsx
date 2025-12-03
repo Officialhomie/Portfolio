@@ -16,12 +16,18 @@ export default function Home() {
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-glass-border backdrop-blur-xl"
+        className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-glass-border backdrop-blur-xl shadow-lg"
       >
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <motion.div
-            className="font-mono font-bold text-xl gradient-text flex items-center gap-2"
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <motion.a
+            href="#"
+            className="font-mono font-bold text-xl gradient-text flex items-center gap-2 cursor-pointer transition-all"
             whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={(e) => {
+              e.preventDefault()
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
           >
             <motion.div
               animate={{ rotate: [0, 360] }}
@@ -29,9 +35,11 @@ export default function Home() {
             >
               <Sparkles className="h-5 w-5 text-primary" />
             </motion.div>
-            Web3 Portfolio
-          </motion.div>
-          <WalletConnect />
+            <span>OneTrueHomie</span>
+          </motion.a>
+          <div className="flex items-center gap-4">
+            <WalletConnect />
+          </div>
         </div>
       </motion.header>
 
@@ -42,7 +50,7 @@ export default function Home() {
       <ProjectsShowcase />
 
       {/* Interactive Features Section */}
-      <section className="relative py-32 px-4 overflow-hidden">
+      <section className="relative py-40 px-4 overflow-hidden">
         {/* Background elements */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
         <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
@@ -55,7 +63,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-20"
+            className="text-center mb-24"
           >
             <motion.h2
               className="text-4xl md:text-5xl font-mono font-bold gradient-text mb-6"
@@ -77,7 +85,7 @@ export default function Home() {
           </motion.div>
 
           {/* Feature Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -97,7 +105,7 @@ export default function Home() {
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -206,7 +214,7 @@ export default function Home() {
                 </motion.span>
                 <span>for Web3</span>
               </p>
-              <p>© {new Date().getFullYear()} Web3 Portfolio Protocol</p>
+              <p>© {new Date().getFullYear()} OneTrueHomie Portfolio Protocol</p>
             </motion.div>
           </div>
         </motion.div>
