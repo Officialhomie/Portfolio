@@ -82,7 +82,7 @@ export function ProjectsShowcase() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="flex items-center gap-3 mb-10"
+              className="flex items-center justify-center gap-3 mb-10"
             >
               <motion.div
                 animate={{
@@ -97,7 +97,7 @@ export function ProjectsShowcase() {
               >
                 <Sparkles className="h-6 w-6 text-secondary" />
               </motion.div>
-              <h3 className="text-3xl font-mono font-bold gradient-text">
+              <h3 className="text-3xl font-mono font-bold gradient-text text-center">
                 Featured Projects
               </h3>
               <div className="flex-1 h-px bg-gradient-to-r from-secondary/50 to-transparent" />
@@ -123,9 +123,9 @@ export function ProjectsShowcase() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="flex items-center gap-3 mb-10"
+            className="flex items-center justify-center gap-3 mb-10"
           >
-            <h3 className="text-3xl font-mono font-bold gradient-text">
+            <h3 className="text-3xl font-mono font-bold gradient-text text-center">
               All Projects
             </h3>
             <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent" />
