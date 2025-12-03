@@ -294,14 +294,18 @@ code, pre {
 /* 3D Card Flip */
 .perspective-1000 {
   perspective: 1000px;
+  perspective-origin: center center;
 }
 
 .preserve-3d {
   transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .backface-hidden {
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
 }
 
 .rotate-y-180 {
@@ -345,7 +349,11 @@ html {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(98, 126, 234, 0.3);
   box-shadow: 0 12px 48px 0 rgba(98, 126, 234, 0.2);
-  transform: translateY(-4px);
+}
+
+/* Prevent hover transform on cards that are flipping */
+.preserve-3d .glass-card:hover {
+  transform: none;
 }
 
 /* Magnetic Cursor Effect */
