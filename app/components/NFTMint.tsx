@@ -67,9 +67,9 @@ export function NFTMint() {
 
   if (!isConnected) {
     return (
-      <div className="glass rounded-xl p-8 text-center">
-        <Gift className="h-12 w-12 text-foreground-secondary mx-auto mb-4" />
-        <p className="text-foreground-secondary mb-2">
+      <div className="glass-card rounded-xl p-12 text-center">
+        <Gift className="h-16 w-16 text-foreground-secondary mx-auto mb-6 opacity-50" />
+        <p className="text-base text-foreground-secondary mb-3">
           Connect your wallet to mint your free Visit NFT
         </p>
         <p className="text-sm text-foreground-secondary/80">
@@ -83,16 +83,16 @@ export function NFTMint() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass rounded-xl p-6"
+      className="glass-card rounded-xl p-8"
     >
-      <div className="flex items-center gap-3 mb-6">
-        <Gift className="h-6 w-6 text-accent" />
-        <h2 className="text-2xl font-mono font-bold text-foreground">
+      <div className="flex items-center gap-3 mb-8">
+        <Gift className="h-7 w-7 text-accent" />
+        <h2 className="text-2xl font-mono font-bold gradient-text">
           Proof of Visit NFT
         </h2>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="flex items-center justify-between text-sm">
           <span className="text-foreground-secondary">Minted</span>
           <span className="font-mono text-foreground">
