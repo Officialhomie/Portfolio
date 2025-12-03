@@ -16,13 +16,7 @@ const queryClient = new QueryClient({
 })
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Always render providers, but prevent SSR hydration issues
+  // Always render providers - wagmi handles SSR internally
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
