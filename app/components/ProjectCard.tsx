@@ -29,12 +29,13 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
+      style={{ willChange: 'transform' }}
     >
       <motion.div
         className="relative w-full h-full preserve-3d"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-        style={{ transformStyle: 'preserve-3d' }}
+        transition={{ duration: 0.6, type: "spring", stiffness: 200, damping: 20 }}
+        style={{ transformStyle: 'preserve-3d', willChange: 'transform' }}
       >
         {/* Front of card */}
         <motion.div
@@ -42,8 +43,7 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
             "absolute inset-0 backface-hidden glass-card rounded-xl p-6 cursor-pointer overflow-hidden"
           )}
           onClick={() => setIsFlipped(!isFlipped)}
-          whileHover={{ y: -8 }}
-          transition={{ duration: 0.3 }}
+          style={{ willChange: 'transform' }}
         >
           {/* Animated border gradient */}
           <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -70,8 +70,7 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
                       e.currentTarget.src = '/placeholder-project.png'
                       setImageLoaded(true)
                     }}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
+                    style={{ pointerEvents: 'none' }}
                   />
                   {/* Image overlay gradient */}
                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
