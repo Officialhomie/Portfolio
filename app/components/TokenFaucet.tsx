@@ -90,8 +90,9 @@ export function TokenFaucet() {
 
   if (!isConnected) {
     return (
-      <div className="glass rounded-lg p-4 text-center">
-        <p className="text-sm text-foreground-secondary">
+      <div className="glass-card rounded-xl p-12 text-center">
+        <Coins className="h-12 w-12 text-foreground-secondary mx-auto mb-4 opacity-50" />
+        <p className="text-base text-foreground-secondary">
           Connect wallet to claim tokens
         </p>
       </div>
@@ -99,13 +100,13 @@ export function TokenFaucet() {
   }
 
   return (
-    <div className="glass rounded-lg p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Coins className="h-5 w-5 text-secondary" />
-        <h3 className="font-mono font-bold text-foreground">Portfolio Token Faucet</h3>
+    <div className="glass-card rounded-xl p-8">
+      <div className="flex items-center gap-3 mb-6">
+        <Coins className="h-6 w-6 text-secondary" />
+        <h3 className="text-xl font-mono font-bold gradient-text">Portfolio Token Faucet</h3>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {tokenBalance !== undefined && (
           <div className="text-sm">
             <span className="text-foreground-secondary">Balance: </span>
