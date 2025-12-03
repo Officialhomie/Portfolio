@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# documentation files (not to be committed)
+IMPLEMENTATION_SUMMARY.md
+README_CONTRACTS.md
+README_ENHANCED_CONTRACTS.md
