@@ -104,7 +104,7 @@ export function Hero() {
         >
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-mono font-bold mb-6">
             <span className="gradient-text gradient-text-animate block mb-2">
-              Web3 Portfolio
+              OneTrueHomie Portfolio
             </span>
             <span className="text-foreground block">
               Protocol
@@ -119,7 +119,7 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="mb-8 space-y-4"
         >
-          <p className="text-xl md:text-2xl text-foreground-secondary max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl text-foreground-secondary max-w-3xl mx-auto text-center">
             Connect your wallet to explore interactive blockchain projects,
             smart contracts, and decentralized technologies.
           </p>
