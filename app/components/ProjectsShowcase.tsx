@@ -3,14 +3,34 @@
 import { getAllProjects, getFeaturedProjects } from '@/lib/projects-data'
 import { ProjectCard } from './ProjectCard'
 import { VotingInterface } from './VotingInterface'
-import { useState } from 'react'
+import { ProjectSearch } from './ProjectSearch'
+import { useState, useMemo } from 'react'
 import { Code2, Sparkles, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Project } from '@/types/project'
 
 export function ProjectsShowcase() {
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
-  const projects = getAllProjects()
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
+  const allProjects = getAllProjects()
   const featuredProjects = getFeaturedProjects()
+  
+  // Use filtered projects if search/filter is active, otherwise use all projects
+  const projects = useMemo(() => {
+    return filteredProjects.length > 0 && filteredProjects.length !== allProjects.length
+      ? filteredProjects
+      : allProjects
+  }, [filteredProjects, allProjects])
+  
+  // Filter featured projects based on current filter
+  const filteredFeaturedProjects = useMemo(() => {
+    if (filteredProjects.length > 0 && filteredProjects.length !== allProjects.length) {
+      return featuredProjects.filter(fp => 
+        filteredProjects.some(p => p.id === fp.id)
+      )
+    }
+    return featuredProjects
+  }, [filteredProjects, featuredProjects, allProjects])
 
   const handleEndorse = (projectId: string) => {
     console.log('Endorse project:', projectId)
@@ -21,44 +41,49 @@ export function ProjectsShowcase() {
   }
 
   return (
-    <section className="relative py-32 px-4 overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+    <section className="relative py-32 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 overflow-hidden">
+      {/* Background decoration - positioned behind content, doesn't affect layout */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto">
+      <div className="relative w-full max-w-[1920px] mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-20"
+          className="flex flex-col items-center text-center gap-6 sm:gap-8 mb-16 sm:mb-24 px-4"
         >
+          {/* Badge with icon */}
           <motion.div
             initial={{ scale: 0.9 }}
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center justify-center gap-3 mb-6 glass-card px-6 py-3 rounded-full"
+            className="inline-flex items-center justify-center gap-2.5 glass-card px-5 py-2.5 rounded-full"
           >
             <motion.div
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             >
-              <Code2 className="h-6 w-6 text-primary" />
+              <Code2 className="h-5 w-5 text-primary" />
             </motion.div>
-            <h2 className="text-4xl md:text-5xl font-mono font-bold gradient-text">
-              Projects
-            </h2>
+            <span className="text-sm font-mono text-foreground-secondary">Portfolio Showcase</span>
           </motion.div>
 
+          {/* Main Title */}
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-mono font-bold gradient-text">
+            Projects
+          </h2>
+
+          {/* Description */}
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-lg md:text-xl text-foreground-secondary max-w-3xl mx-auto leading-relaxed"
+            className="text-base sm:text-lg md:text-xl text-foreground-secondary max-w-3xl leading-relaxed"
           >
             Explore my blockchain projects, each demonstrating different aspects of Web3 development
             from smart contracts to IPFS integration
@@ -67,44 +92,54 @@ export function ProjectsShowcase() {
           {/* Animated divider */}
           <motion.div
             initial={{ width: 0 }}
-            whileInView={{ width: "100px" }}
+            whileInView={{ width: "120px" }}
             viewport={{ once: true }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="h-1 bg-gradient-to-r from-primary via-secondary to-accent mx-auto mt-8 rounded-full"
+            className="h-1 bg-gradient-to-r from-primary via-secondary to-accent rounded-full"
           />
         </motion.div>
 
+        {/* Search and Filter - Centered Container */}
+        <div className="flex flex-col items-center w-full mb-16 sm:mb-20">
+          <ProjectSearch 
+            projects={allProjects} 
+            onFilterChange={setFilteredProjects}
+          />
+        </div>
+
         {/* Featured Projects */}
-        {featuredProjects.length > 0 && (
-          <div className="mb-24">
+        {filteredFeaturedProjects.length > 0 && (
+          <div className="mb-20 sm:mb-28">
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="flex items-center justify-center gap-3 mb-10"
+              className="flex flex-col items-center gap-4 sm:gap-5 mb-12 sm:mb-16"
             >
-              <motion.div
-                animate={{
-                  rotate: [0, 360],
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              >
-                <Sparkles className="h-6 w-6 text-secondary" />
-              </motion.div>
-              <h3 className="text-3xl font-mono font-bold gradient-text text-center">
-                Featured Projects
-              </h3>
-              <div className="flex-1 h-px bg-gradient-to-r from-secondary/50 to-transparent" />
+              <div className="flex items-center gap-4">
+                <motion.div
+                  animate={{
+                    rotate: [0, 360],
+                    scale: [1, 1.2, 1],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Sparkles className="h-7 w-7 text-secondary" />
+                </motion.div>
+                <h3 className="text-2xl sm:text-3xl font-mono font-bold gradient-text text-center">
+                  Featured Projects
+                </h3>
+              </div>
+              <div className="w-28 h-1 bg-gradient-to-r from-secondary/50 via-secondary to-secondary/50 rounded-full" />
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredProjects.map((project, index) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 sm:gap-8 lg:gap-10">
+              {filteredFeaturedProjects.map((project, index) => (
                 <ProjectCard
                   key={project.id}
                   project={project}
@@ -117,32 +152,34 @@ export function ProjectsShowcase() {
         )}
 
         {/* All Projects */}
-        <div>
+        <div className="mt-8 sm:mt-12">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="flex items-center justify-center gap-3 mb-10"
+            className="flex flex-col items-center gap-4 sm:gap-5 mb-12 sm:mb-16"
           >
-            <h3 className="text-3xl font-mono font-bold gradient-text text-center">
-              All Projects
-            </h3>
-            <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent" />
-            <motion.div
-              initial={{ scale: 0 }}
-              whileInView={{ scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ type: "spring", delay: 0.3 }}
-              className="glass-card px-4 py-2 rounded-full"
-            >
-              <span className="text-sm font-mono text-foreground-secondary">
-                {projects.length} Projects
-              </span>
-            </motion.div>
+            <div className="flex items-center gap-4">
+              <h3 className="text-2xl sm:text-3xl font-mono font-bold gradient-text text-center">
+                All Projects
+              </h3>
+              <motion.div
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ type: "spring", delay: 0.3 }}
+                className="glass-card px-4 py-2 rounded-full"
+              >
+                <span className="text-sm font-mono text-foreground-secondary">
+                  {projects.length} Projects
+                </span>
+              </motion.div>
+            </div>
+            <div className="w-28 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50 rounded-full" />
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 sm:gap-8 lg:gap-10">
             {projects.map((project, index) => (
               <ProjectCard
                 key={project.id}
