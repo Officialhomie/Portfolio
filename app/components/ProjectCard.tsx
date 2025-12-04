@@ -3,10 +3,12 @@
 import { Project } from '@/types/project'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import { ExternalLink, Github, Image as ImageIcon, CheckCircle2, Star, GitFork } from 'lucide-react'
+import { ExternalLink, Github, Image as ImageIcon, CheckCircle2, Star, GitFork, Loader2 } from 'lucide-react'
 import { formatAddress, getBaseScanURL } from '@/lib/utils'
 import { getIPFSGatewayURL } from '@/lib/projects-data'
 import { cn } from '@/lib/utils'
+import { useToast } from '@/app/contexts/ToastContext'
+import { useAppKitAccount } from '@reown/appkit/react'
 
 interface ProjectCardProps {
   project: Project
@@ -17,6 +19,9 @@ interface ProjectCardProps {
 export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [isEndorsing, setIsEndorsing] = useState(false)
+  const { isConnected } = useAppKitAccount()
+  const { success, error, info } = useToast()
 
   const imageUrl = project.ipfsImageCID
     ? getIPFSGatewayURL(project.ipfsImageCID)
@@ -24,7 +29,7 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
 
   return (
     <motion.div
-      className="relative h-[480px] perspective-1000 group"
+      className="relative h-[400px] sm:h-[480px] w-full perspective-1000 group"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -44,6 +49,15 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
           )}
           onClick={() => setIsFlipped(!isFlipped)}
           style={{ willChange: 'transform' }}
+          aria-label={`Flip card to view details for ${project.name}`}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsFlipped(!isFlipped)
+            }
+          }}
         >
           {/* Animated border gradient */}
           <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -56,21 +70,23 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
               {project.ipfsImageCID ? (
                 <>
                   {!imageLoaded && (
-                    <div className="absolute inset-0 skeleton" />
+                    <div className="absolute inset-0">
+                      <Skeleton variant="rectangular" className="w-full h-full rounded-lg" />
+                    </div>
                   )}
-                  <motion.img
+                  <Image
                     src={imageUrl}
                     alt={project.name}
+                    fill
                     className={cn(
-                      "w-full h-full object-cover transition-opacity duration-500",
+                      "object-cover transition-opacity duration-500",
                       imageLoaded ? "opacity-100" : "opacity-0"
                     )}
                     onLoad={() => setImageLoaded(true)}
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder-project.png'
+                    onError={() => {
                       setImageLoaded(true)
                     }}
-                    style={{ pointerEvents: 'none' }}
+                    unoptimized
                   />
                   {/* Image overlay gradient */}
                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
@@ -185,6 +201,15 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
             "absolute inset-0 backface-hidden rotate-y-180 glass-card rounded-xl p-6 overflow-y-auto cursor-pointer"
           )}
           onClick={() => setIsFlipped(!isFlipped)}
+          aria-label={`Flip card back for ${project.name}`}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsFlipped(!isFlipped)
+            }
+          }}
         >
           <div className="flex flex-col h-full">
             <motion.h3
@@ -322,15 +347,33 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
 
               {onEndorse && (
                 <motion.button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation()
-                    onEndorse(project.id)
+                    if (!isConnected) {
+                      info('Please connect your wallet to endorse projects')
+                      return
+                    }
+                    setIsEndorsing(true)
+                    try {
+                      await onEndorse(project.id)
+                      success(`Successfully endorsed ${project.name}!`)
+                    } catch (err) {
+                      error('Failed to endorse project. Please try again.')
+                    } finally {
+                      setIsEndorsing(false)
+                    }
                   }}
-                  className="glass-card hover:bg-opacity-20 rounded-lg px-4 py-2.5 text-primary hover:text-primary-hover transition-all text-sm font-medium btn-glow"
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
+                  disabled={isEndorsing}
+                  className="glass-card hover:bg-opacity-20 rounded-lg px-4 py-2.5 flex items-center justify-center gap-2 text-primary hover:text-primary-hover transition-all text-sm font-medium btn-glow disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileHover={{ scale: isEndorsing ? 1 : 1.02, y: isEndorsing ? 0 : -2 }}
+                  whileTap={{ scale: isEndorsing ? 1 : 0.98 }}
                 >
-                  Endorse Project
+                  {isEndorsing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Star className="h-4 w-4" />
+                  )}
+                  <span>{isEndorsing ? 'Endorsing...' : 'Endorse Project'}</span>
                 </motion.button>
               )}
 
