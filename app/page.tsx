@@ -5,7 +5,8 @@ import { ProjectsShowcase } from './components/ProjectsShowcase'
 import { VisitorBook } from './components/VisitorBook'
 import { NFTMint } from './components/NFTMint'
 import { TokenFaucet } from './components/TokenFaucet'
-import { WalletConnect } from './components/WalletConnect'
+import { NavigationMenu } from './components/NavigationMenu'
+import { BentoGrid, BentoItem } from './components/BentoGrid'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { NetworkError } from './components/NetworkError'
 import { motion } from 'framer-motion'
@@ -15,81 +16,47 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <NetworkError />
+      <NavigationMenu />
       <main className="relative min-h-screen">
-      {/* Enhanced Header */}
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-glass-border backdrop-blur-xl shadow-lg"
-      >
-        <div className="max-w-7xl xl:max-w-[90rem] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <motion.a
-            href="#"
-            className="font-mono font-bold text-xl gradient-text flex items-center gap-2 cursor-pointer transition-all"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={(e) => {
-              e.preventDefault()
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
-          >
-            <motion.div
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            >
-              <Sparkles className="h-5 w-5 text-primary" />
-            </motion.div>
-            <span>OneTrueHomie</span>
-          </motion.a>
-          <div className="flex items-center gap-4">
-            <WalletConnect />
-          </div>
-        </div>
-      </motion.header>
-
       {/* Hero Section */}
-      <Hero />
+      <section id="home">
+        <Hero />
+      </section>
 
       {/* Projects Showcase */}
-      <ProjectsShowcase />
+      <section id="projects">
+        <ProjectsShowcase />
+      </section>
 
       {/* Interactive Features Section */}
-      <section className="relative py-24 sm:py-32 md:py-40 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section id="interactive" className="section-lg relative overflow-hidden bg-gradient-to-b from-background via-background-tertiary/50 to-background">
         {/* Animated background elements */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.03] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent" />
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 50, 0],
             y: [0, -30, 0],
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]"
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-primary/8 rounded-full blur-[120px] pointer-events-none"
         />
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, -40, 0],
             y: [0, 40, 0],
           }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-[100px]"
-        />
-        <motion.div
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.05, 0.1, 0.05],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-[120px]"
+          transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-accent/8 rounded-full blur-[120px] pointer-events-none"
         />
 
-        <div className="relative max-w-7xl xl:max-w-[90rem] mx-auto">
+        <div className="container-wide relative">
           {/* Section Header */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16 sm:mb-20 lg:mb-24"
+            className="text-center mb-20"
           >
             {/* Badge */}
             <motion.div
@@ -97,80 +64,55 @@ export default function Home() {
               whileInView={{ scale: 1, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6"
+              className="inline-flex items-center gap-2 badge badge-primary px-5 py-2.5 mb-8"
             >
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
               >
-                <Zap className="h-4 w-4 text-primary" />
+                <Zap className="h-5 w-5" />
               </motion.div>
-              <span className="text-sm font-medium text-foreground-secondary">On-Chain Experience</span>
+              <span className="font-medium">On-Chain Experience</span>
             </motion.div>
-            
+
             <motion.h2
-              className="text-4xl sm:text-5xl md:text-6xl font-mono font-bold gradient-text mb-6"
+              className="text-5xl sm:text-6xl md:text-7xl font-mono font-bold gradient-text mb-6"
               initial={{ scale: 0.9 }}
               whileInView={{ scale: 1 }}
               viewport={{ once: true }}
             >
               Interactive Features
             </motion.h2>
-            
+
             <motion.p
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
-              className="text-lg sm:text-xl text-foreground-secondary max-w-2xl mx-auto leading-relaxed"
+              className="text-lg sm:text-xl text-foreground-secondary max-w-3xl mx-auto leading-relaxed text-balance"
             >
-              Experience the power of Web3 through interactive on-chain features. 
-              Every action executes real smart contract transactions.
+              Experience the power of Web3 through interactive on-chain features.
+              Every action executes real smart contract transactions on Base Mainnet.
             </motion.p>
-            
-            {/* Decorative divider */}
-            <motion.div
-              initial={{ width: 0 }}
-              whileInView={{ width: 120 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="h-1 bg-gradient-to-r from-primary via-secondary to-accent rounded-full mx-auto mt-8"
-            />
           </motion.div>
 
-          {/* Feature Cards Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 mb-10 lg:mb-12">
+          {/* Bento Grid Layout */}
+          <BentoGrid>
             {/* Token Faucet */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
+            <BentoItem span="default">
               <TokenFaucet />
-            </motion.div>
+            </BentoItem>
 
             {/* NFT Mint */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
+            <BentoItem span="default">
               <NFTMint />
-            </motion.div>
-          </div>
+            </BentoItem>
 
-          {/* Visitor Book - Full width */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mb-16 lg:mb-20"
-          >
-            <VisitorBook />
-          </motion.div>
+            {/* Visitor Book - Full width */}
+            <BentoItem span="wide" className="lg:col-span-3">
+              <VisitorBook />
+            </BentoItem>
+          </BentoGrid>
 
           {/* About This Portfolio */}
           <motion.div
@@ -341,7 +283,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="relative border-t border-glass-border py-12 px-4 overflow-hidden">
+      <footer id="contact" className="relative border-t border-glass-border py-12 px-4 overflow-hidden">
         {/* Background decoration */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-gradient-to-t from-primary/10 to-transparent blur-2xl" />
 
