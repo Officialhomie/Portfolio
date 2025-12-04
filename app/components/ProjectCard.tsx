@@ -29,7 +29,7 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
 
   return (
     <motion.div
-      className="relative h-[400px] sm:h-[480px] w-full perspective-1000 group"
+      className="relative h-[420px] sm:h-[500px] w-full perspective-1000 group"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -45,7 +45,7 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
         {/* Front of card */}
         <motion.div
           className={cn(
-            "absolute inset-0 backface-hidden glass-card rounded-xl p-6 cursor-pointer overflow-hidden"
+            "absolute inset-0 backface-hidden glass-card-elevated rounded-2xl p-6 cursor-pointer overflow-hidden border border-glass-border hover:border-glass-border-hover"
           )}
           onClick={() => setIsFlipped(!isFlipped)}
           style={{ willChange: 'transform' }}
@@ -60,8 +60,8 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
           }}
         >
           {/* Animated border gradient */}
-          <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary via-secondary to-accent opacity-20 blur-xl" />
+          <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary via-secondary to-accent opacity-10 blur-2xl" />
           </div>
 
           <div className="relative flex flex-col h-full">
@@ -198,7 +198,7 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
         {/* Back of card */}
         <motion.div
           className={cn(
-            "absolute inset-0 backface-hidden rotate-y-180 glass-card rounded-xl p-6 overflow-y-auto cursor-pointer"
+            "absolute inset-0 backface-hidden rotate-y-180 glass-card-elevated rounded-2xl p-6 overflow-y-auto cursor-pointer border border-glass-border"
           )}
           onClick={() => setIsFlipped(!isFlipped)}
           aria-label={`Flip card back for ${project.name}`}

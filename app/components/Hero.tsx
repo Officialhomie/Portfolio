@@ -5,14 +5,16 @@ import { WalletConnect } from './WalletConnect'
 import { NetworkIndicator } from './NetworkIndicator'
 import { GasTracker } from './GasTracker'
 import { BlockHeightCounter } from './BlockHeightCounter'
+import { MetricsTicker } from './MetricsTicker'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { ArrowDown, Sparkles, Code2, Zap, Layers } from 'lucide-react'
+import { ArrowDown, Sparkles, Code2, Zap, Layers, Github, Twitter, Linkedin, ExternalLink, ChevronRight, Play } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function Hero() {
   const { isConnected } = useAppKitAccount()
   const { scrollY } = useScroll()
   const [mounted, setMounted] = useState(false)
+  const [greeting, setGreeting] = useState('')
 
   const y1 = useTransform(scrollY, [0, 500], [0, 150])
   const y2 = useTransform(scrollY, [0, 500], [0, -100])
@@ -21,238 +23,309 @@ export function Hero() {
 
   useEffect(() => {
     setMounted(true)
+
+    // Dynamic greeting based on time
+    const hour = new Date().getHours()
+    if (hour < 12) setGreeting('Good morning')
+    else if (hour < 18) setGreeting('Good afternoon')
+    else setGreeting('Good evening')
   }, [])
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 sm:py-20 overflow-hidden">
-      {/* Animated background elements with parallax */}
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+      {/* Minimal subtle background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Primary glow orb */}
         <motion.div
           style={{ y: y1 }}
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-glow"
+          className="absolute top-1/4 left-1/4 w-[800px] h-[800px] bg-primary/[0.02] rounded-full blur-3xl"
         />
-
-        {/* Secondary glow orb */}
-        <motion.div
-          style={{ y: y2, animationDelay: '1s' }}
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-glow"
-        />
-
-        {/* Accent glow orb */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5, delay: 0.5 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-secondary/5 rounded-full blur-3xl"
-        />
-
-        {/* Grid overlay with fade */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(98,126,234,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(98,126,234,0.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
-
-        {/* Floating particles */}
-        {mounted && Array.from({ length: 20 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-primary/30 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
       </div>
 
-      <motion.div
-        style={{ opacity, scale }}
-        className="relative z-10 max-w-5xl mx-auto text-center"
-      >
-        {/* Animated badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-8 inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full"
-        >
-          <div className="flex items-center gap-2">
+      {/* Main Content - Split Layout */}
+      <div className="container-wide relative z-10 py-12 sm:py-16 lg:py-24">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left Column - Content */}
+          <motion.div
+            style={{ opacity, scale }}
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="space-y-8"
+          >
+            {/* Greeting Badge */}
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-glass-bg border border-glass-border text-sm text-foreground-secondary"
             >
-              <Sparkles className="h-4 w-4 text-secondary" />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              <span className="font-medium">{greeting}! Welcome</span>
             </motion.div>
-            <span className="text-sm font-mono text-foreground-secondary">
-              Full-Stack Blockchain Developer
-            </span>
-          </div>
-        </motion.div>
 
-        {/* Main heading with gradient animation */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-mono font-bold mb-6">
-            <span className="gradient-text gradient-text-animate block mb-2">
-              OneTrueHomie Portfolio
-            </span>
-            <span className="text-foreground block">
-              Protocol
-            </span>
-          </h1>
-        </motion.div>
-
-        {/* Subtitle with stagger animation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="flex flex-col items-center gap-8 sm:gap-10 mb-10 sm:mb-14"
-        >
-          {/* Description */}
-          <p className="text-lg sm:text-xl md:text-2xl text-foreground-secondary max-w-3xl mx-auto text-center leading-relaxed px-4">
-            Connect your wallet to explore interactive blockchain projects,
-            smart contracts, and decentralized technologies.
-          </p>
-
-          {/* Feature badges */}
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-            <motion.div
-              whileHover={{ scale: 1.05, y: -2 }}
-              className="flex items-center gap-2.5 glass-card px-4 py-2.5 rounded-xl border border-primary/20"
-            >
-              <Code2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <span className="text-sm sm:text-base font-medium text-foreground-secondary">Smart Contracts</span>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.05, y: -2 }}
-              className="flex items-center gap-2.5 glass-card px-4 py-2.5 rounded-xl border border-secondary/20"
-            >
-              <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-secondary" />
-              <span className="text-sm sm:text-base font-medium text-foreground-secondary">IPFS Storage</span>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.05, y: -2 }}
-              className="flex items-center gap-2.5 glass-card px-4 py-2.5 rounded-xl border border-accent/20"
-            >
-              <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
-              <span className="text-sm sm:text-base font-medium text-foreground-secondary">Base Mainnet</span>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* CTA Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="flex flex-col items-center gap-8 sm:gap-10 mb-12 sm:mb-16"
-        >
-          {!isConnected ? (
-            <div className="flex flex-col items-center gap-6">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+            {/* Main Headline */}
+            <div className="space-y-4">
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+                className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-mono font-bold leading-tight"
               >
-                <WalletConnect />
-              </motion.div>
-              <motion.div
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="flex items-center gap-3 text-foreground-secondary"
+                <span className="gradient-text gradient-text-animate block">
+                  Building the Future
+                </span>
+                <span className="text-foreground block mt-2">
+                  with Web3 Technology
+                </span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="text-lg sm:text-xl text-foreground-secondary leading-relaxed max-w-2xl text-balance"
               >
-                <ArrowDown className="h-5 w-5" />
-                <span className="text-sm font-mono">Connect to unlock full experience</span>
-              </motion.div>
+                Full-stack blockchain developer specializing in smart contracts,
+                decentralized applications, and Web3 infrastructure. Turning innovative
+                ideas into production-ready solutions on Base Mainnet.
+              </motion.p>
             </div>
-          ) : (
+
+            {/* Tech Badges */}
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", duration: 0.6 }}
-              className="flex flex-col items-center gap-8 sm:gap-10"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="flex flex-wrap gap-2"
             >
-              {/* Welcome message */}
+              {[
+                { icon: Code2, label: 'Smart Contracts' },
+                { icon: Layers, label: 'IPFS Storage' },
+                { icon: Zap, label: 'Base' },
+              ].map((item, index) => {
+                const Icon = item.icon
+                return (
+                  <motion.div
+                    key={item.label}
+                    whileHover={{ scale: 1.02 }}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-glass-bg border border-glass-border text-sm text-foreground-secondary hover:border-glass-border-hover transition-colors"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+
+            {/* CTA Buttons */}
+            {!isConnected ? (
               <motion.div
-                className="flex items-center gap-3 glass-card px-6 sm:px-8 py-4 rounded-2xl border border-primary/20"
-                animate={{
-                  boxShadow: [
-                    "0 0 20px rgba(98, 126, 234, 0.2)",
-                    "0 0 40px rgba(98, 126, 234, 0.4)",
-                    "0 0 20px rgba(98, 126, 234, 0.2)",
-                  ]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="flex flex-col sm:flex-row gap-4 pt-4"
               >
-                <motion.div
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                >
-                  <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <WalletConnect />
                 </motion.div>
-                <span className="font-mono text-base sm:text-lg text-foreground">
-                  Welcome! Explore the portfolio below.
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="btn btn-ghost btn-lg"
+                >
+                  <Play className="h-5 w-5" />
+                  <span>View Projects</span>
+                  <ChevronRight className="h-5 w-5" />
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="space-y-6 pt-4"
+              >
+                {/* Welcome Message */}
+                <motion.div
+                  className="glass-card-elevated p-6 rounded-2xl border border-primary/20"
+                  animate={{
+                    boxShadow: [
+                      '0 0 20px rgba(91, 126, 245, 0.2)',
+                      '0 0 40px rgba(91, 126, 245, 0.3)',
+                      '0 0 20px rgba(91, 126, 245, 0.2)',
+                    ],
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                      className="p-2 rounded-xl bg-primary/20"
+                    >
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    </motion.div>
+                    <div>
+                      <p className="font-semibold text-foreground">Connected Successfully!</p>
+                      <p className="text-sm text-foreground-secondary">Explore interactive features below</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Network Stats */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <NetworkIndicator />
+                  <GasTracker />
+                  <BlockHeightCounter />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Social Links */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="flex items-center gap-4 pt-4"
+            >
+              {[
+                { icon: Github, href: 'https://github.com/Officialhomie', label: 'GitHub' },
+                { icon: Twitter, href: 'https://twitter.com/Officialhomie', label: 'Twitter' },
+                { icon: Linkedin, href: 'https://linkedin.com/in/officialhomie', label: 'LinkedIn' },
+              ].map((social) => {
+                const Icon = social.icon
+                return (
+                  <motion.a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="glass-card p-3 rounded-xl hover:border-primary/30 transition-colors"
+                    aria-label={social.label}
+                  >
+                    <Icon className="h-5 w-5 text-foreground-secondary" />
+                  </motion.a>
+                )
+              })}
+            </motion.div>
+          </motion.div>
+
+          {/* Right Column - Metrics & Visual */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="space-y-8"
+          >
+            {/* Live Metrics */}
+            <div className="space-y-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center gap-2"
+              >
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                <span className="text-sm font-mono text-foreground-secondary uppercase tracking-wider">
+                  Live Portfolio Metrics
                 </span>
               </motion.div>
+              <MetricsTicker />
+            </div>
 
-              {/* Live Stats Dashboard */}
-              <div className="flex flex-col items-center gap-4">
-                <span className="text-xs sm:text-sm font-mono text-foreground-secondary/60 uppercase tracking-wider">
-                  Live Network Stats
-                </span>
-                <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-                  <motion.div whileHover={{ scale: 1.05, y: -4 }}>
-                    <NetworkIndicator />
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.05, y: -4 }}>
-                    <GasTracker />
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.05, y: -4 }}>
-                    <BlockHeightCounter />
-                  </motion.div>
+            {/* Visual Element - Clean Stats Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="relative"
+            >
+              <div className="glass-card rounded-2xl p-8 border border-glass-border overflow-hidden">
+                {/* Animated background grid */}
+                <div
+                  className="absolute inset-0 opacity-[0.02]"
+                  style={{
+                    backgroundImage: `radial-gradient(circle at 1px 1px, rgb(255 255 255) 1px, transparent 0)`,
+                    backgroundSize: '32px 32px',
+                  }}
+                />
+
+                {/* Content */}
+                <div className="relative space-y-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-mono font-bold text-xl text-foreground">
+                      Technical Skills
+                    </h3>
+                    <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                      <span className="text-xs font-medium text-primary">Verified</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {[
+                      { label: 'Smart Contract Development', value: '98%' },
+                      { label: 'Frontend Engineering', value: '95%' },
+                      { label: 'Web3 Integration', value: '97%' },
+                    ].map((skill, index) => (
+                      <div key={skill.label} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-foreground-secondary">{skill.label}</span>
+                          <span className="font-mono text-sm text-foreground">
+                            {skill.value}
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-glass-bg overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: skill.value }}
+                            transition={{ duration: 1.5, delay: 0.8 + index * 0.2 }}
+                            className="h-full rounded-full bg-primary"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-glass-border">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-foreground-secondary">Deployed on Base</span>
+                      <span className="status-indicator status-online">Live</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
-          )}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Scroll Indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+      >
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="flex flex-col items-center gap-2"
+        >
+          <span className="text-xs font-mono text-foreground-secondary">Scroll to explore</span>
+          <div className="w-6 h-10 border-2 border-primary/30 rounded-full flex items-start justify-center p-2">
+            <motion.div
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="w-1.5 h-1.5 bg-primary rounded-full"
+            />
+          </div>
         </motion.div>
       </motion.div>
-
-      {/* Scroll indicator */}
-      {isConnected && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="absolute bottom-12 left-1/2 transform -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 12, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="flex flex-col items-center gap-2"
-          >
-            <span className="text-xs font-mono text-foreground-secondary">
-              Scroll to explore
-            </span>
-            <div className="w-6 h-10 border-2 border-primary/30 rounded-full flex items-start justify-center p-2">
-              <motion.div
-                animate={{ y: [0, 12, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-1.5 h-1.5 bg-primary rounded-full"
-              />
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
 
       {/* Decorative elements */}
       <div className="absolute top-20 right-10 w-20 h-20 border border-primary/20 rounded-lg rotate-12 animate-float" />
