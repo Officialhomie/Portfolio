@@ -14,18 +14,18 @@ export function ProjectsShowcase() {
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
   const allProjects = getAllProjects()
   const featuredProjects = getFeaturedProjects()
-  
+
   // Use filtered projects if search/filter is active, otherwise use all projects
   const projects = useMemo(() => {
     return filteredProjects.length > 0 && filteredProjects.length !== allProjects.length
       ? filteredProjects
       : allProjects
   }, [filteredProjects, allProjects])
-  
+
   // Filter featured projects based on current filter
   const filteredFeaturedProjects = useMemo(() => {
     if (filteredProjects.length > 0 && filteredProjects.length !== allProjects.length) {
-      return featuredProjects.filter(fp => 
+      return featuredProjects.filter(fp =>
         filteredProjects.some(p => p.id === fp.id)
       )
     }
@@ -41,19 +41,18 @@ export function ProjectsShowcase() {
   }
 
   return (
-    <section className="relative py-32 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 overflow-hidden">
-      {/* Background decoration - positioned behind content, doesn't affect layout */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+    <section className="section-lg relative overflow-hidden bg-gradient-to-b from-background via-background-secondary/10 to-background">
+      {/* Minimal background decoration */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/[0.02] rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative w-full max-w-[1920px] mx-auto">
+      <div className="container-wide relative">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="flex flex-col items-center text-center gap-6 sm:gap-8 mb-16 sm:mb-24 px-4"
+          className="text-center mb-20"
         >
           {/* Badge with icon */}
           <motion.div
@@ -61,42 +60,63 @@ export function ProjectsShowcase() {
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center justify-center gap-2.5 glass-card px-5 py-2.5 rounded-full"
+            className="inline-flex items-center justify-center gap-2.5 badge badge-primary px-5 py-2.5 mb-8"
           >
             <motion.div
               animate={{ rotate: [0, 360] }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
             >
-              <Code2 className="h-5 w-5 text-primary" />
+              <Code2 className="h-5 w-5" />
             </motion.div>
-            <span className="text-sm font-mono text-foreground-secondary">Portfolio Showcase</span>
+            <span className="font-medium">Portfolio Showcase</span>
           </motion.div>
 
           {/* Main Title */}
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-mono font-bold gradient-text">
-            Projects
-          </h2>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-5xl sm:text-6xl md:text-7xl font-mono font-bold gradient-text mb-6"
+          >
+            Featured Work
+          </motion.h2>
 
           {/* Description */}
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="text-base sm:text-lg md:text-xl text-foreground-secondary max-w-3xl leading-relaxed"
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="text-lg sm:text-xl text-foreground-secondary max-w-3xl mx-auto leading-relaxed text-balance"
           >
-            Explore my blockchain projects, each demonstrating different aspects of Web3 development
-            from smart contracts to IPFS integration
+            Explore my blockchain projects showcasing smart contract development,
+            decentralized storage, and full-stack Web3 engineering
           </motion.p>
 
-          {/* Animated divider */}
+          {/* Stats */}
           <motion.div
-            initial={{ width: 0 }}
-            whileInView={{ width: "120px" }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="h-1 bg-gradient-to-r from-primary via-secondary to-accent rounded-full"
-          />
+            transition={{ delay: 0.3 }}
+            className="flex items-center justify-center gap-8 mt-8"
+          >
+            <div className="text-center">
+              <div className="text-3xl font-mono font-bold gradient-text">{allProjects.length}</div>
+              <div className="text-sm text-foreground-secondary">Total Projects</div>
+            </div>
+            <div className="w-px h-12 bg-glass-border" />
+            <div className="text-center">
+              <div className="text-3xl font-mono font-bold gradient-text">{featuredProjects.length}</div>
+              <div className="text-sm text-foreground-secondary">Featured</div>
+            </div>
+            <div className="w-px h-12 bg-glass-border" />
+            <div className="text-center">
+              <div className="text-3xl font-mono font-bold text-success">100%</div>
+              <div className="text-sm text-foreground-secondary">On-Chain</div>
+            </div>
+          </motion.div>
         </motion.div>
 
         {/* Search and Filter - Centered Container */}
@@ -109,13 +129,13 @@ export function ProjectsShowcase() {
 
         {/* Featured Projects */}
         {filteredFeaturedProjects.length > 0 && (
-          <div className="mb-20 sm:mb-28">
+          <div className="mb-24">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="flex flex-col items-center gap-4 sm:gap-5 mb-12 sm:mb-16"
+              className="flex items-center justify-between mb-12"
             >
               <div className="flex items-center gap-4">
                 <motion.div
@@ -126,67 +146,92 @@ export function ProjectsShowcase() {
                   transition={{
                     duration: 3,
                     repeat: Infinity,
-                    ease: "easeInOut",
+                    ease: 'easeInOut',
                   }}
+                  className="p-3 rounded-xl bg-gradient-to-br from-secondary/20 to-accent/20 border border-secondary/20"
                 >
-                  <Sparkles className="h-7 w-7 text-secondary" />
+                  <Sparkles className="h-6 w-6 text-secondary" />
                 </motion.div>
-                <h3 className="text-2xl sm:text-3xl font-mono font-bold gradient-text text-center">
-                  Featured Projects
-                </h3>
+                <div>
+                  <h3 className="text-3xl sm:text-4xl font-mono font-bold gradient-text">
+                    Featured Projects
+                  </h3>
+                  <p className="text-sm text-foreground-secondary mt-1">
+                    Highlighted work showcasing technical excellence
+                  </p>
+                </div>
               </div>
-              <div className="w-28 h-1 bg-gradient-to-r from-secondary/50 via-secondary to-secondary/50 rounded-full" />
+              <div className="hidden sm:flex items-center gap-2 badge badge-secondary px-4 py-2">
+                <span className="font-mono font-bold">{filteredFeaturedProjects.length}</span>
+                <span>Featured</span>
+              </div>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 sm:gap-8 lg:gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredFeaturedProjects.map((project, index) => (
-                <ProjectCard
+                <motion.div
                   key={project.id}
-                  project={project}
-                  onEndorse={handleEndorse}
-                  onVote={handleVote}
-                />
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <ProjectCard
+                    project={project}
+                    onEndorse={handleEndorse}
+                    onVote={handleVote}
+                  />
+                </motion.div>
               ))}
             </div>
           </div>
         )}
 
         {/* All Projects */}
-        <div className="mt-8 sm:mt-12">
+        <div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col items-center gap-4 sm:gap-5 mb-12 sm:mb-16"
+            className="flex items-center justify-between mb-12"
           >
             <div className="flex items-center gap-4">
-              <h3 className="text-2xl sm:text-3xl font-mono font-bold gradient-text text-center">
-                All Projects
-              </h3>
               <motion.div
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ type: "spring", delay: 0.3 }}
-                className="glass-card px-4 py-2 rounded-full"
+                className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20"
               >
-                <span className="text-sm font-mono text-foreground-secondary">
-                  {projects.length} Projects
-                </span>
+                <Code2 className="h-6 w-6 text-primary" />
               </motion.div>
+              <div>
+                <h3 className="text-3xl sm:text-4xl font-mono font-bold gradient-text">
+                  All Projects
+                </h3>
+                <p className="text-sm text-foreground-secondary mt-1">
+                  Complete portfolio of blockchain solutions
+                </p>
+              </div>
             </div>
-            <div className="w-28 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50 rounded-full" />
+            <div className="hidden sm:flex items-center gap-2 badge badge-primary px-4 py-2">
+              <span className="font-mono font-bold">{projects.length}</span>
+              <span>Total</span>
+            </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 sm:gap-8 lg:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project, index) => (
-              <ProjectCard
+              <motion.div
                 key={project.id}
-                project={project}
-                onEndorse={handleEndorse}
-                onVote={handleVote}
-              />
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.05 }}
+              >
+                <ProjectCard
+                  project={project}
+                  onEndorse={handleEndorse}
+                  onVote={handleVote}
+                />
+              </motion.div>
             ))}
           </div>
         </div>
