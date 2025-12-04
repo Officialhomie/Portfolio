@@ -9,6 +9,27 @@ export const CONTRACT_ADDRESSES = {
   PORTFOLIO_TOKEN: process.env.NEXT_PUBLIC_PORTFOLIO_TOKEN_ADDRESS || '',
 } as const
 
+// Helper function to validate contract addresses
+export function isContractAddressValid(address: string): boolean {
+  return address !== '' && address.startsWith('0x') && address.length === 42
+}
+
+// Helper function to check if all contracts are deployed
+export function areContractsDeployed(): boolean {
+  return Object.values(CONTRACT_ADDRESSES).every(isContractAddressValid)
+}
+
+// Helper function to get contract address with validation
+export function getContractAddress(
+  contractName: keyof typeof CONTRACT_ADDRESSES
+): `0x${string}` | null {
+  const address = CONTRACT_ADDRESSES[contractName]
+  if (isContractAddressValid(address)) {
+    return address as `0x${string}`
+  }
+  return null
+}
+
 // Portfolio Token ABI
 export const PORTFOLIO_TOKEN_ABI = [
   {
