@@ -1,6 +1,6 @@
 'use client'
 
-import { useAccount } from 'wagmi'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { WalletConnect } from './WalletConnect'
 import { NetworkIndicator } from './NetworkIndicator'
 import { GasTracker } from './GasTracker'
@@ -10,7 +10,7 @@ import { ArrowDown, Sparkles, Code2, Zap, Layers } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function Hero() {
-  const { isConnected } = useAccount()
+  const { isConnected } = useAppKitAccount()
   const { scrollY } = useScroll()
   const [mounted, setMounted] = useState(false)
 
@@ -24,7 +24,7 @@ export function Hero() {
   }, [])
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-20 overflow-hidden">
+    <section className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 sm:py-20 overflow-hidden">
       {/* Animated background elements with parallax */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Primary glow orb */}
@@ -102,7 +102,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-mono font-bold mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-mono font-bold mb-6">
             <span className="gradient-text gradient-text-animate block mb-2">
               OneTrueHomie Portfolio
             </span>
@@ -117,34 +117,36 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="mb-8 space-y-4"
+          className="flex flex-col items-center gap-8 sm:gap-10 mb-10 sm:mb-14"
         >
-          <p className="text-xl md:text-2xl text-foreground-secondary max-w-3xl mx-auto text-center">
+          {/* Description */}
+          <p className="text-lg sm:text-xl md:text-2xl text-foreground-secondary max-w-3xl mx-auto text-center leading-relaxed px-4">
             Connect your wallet to explore interactive blockchain projects,
             smart contracts, and decentralized technologies.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-foreground-secondary/80">
+          {/* Feature badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg"
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="flex items-center gap-2.5 glass-card px-4 py-2.5 rounded-xl border border-primary/20"
             >
-              <Code2 className="h-4 w-4 text-primary" />
-              <span>Smart Contracts</span>
+              <Code2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <span className="text-sm sm:text-base font-medium text-foreground-secondary">Smart Contracts</span>
             </motion.div>
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg"
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="flex items-center gap-2.5 glass-card px-4 py-2.5 rounded-xl border border-secondary/20"
             >
-              <Layers className="h-4 w-4 text-secondary" />
-              <span>IPFS Storage</span>
+              <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-secondary" />
+              <span className="text-sm sm:text-base font-medium text-foreground-secondary">IPFS Storage</span>
             </motion.div>
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg"
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="flex items-center gap-2.5 glass-card px-4 py-2.5 rounded-xl border border-accent/20"
             >
-              <Zap className="h-4 w-4 text-accent" />
-              <span>Base Mainnet</span>
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
+              <span className="text-sm sm:text-base font-medium text-foreground-secondary">Base Mainnet</span>
             </motion.div>
           </div>
         </motion.div>
@@ -154,10 +156,10 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="flex flex-col items-center gap-6 mb-12"
+          className="flex flex-col items-center gap-8 sm:gap-10 mb-12 sm:mb-16"
         >
           {!isConnected ? (
-            <>
+            <div className="flex flex-col items-center gap-6">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -167,26 +169,27 @@ export function Hero() {
               <motion.div
                 animate={{ y: [0, 8, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="flex items-center gap-2 text-foreground-secondary"
+                className="flex items-center gap-3 text-foreground-secondary"
               >
                 <ArrowDown className="h-5 w-5" />
                 <span className="text-sm font-mono">Connect to unlock full experience</span>
               </motion.div>
-            </>
+            </div>
           ) : (
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", duration: 0.6 }}
-              className="flex flex-col items-center gap-6"
+              className="flex flex-col items-center gap-8 sm:gap-10"
             >
+              {/* Welcome message */}
               <motion.div
-                className="flex items-center gap-2 glass-card px-6 py-3 rounded-xl"
+                className="flex items-center gap-3 glass-card px-6 sm:px-8 py-4 rounded-2xl border border-primary/20"
                 animate={{
                   boxShadow: [
-                    "0 0 20px rgba(98, 126, 234, 0.3)",
-                    "0 0 40px rgba(98, 126, 234, 0.5)",
-                    "0 0 20px rgba(98, 126, 234, 0.3)",
+                    "0 0 20px rgba(98, 126, 234, 0.2)",
+                    "0 0 40px rgba(98, 126, 234, 0.4)",
+                    "0 0 20px rgba(98, 126, 234, 0.2)",
                   ]
                 }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -195,35 +198,33 @@ export function Hero() {
                   animate={{ rotate: [0, 360] }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                 >
-                  <Sparkles className="h-5 w-5 text-primary" />
+                  <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </motion.div>
-                <span className="font-mono text-foreground">
+                <span className="font-mono text-base sm:text-lg text-foreground">
                   Welcome! Explore the portfolio below.
                 </span>
               </motion.div>
+
+              {/* Live Stats Dashboard */}
+              <div className="flex flex-col items-center gap-4">
+                <span className="text-xs sm:text-sm font-mono text-foreground-secondary/60 uppercase tracking-wider">
+                  Live Network Stats
+                </span>
+                <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+                  <motion.div whileHover={{ scale: 1.05, y: -4 }}>
+                    <NetworkIndicator />
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.05, y: -4 }}>
+                    <GasTracker />
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.05, y: -4 }}>
+                    <BlockHeightCounter />
+                  </motion.div>
+                </div>
+              </div>
             </motion.div>
           )}
         </motion.div>
-
-        {/* Live Stats Dashboard */}
-        {isConnected && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
-            className="flex flex-wrap items-center justify-center gap-4"
-          >
-            <motion.div whileHover={{ scale: 1.05, y: -4 }}>
-              <NetworkIndicator />
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05, y: -4 }}>
-              <GasTracker />
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05, y: -4 }}>
-              <BlockHeightCounter />
-            </motion.div>
-          </motion.div>
-        )}
       </motion.div>
 
       {/* Scroll indicator */}
