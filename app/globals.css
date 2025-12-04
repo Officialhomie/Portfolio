@@ -349,6 +349,7 @@ html {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(98, 126, 234, 0.3);
   box-shadow: 0 12px 48px 0 rgba(98, 126, 234, 0.2);
+  transform: translateY(-4px);
 }
 
 /* Prevent hover transform on cards that are flipping */
@@ -435,4 +436,29 @@ html {
 .reveal.active {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .gradient-text-animate {
+    animation: none !important;
+  }
+  
+  .animate-pulse-glow,
+  .animate-float,
+  .animate-shimmer,
+  .animate-gradient-shift,
+  .animate-glow-pulse,
+  .animate-border-dance {
+    animation: none !important;
+  }
 }
