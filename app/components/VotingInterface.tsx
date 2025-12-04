@@ -1,12 +1,15 @@
 'use client'
 
-import { useAccount, useWriteContract, useReadContract } from 'wagmi'
-import { useState } from 'react'
-import { CONTRACT_ADDRESSES, PROJECT_VOTING_ABI, PORTFOLIO_TOKEN_ABI } from '@/lib/contracts'
-import { formatAddress } from '@/lib/utils'
+import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useAppKitAccount } from '@reown/appkit/react'
+import { useState, useEffect } from 'react'
+import { CONTRACT_ADDRESSES, PROJECT_VOTING_ABI, PORTFOLIO_TOKEN_ABI, getContractAddress } from '@/lib/contracts'
+import { formatAddress, getBaseScanURL } from '@/lib/utils'
 import { Vote, Coins, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { parseEther } from 'viem'
+import { useToast } from '@/app/contexts/ToastContext'
+import { getErrorMessage } from '@/lib/errors'
 
 interface VotingInterfaceProps {
   projectId: string
@@ -14,97 +17,173 @@ interface VotingInterfaceProps {
 }
 
 export function VotingInterface({ projectId, projectName }: VotingInterfaceProps) {
-  const { address, isConnected } = useAccount()
+  const { address, isConnected } = useAppKitAccount()
   const [isVoting, setIsVoting] = useState(false)
   const [isApproving, setIsApproving] = useState(false)
+  const [approveTxHash, setApproveTxHash] = useState<`0x${string}` | null>(null)
+  const [voteTxHash, setVoteTxHash] = useState<`0x${string}` | null>(null)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const { success, error, loading: showLoadingToast, removeToast } = useToast()
+  const votingContractAddress = getContractAddress('PROJECT_VOTING')
+  const tokenContractAddress = getContractAddress('PORTFOLIO_TOKEN')
 
   // Check if user has voted
   const { data: hasVoted } = useReadContract({
-    address: CONTRACT_ADDRESSES.PROJECT_VOTING as `0x${string}`,
+    address: votingContractAddress!,
     abi: PROJECT_VOTING_ABI,
     functionName: 'checkVote',
     args: [address!, projectId],
     query: {
-      enabled: !!address && !!CONTRACT_ADDRESSES.PROJECT_VOTING,
+      enabled: !!address && !!votingContractAddress,
     },
   })
 
   // Get vote count
   const { data: voteCount } = useReadContract({
-    address: CONTRACT_ADDRESSES.PROJECT_VOTING as `0x${string}`,
+    address: votingContractAddress!,
     abi: PROJECT_VOTING_ABI,
     functionName: 'getVotes',
     args: [projectId],
     query: {
-      enabled: !!CONTRACT_ADDRESSES.PROJECT_VOTING,
+      enabled: !!votingContractAddress,
     },
   })
 
   // Get vote cost
   const { data: voteCost } = useReadContract({
-    address: CONTRACT_ADDRESSES.PROJECT_VOTING as `0x${string}`,
+    address: votingContractAddress!,
     abi: PROJECT_VOTING_ABI,
     functionName: 'voteCost',
     query: {
-      enabled: !!CONTRACT_ADDRESSES.PROJECT_VOTING,
+      enabled: !!votingContractAddress,
     },
   })
 
   // Get token balance
   const { data: tokenBalance } = useReadContract({
-    address: CONTRACT_ADDRESSES.PORTFOLIO_TOKEN as `0x${string}`,
+    address: tokenContractAddress!,
     abi: PORTFOLIO_TOKEN_ABI,
     functionName: 'balanceOf',
     args: [address!],
     query: {
-      enabled: !!address && !!CONTRACT_ADDRESSES.PORTFOLIO_TOKEN,
+      enabled: !!address && !!tokenContractAddress,
     },
   })
 
   // Check token allowance
   const { data: allowance } = useReadContract({
-    address: CONTRACT_ADDRESSES.PORTFOLIO_TOKEN as `0x${string}`,
+    address: tokenContractAddress!,
     abi: PORTFOLIO_TOKEN_ABI,
     functionName: 'allowance',
-    args: [address!, CONTRACT_ADDRESSES.PROJECT_VOTING as `0x${string}`],
+    args: [address!, votingContractAddress!],
     query: {
-      enabled: !!address && !!CONTRACT_ADDRESSES.PORTFOLIO_TOKEN && !!CONTRACT_ADDRESSES.PROJECT_VOTING,
+      enabled: !!address && !!tokenContractAddress && !!votingContractAddress,
     },
   })
+
+  // Wait for approve transaction
+  const { isLoading: isApprovingConfirming, isSuccess: isApproveConfirmed } = useWaitForTransactionReceipt({
+    hash: approveTxHash || undefined,
+  })
+
+  // Wait for vote transaction
+  const { isLoading: isVotingConfirming, isSuccess: isVoteConfirmed } = useWaitForTransactionReceipt({
+    hash: voteTxHash || undefined,
+  })
+
+  useEffect(() => {
+    if (isApproveConfirmed && approveTxHash) {
+      success('Tokens approved successfully!', {
+        link: {
+          label: 'View on Basescan',
+          href: getBaseScanURL(approveTxHash, 'tx'),
+        },
+      })
+      setApproveTxHash(null)
+    }
+  }, [isApproveConfirmed, approveTxHash, success])
+
+  useEffect(() => {
+    if (isVoteConfirmed && voteTxHash) {
+      success(`Successfully voted for ${projectName}!`, {
+        link: {
+          label: 'View on Basescan',
+          href: getBaseScanURL(voteTxHash, 'tx'),
+        },
+      })
+      setVoteTxHash(null)
+      setShowConfirmDialog(false)
+    }
+  }, [isVoteConfirmed, voteTxHash, success, projectName])
 
   const { writeContract } = useWriteContract()
 
   const handleApprove = async () => {
-    if (!isConnected || !address || !voteCost) return
+    if (!isConnected || !address || !voteCost || !tokenContractAddress || !votingContractAddress) {
+      if (!isConnected) {
+        error('Please connect your wallet')
+      }
+      return
+    }
 
     setIsApproving(true)
+    const loadingToastId = showLoadingToast('Approving tokens...')
+    
     try {
-      await writeContract({
-        address: CONTRACT_ADDRESSES.PORTFOLIO_TOKEN as `0x${string}`,
+      const hash = await writeContract({
+        address: tokenContractAddress,
         abi: PORTFOLIO_TOKEN_ABI,
         functionName: 'approve',
-        args: [CONTRACT_ADDRESSES.PROJECT_VOTING as `0x${string}`, voteCost],
+        args: [votingContractAddress, voteCost],
       })
-    } catch (error) {
-      console.error('Error approving tokens:', error)
+      
+      if (hash) {
+        setApproveTxHash(hash)
+        removeToast(loadingToastId)
+        showLoadingToast('Transaction submitted. Waiting for confirmation...')
+      }
+    } catch (err: unknown) {
+      removeToast(loadingToastId)
+      const errorMessage = getErrorMessage(err)
+      if (!errorMessage.includes('cancelled') && !errorMessage.includes('rejected')) {
+        error(errorMessage)
+      }
     } finally {
       setIsApproving(false)
     }
   }
 
   const handleVote = async () => {
-    if (!isConnected || !address) return
+    if (!isConnected || !address || !votingContractAddress) {
+      if (!isConnected) {
+        error('Please connect your wallet')
+      }
+      return
+    }
 
     setIsVoting(true)
+    const loadingToastId = showLoadingToast('Submitting vote...')
+    
     try {
-      await writeContract({
-        address: CONTRACT_ADDRESSES.PROJECT_VOTING as `0x${string}`,
+      const hash = await writeContract({
+        address: votingContractAddress,
         abi: PROJECT_VOTING_ABI,
         functionName: 'vote',
         args: [projectId],
       })
-    } catch (error) {
-      console.error('Error voting:', error)
+      
+      if (hash) {
+        setVoteTxHash(hash)
+        removeToast(loadingToastId)
+        showLoadingToast('Transaction submitted. Waiting for confirmation...')
+      }
+    } catch (err: unknown) {
+      removeToast(loadingToastId)
+      const errorMessage = getErrorMessage(err)
+      if (!errorMessage.includes('cancelled') && !errorMessage.includes('rejected')) {
+        error(errorMessage)
+      }
+      setShowConfirmDialog(false)
     } finally {
       setIsVoting(false)
     }
@@ -161,21 +240,49 @@ export function VotingInterface({ projectId, projectName }: VotingInterfaceProps
           {hasEnoughTokens && !hasEnoughAllowance && (
             <button
               onClick={handleApprove}
-              disabled={isApproving}
+              disabled={isApproving || isApprovingConfirming}
               className="w-full glass hover:bg-opacity-20 rounded-lg px-4 py-2 text-secondary hover:text-secondary-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
             >
-              {isApproving ? 'Approving...' : 'Approve Tokens'}
+              {isApproving || isApprovingConfirming 
+                ? (isApprovingConfirming ? 'Confirming...' : 'Approving...') 
+                : 'Approve Tokens'}
             </button>
           )}
 
           {hasEnoughTokens && hasEnoughAllowance && (
-            <button
-              onClick={handleVote}
-              disabled={isVoting}
-              className="w-full glass hover:bg-opacity-20 rounded-lg px-4 py-2 text-secondary hover:text-secondary-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-            >
-              {isVoting ? 'Voting...' : `Vote for ${projectName}`}
-            </button>
+            <>
+              {!showConfirmDialog ? (
+                <button
+                  onClick={() => setShowConfirmDialog(true)}
+                  className="w-full glass hover:bg-opacity-20 rounded-lg px-4 py-2 text-secondary hover:text-secondary-hover transition-all text-sm font-medium"
+                >
+                  Vote for {projectName}
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-foreground-secondary text-center">
+                    Confirm your vote for {projectName}?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowConfirmDialog(false)}
+                      className="flex-1 glass hover:bg-opacity-20 rounded-lg px-4 py-2 text-foreground-secondary hover:text-foreground transition-all text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleVote}
+                      disabled={isVoting || isVotingConfirming}
+                      className="flex-1 glass hover:bg-opacity-20 rounded-lg px-4 py-2 text-secondary hover:text-secondary-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                    >
+                      {isVoting || isVotingConfirming 
+                        ? (isVotingConfirming ? 'Confirming...' : 'Voting...') 
+                        : 'Confirm Vote'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       ) : (
