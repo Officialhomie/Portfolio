@@ -21,7 +21,7 @@ export function NetworkIndicator() {
           <>
             <CheckCircle2 className="h-4 w-4 text-primary" />
             <span className="text-xs font-mono text-foreground">
-              Base Mainnet
+              Base
             </span>
           </>
         ) : (
@@ -33,11 +33,6 @@ export function NetworkIndicator() {
           </>
         )}
       </div>
-      {chain && (
-        <div className="text-xs font-mono text-foreground-secondary">
-          Chain ID: {chainId}
-        </div>
-      )}
     </div>
   )
 }

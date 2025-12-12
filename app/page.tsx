@@ -10,7 +10,7 @@ import { BentoGrid, BentoItem } from './components/BentoGrid'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { NetworkError } from './components/NetworkError'
 import { motion } from 'framer-motion'
-import { Sparkles, Shield, Database, Zap, Award, Globe, Github, Twitter, Linkedin, Mail } from 'lucide-react'
+import { Shield, Database, Zap, Award, Globe, Github, Twitter, Linkedin, Mail } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -92,7 +92,7 @@ export default function Home() {
               className="text-lg sm:text-xl text-foreground-secondary max-w-3xl mx-auto leading-relaxed text-balance"
             >
               Experience the power of Web3 through interactive on-chain features.
-              Every action executes real smart contract transactions on Base Mainnet.
+              Every action executes real smart contract transactions on Base.
             </motion.p>
           </motion.div>
 
@@ -158,7 +158,7 @@ export default function Home() {
                     >
                       <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-lg" />
                       <div className="relative p-4 rounded-2xl bg-gradient-to-br from-primary/25 to-secondary/20 border border-primary/30 shadow-lg shadow-primary/20">
-                        <Sparkles className="h-7 w-7 text-primary" />
+                        <Globe className="h-7 w-7 text-primary" />
                       </div>
                     </motion.div>
                     <div>
@@ -170,10 +170,10 @@ export default function Home() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
                     <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                    <span className="text-sm font-medium text-accent">Live on Base Mainnet</span>
+                    <span className="text-sm font-medium text-accent">Live on Base</span>
                   </div>
                 </div>
 
@@ -191,7 +191,7 @@ export default function Home() {
                       <p className="text-base sm:text-lg text-foreground leading-relaxed">
                         I'm a <span className="text-primary font-semibold">Full-Stack Blockchain Developer</span> passionate 
                         about building decentralized applications that solve real-world problems. This portfolio itself 
-                        is a testament to my skills—a fully functional Web3 application deployed on Base Mainnet.
+                        is a testament to my skills—a fully functional Web3 application deployed on Base.
                       </p>
                     </motion.div>
                     
@@ -220,9 +220,9 @@ export default function Home() {
                       <div className="h-px flex-grow bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {[
-                        { icon: Shield, text: 'Base Mainnet', color: 'text-primary', bg: 'from-primary/15 to-primary/5', border: 'border-primary/20' },
+                        { icon: Shield, text: 'Base', color: 'text-primary', bg: 'from-primary/15 to-primary/5', border: 'border-primary/20' },
                         { icon: Database, text: 'IPFS Storage', color: 'text-secondary', bg: 'from-secondary/15 to-secondary/5', border: 'border-secondary/20' },
                         { icon: Globe, text: 'On-Chain Data', color: 'text-accent', bg: 'from-accent/15 to-accent/5', border: 'border-accent/20' },
                         { icon: Zap, text: 'Token Gating', color: 'text-primary', bg: 'from-primary/15 to-primary/5', border: 'border-primary/20' },
@@ -236,7 +236,7 @@ export default function Home() {
                           viewport={{ once: true }}
                           transition={{ delay: 0.4 + i * 0.05 }}
                           whileHover={{ scale: 1.03, y: -2 }}
-                          className={`flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br ${item.bg} border ${item.border} group cursor-default`}
+                          className={`flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl bg-gradient-to-br ${item.bg} border ${item.border} group cursor-default`}
                         >
                           <div className={`p-2 rounded-lg bg-gradient-to-br ${item.bg} border ${item.border}`}>
                             <item.icon className={`h-4 w-4 ${item.color} group-hover:scale-110 transition-transform`} />
@@ -260,7 +260,7 @@ export default function Home() {
                     <div className="h-px flex-grow bg-gradient-to-r from-transparent via-secondary/20 to-transparent" />
                   </div>
                   
-                  <div className="flex flex-wrap gap-3 justify-center">
+                  <div className="flex flex-wrap gap-3 sm:gap-4 justify-center">
                     {['Solidity', 'Next.js', 'TypeScript', 'wagmi', 'viem', 'Foundry', 'Base', 'IPFS'].map((tech, i) => (
                       <motion.span
                         key={tech}
@@ -348,7 +348,7 @@ export default function Home() {
 
             {/* Tech Stack */}
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-foreground-secondary">
-              {['Next.js', 'wagmi', 'viem', 'Framer Motion', 'Base Mainnet'].map((tech, i) => (
+              {['Next.js', 'wagmi', 'viem', 'Framer Motion', 'Base'].map((tech, i) => (
                 <motion.span
                   key={tech}
                   initial={{ opacity: 0, scale: 0.8 }}

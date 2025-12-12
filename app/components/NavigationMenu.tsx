@@ -104,7 +104,7 @@ export function NavigationMenu() {
               </motion.a>
 
               {/* Desktop Navigation */}
-              <nav className="hidden lg:flex items-center gap-2">
+              <nav className="hidden lg:flex items-center gap-3">
                 {navItems.map((item) => {
                   const isActive = activeSection === item.href.slice(1)
                   const Icon = item.icon
@@ -143,7 +143,7 @@ export function NavigationMenu() {
               </nav>
 
               {/* Wallet Connect & Mobile Menu */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <div className="hidden sm:block">
                   <WalletConnect />
                 </div>
@@ -217,7 +217,7 @@ export function NavigationMenu() {
               </div>
 
               {/* Mobile Navigation Links */}
-              <nav className="flex flex-col gap-2 mb-8">
+              <nav className="flex flex-col gap-3 mb-8">
                 {navItems.map((item, index) => {
                   const isActive = activeSection === item.href.slice(1)
                   const Icon = item.icon

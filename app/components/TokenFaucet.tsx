@@ -5,7 +5,7 @@ import { useAppKitAccount } from '@reown/appkit/react'
 import { useState, useEffect } from 'react'
 import { CONTRACT_ADDRESSES, PORTFOLIO_TOKEN_ABI, getContractAddress } from '@/lib/contracts'
 import { formatAddress, getBaseScanURL } from '@/lib/utils'
-import { Coins, CheckCircle2, Clock, Sparkles, TrendingUp, Wallet, Zap } from 'lucide-react'
+import { Coins, CheckCircle2, Clock, TrendingUp, Wallet, Zap } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/app/contexts/ToastContext'
 import { getErrorMessage } from '@/lib/errors'
@@ -201,24 +201,24 @@ export function TokenFaucet() {
       }} />
       
       {/* Main card */}
-      <div className="relative glass-card h-full rounded-3xl border border-glass-border p-8 sm:p-12 lg:p-14">
+      <div className="relative glass-card h-full rounded-3xl border border-glass-border p-8 sm:p-12 lg:p-16">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex items-start justify-between gap-4 mb-8 sm:mb-10">
+          <div className="flex items-center gap-4 sm:gap-5">
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
-              className="relative"
+              className="relative flex-shrink-0"
             >
               <div className="absolute inset-0 bg-secondary/30 rounded-2xl blur-lg" />
               <div className="relative p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-secondary/25 to-primary/20 border border-secondary/30 shadow-lg shadow-secondary/20">
                 <Coins className="h-6 w-6 sm:h-7 sm:w-7 text-secondary" />
               </div>
             </motion.div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-xl sm:text-2xl font-mono font-bold gradient-text">
                 Token Faucet
               </h3>
-              <p className="text-xs sm:text-sm text-foreground-secondary mt-0.5">
+              <p className="text-xs sm:text-sm text-foreground-secondary mt-1">
                 Claim free PPT tokens
               </p>
             </div>
@@ -228,7 +228,7 @@ export function TokenFaucet() {
           <motion.div
             animate={canClaim ? { scale: [1, 1.1, 1] } : {}}
             transition={{ duration: 2, repeat: Infinity }}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 flex-shrink-0 ${
               canClaim 
                 ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
                 : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
@@ -244,13 +244,13 @@ export function TokenFaucet() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="relative mb-8 p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 overflow-hidden"
+          className="relative mb-8 sm:mb-10 p-6 sm:p-8 lg:p-10 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/10 rounded-full blur-2xl" />
           
-          <div className="relative flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-foreground-secondary text-sm mb-2">
+          <div className="relative flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-foreground-secondary text-sm mb-3">
                 <Wallet className="h-4 w-4" />
                 <span>Your Balance</span>
               </div>
@@ -265,7 +265,7 @@ export function TokenFaucet() {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="p-3 rounded-full bg-gradient-to-br from-secondary/20 to-primary/10 border border-secondary/20"
+              className="p-3 rounded-full bg-gradient-to-br from-secondary/20 to-primary/10 border border-secondary/20 flex-shrink-0"
             >
               <TrendingUp className="h-5 w-5 text-secondary" />
             </motion.div>
@@ -273,12 +273,12 @@ export function TokenFaucet() {
         </motion.div>
 
         {/* Claim Amount Info */}
-        <div className="flex items-center justify-between mb-8 p-5 sm:p-6 rounded-xl bg-primary/5 border border-primary/10">
+        <div className="flex items-center justify-between gap-4 mb-8 sm:mb-10 p-5 sm:p-6 lg:p-7 rounded-xl bg-primary/5 border border-primary/10">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
+            <Coins className="h-4 w-4 text-primary" />
             <span className="text-sm text-foreground-secondary">Claim Amount</span>
           </div>
-          <span className="font-mono text-foreground font-semibold">
+          <span className="font-mono text-foreground font-semibold flex-shrink-0">
             +{claimAmount.toFixed(0)} PPT
           </span>
         </div>

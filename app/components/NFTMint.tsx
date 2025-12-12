@@ -4,7 +4,7 @@ import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useState, useEffect } from 'react'
 import { CONTRACT_ADDRESSES, VISIT_NFT_ABI, getContractAddress } from '@/lib/contracts'
-import { Gift, CheckCircle2, Users, Sparkles, ExternalLink, Hexagon, Star } from 'lucide-react'
+import { Gift, CheckCircle2, Users, ExternalLink, Hexagon, Star } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/app/contexts/ToastContext'
 import { getBaseScanURL } from '@/lib/utils'
@@ -205,24 +205,24 @@ export function NFTMint() {
       </div>
       
       {/* Main card */}
-      <div className="relative glass-card h-full rounded-3xl border border-glass-border p-8 sm:p-12 lg:p-14">
+      <div className="relative glass-card h-full rounded-3xl border border-glass-border p-8 sm:p-12 lg:p-16">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex items-start justify-between gap-4 mb-8 sm:mb-10">
+          <div className="flex items-center gap-4 sm:gap-5">
             <motion.div
               whileHover={{ scale: 1.1, rotate: -5 }}
-              className="relative"
+              className="relative flex-shrink-0"
             >
               <div className="absolute inset-0 bg-accent/30 rounded-2xl blur-lg" />
               <div className="relative p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-accent/25 to-secondary/20 border border-accent/30 shadow-lg shadow-accent/20">
                 <Gift className="h-6 w-6 sm:h-7 sm:w-7 text-accent" />
               </div>
             </motion.div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-xl sm:text-2xl font-mono font-bold gradient-text">
                 Proof of Visit
               </h3>
-              <p className="text-xs sm:text-sm text-foreground-secondary mt-0.5">
+              <p className="text-xs sm:text-sm text-foreground-secondary mt-1">
                 Exclusive NFT Collection
               </p>
             </div>
@@ -232,7 +232,7 @@ export function NFTMint() {
           <motion.div
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 3, repeat: Infinity }}
-            className="px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-accent/20 to-secondary/20 text-accent border border-accent/30 flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-accent/20 to-secondary/20 text-accent border border-accent/30 flex items-center gap-1.5 flex-shrink-0"
           >
             <Star className="h-3 w-3" />
             <span>Limited Edition</span>
@@ -244,14 +244,14 @@ export function NFTMint() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="relative mb-8 p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10"
+          className="relative mb-8 sm:mb-10 p-6 sm:p-8 lg:p-10 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/10"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between gap-4 mb-5">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-foreground-secondary" />
               <span className="text-sm text-foreground-secondary">Minted</span>
             </div>
-            <span className="font-mono text-foreground font-semibold">
+            <span className="font-mono text-foreground font-semibold flex-shrink-0">
               {mintedCount} <span className="text-foreground-secondary">/ {maxSupply}</span>
             </span>
           </div>
@@ -280,7 +280,7 @@ export function NFTMint() {
               transition={{ delay: 0.5 }}
               className="flex items-center justify-center gap-2 mt-4 text-sm"
             >
-              <Sparkles className="h-4 w-4 text-accent" />
+              <Star className="h-4 w-4 text-accent" />
               <span className="text-foreground-secondary">
                 <span className="font-semibold text-accent">{supplyLeft}</span> NFTs remaining
               </span>
@@ -292,12 +292,12 @@ export function NFTMint() {
         <motion.div
           whileHover={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 300 }}
-          className="relative mb-8 p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-accent/10 via-secondary/5 to-primary/10 border border-accent/20 overflow-hidden"
+          className="relative mb-8 sm:mb-10 p-5 sm:p-6 lg:p-8 rounded-2xl bg-gradient-to-br from-accent/10 via-secondary/5 to-primary/10 border border-accent/20 overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl" />
           
-          <div className="relative flex items-center gap-4">
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br from-accent/30 to-secondary/30 border border-accent/30 flex items-center justify-center overflow-hidden">
+          <div className="relative flex items-center gap-4 sm:gap-5">
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br from-accent/30 to-secondary/30 border border-accent/30 flex items-center justify-center overflow-hidden flex-shrink-0">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
@@ -306,16 +306,16 @@ export function NFTMint() {
               <Hexagon className="h-8 w-8 sm:h-10 sm:w-10 text-accent relative z-10" />
             </div>
             
-            <div className="flex-1">
-              <h4 className="font-mono font-bold text-foreground mb-1">
+            <div className="flex-1 min-w-0">
+              <h4 className="font-mono font-bold text-foreground mb-2">
                 Visitor Pass #{mintedCount + 1}
               </h4>
-              <p className="text-xs sm:text-sm text-foreground-secondary">
+              <p className="text-xs sm:text-sm text-foreground-secondary mb-3">
                 Proof of visiting OneTrueHomie's portfolio
               </p>
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <span className="text-xs px-2 py-0.5 rounded-full bg-accent/20 text-accent">ERC-721</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/20 text-secondary">Base Mainnet</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/20 text-secondary">Base</span>
               </div>
             </div>
           </div>
@@ -375,7 +375,7 @@ export function NFTMint() {
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     >
-                      <Sparkles className="h-5 w-5" />
+                      <Gift className="h-5 w-5" />
                     </motion.div>
                     <span>{isConfirming ? 'Confirming...' : 'Minting...'}</span>
                   </>
@@ -387,7 +387,7 @@ export function NFTMint() {
                       animate={{ scale: [1, 1.2, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     >
-                      <Sparkles className="h-4 w-4" />
+                      <Star className="h-4 w-4" />
                     </motion.div>
                   </>
                 )}

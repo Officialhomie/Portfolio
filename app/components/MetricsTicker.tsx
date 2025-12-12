@@ -72,7 +72,7 @@ export function MetricsTicker() {
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 w-full">
       {metrics.map((metric, index) => {
         const Icon = metric.icon
         return (
@@ -85,18 +85,18 @@ export function MetricsTicker() {
             className="relative group"
           >
             <div className={`absolute inset-0 bg-gradient-to-br ${metric.gradient} rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity`} />
-            <div className="relative glass-card rounded-2xl p-4 sm:p-5 border border-glass-border">
-              <div className="flex items-start justify-between mb-3">
-                <div className={`p-2 rounded-xl bg-gradient-to-br ${metric.gradient} border border-${metric.color}/20`}>
+            <div className="relative glass-card rounded-2xl p-5 sm:p-6 border border-glass-border">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div className={`p-2.5 rounded-xl bg-gradient-to-br ${metric.gradient} border border-${metric.color}/20`}>
                   <Icon className={`h-4 w-4 sm:h-5 sm:w-5 text-${metric.color}`} />
                 </div>
                 <motion.div
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
-                  className={`w-2 h-2 rounded-full bg-${metric.color}`}
+                  className={`w-2 h-2 rounded-full bg-${metric.color} flex-shrink-0`}
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="font-mono font-bold text-xl sm:text-2xl text-foreground">
                   {metric.value}
                 </div>

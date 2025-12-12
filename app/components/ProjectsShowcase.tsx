@@ -5,7 +5,7 @@ import { ProjectCard } from './ProjectCard'
 import { VotingInterface } from './VotingInterface'
 import { ProjectSearch } from './ProjectSearch'
 import { useState, useMemo } from 'react'
-import { Code2, Sparkles, X } from 'lucide-react'
+import { Code2, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Project } from '@/types/project'
 
@@ -150,7 +150,7 @@ export function ProjectsShowcase() {
                   }}
                   className="p-3 rounded-xl bg-gradient-to-br from-secondary/20 to-accent/20 border border-secondary/20"
                 >
-                  <Sparkles className="h-6 w-6 text-secondary" />
+                  <Code2 className="h-6 w-6 text-secondary" />
                 </motion.div>
                 <div>
                   <h3 className="text-3xl sm:text-4xl font-mono font-bold gradient-text">
@@ -167,7 +167,7 @@ export function ProjectsShowcase() {
               </div>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {filteredFeaturedProjects.map((project, index) => (
                 <motion.div
                   key={project.id}

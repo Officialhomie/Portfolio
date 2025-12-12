@@ -27,7 +27,7 @@ export function NetworkError() {
             Wrong Network
           </p>
           <p className="text-xs text-foreground-secondary">
-            Please switch to Base Mainnet to use this application
+            Please switch to Base to use this application
           </p>
         </div>
         <button

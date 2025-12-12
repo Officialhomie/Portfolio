@@ -5,7 +5,7 @@ import { useAppKitAccount } from '@reown/appkit/react'
 import { useState, useEffect } from 'react'
 import { CONTRACT_ADDRESSES, VISITOR_BOOK_ABI, getContractAddress } from '@/lib/contracts'
 import { formatAddress, formatENS, getBaseScanURL } from '@/lib/utils'
-import { BookOpen, Send, Clock, MessageSquare, Users, PenLine, ChevronDown, Sparkles } from 'lucide-react'
+import { BookOpen, Send, Clock, MessageSquare, Users, PenLine, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/app/contexts/ToastContext'
 import { getErrorMessage } from '@/lib/errors'
@@ -254,24 +254,24 @@ export function VisitorBook() {
       />
       
       {/* Main card */}
-      <div className="relative glass-card h-full rounded-3xl border border-glass-border p-8 sm:p-12 lg:p-14">
+      <div className="relative glass-card h-full rounded-3xl border border-glass-border p-8 sm:p-12 lg:p-16">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex items-start justify-between gap-4 mb-8 sm:mb-10">
+          <div className="flex items-center gap-4 sm:gap-5">
             <motion.div
               whileHover={{ scale: 1.1, rotate: 5 }}
-              className="relative"
+              className="relative flex-shrink-0"
             >
               <div className="absolute inset-0 bg-primary/30 rounded-2xl blur-lg" />
               <div className="relative p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-primary/25 to-accent/20 border border-primary/30 shadow-lg shadow-primary/20">
                 <BookOpen className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
               </div>
             </motion.div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-xl sm:text-2xl font-mono font-bold gradient-text">
                 Visitor Book
               </h3>
-              <p className="text-xs sm:text-sm text-foreground-secondary mt-0.5">
+              <p className="text-xs sm:text-sm text-foreground-secondary mt-1">
                 On-chain guestbook
               </p>
             </div>
@@ -281,7 +281,7 @@ export function VisitorBook() {
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-sm"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-sm flex-shrink-0"
           >
             <Users className="h-4 w-4 text-primary" />
             <span className="font-mono text-foreground">{visitorCount}</span>
@@ -293,13 +293,13 @@ export function VisitorBook() {
         <motion.div
           animate={isFocused ? { scale: 1.01 } : { scale: 1 }}
           transition={{ type: "spring", stiffness: 300 }}
-          className="relative mb-8"
+          className="relative mb-8 sm:mb-10"
         >
           <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/20 to-accent/20 blur-lg transition-opacity ${isFocused ? 'opacity-100' : 'opacity-0'}`} />
           
-          <div className="relative p-6 sm:p-8 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-primary/30 transition-colors">
+          <div className="relative p-6 sm:p-8 lg:p-10 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-primary/30 transition-colors">
             {/* Writing indicator */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-5">
               <PenLine className="h-4 w-4 text-primary" />
               <span className="text-sm text-foreground-secondary">Leave your message</span>
             </div>
@@ -315,7 +315,7 @@ export function VisitorBook() {
               maxLength={200}
             />
             
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+            <div className="flex items-center justify-between gap-4 mt-5 pt-5 border-t border-white/5">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-primary/50" />
                 <span className="text-xs text-foreground-secondary">
@@ -336,7 +336,7 @@ export function VisitorBook() {
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     >
-                      <Sparkles className="h-4 w-4" />
+                      <Clock className="h-4 w-4" />
                     </motion.div>
                     <span>{isConfirming ? 'Confirming...' : 'Signing...'}</span>
                   </>
@@ -387,7 +387,7 @@ export function VisitorBook() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="space-y-3"
+                className="space-y-4 sm:space-y-5"
               >
                 {visitors.map((visitor, index) => (
                   <VisitorItem 

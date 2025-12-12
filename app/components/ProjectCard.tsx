@@ -3,12 +3,14 @@
 import { Project } from '@/types/project'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import Image from 'next/image'
 import { ExternalLink, Github, Image as ImageIcon, CheckCircle2, Star, GitFork, Loader2 } from 'lucide-react'
 import { formatAddress, getBaseScanURL } from '@/lib/utils'
 import { getIPFSGatewayURL } from '@/lib/projects-data'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/app/contexts/ToastContext'
 import { useAppKitAccount } from '@reown/appkit/react'
+import { Skeleton } from './Skeleton'
 
 interface ProjectCardProps {
   project: Project
@@ -133,7 +135,7 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
               </p>
 
               {/* Tech Stack */}
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 sm:gap-3 mb-4">
                 {project.techStack.slice(0, 3).map((tech, i) => (
                   <motion.span
                     key={tech}
@@ -157,7 +159,7 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
               </div>
 
               {/* Stats */}
-              <div className="flex items-center gap-6 mt-auto text-sm text-foreground-secondary">
+              <div className="flex items-center gap-4 sm:gap-6 mt-auto text-sm text-foreground-secondary">
                 {project.stats.stars !== undefined && (
                   <motion.div
                     whileHover={{ scale: 1.1 }}
@@ -312,9 +314,9 @@ export function ProjectCard({ project, onEndorse, onVote }: ProjectCardProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: isFlipped ? 1 : 0, y: isFlipped ? 0 : 20 }}
               transition={{ delay: isFlipped ? 0.9 : 0 }}
-              className="flex flex-col gap-2 mt-4"
+              className="flex flex-col gap-3 mt-4"
             >
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {project.githubUrl && (
                   <motion.a
                     href={project.githubUrl}

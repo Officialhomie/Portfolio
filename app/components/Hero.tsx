@@ -7,7 +7,7 @@ import { GasTracker } from './GasTracker'
 import { BlockHeightCounter } from './BlockHeightCounter'
 import { MetricsTicker } from './MetricsTicker'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { ArrowDown, Sparkles, Code2, Zap, Layers, Github, Twitter, Linkedin, ExternalLink, ChevronRight, Play } from 'lucide-react'
+import { ArrowDown, Code2, Zap, Layers, Github, Twitter, Linkedin, ExternalLink, ChevronRight, Play } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function Hero() {
@@ -87,7 +87,7 @@ export function Hero() {
               >
                 Full-stack blockchain developer specializing in smart contracts,
                 decentralized applications, and Web3 infrastructure. Turning innovative
-                ideas into production-ready solutions on Base Mainnet.
+                ideas into production-ready solutions on Base.
               </motion.p>
             </div>
 
@@ -96,7 +96,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="flex flex-wrap gap-2"
+              className="flex flex-wrap gap-3"
             >
               {[
                 { icon: Code2, label: 'Smart Contracts' },
@@ -123,7 +123,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="flex flex-col sm:flex-row gap-4 pt-4"
+                className="flex flex-col sm:flex-row gap-4 sm:gap-5 pt-4"
               >
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <WalletConnect />
@@ -150,24 +150,12 @@ export function Hero() {
               >
                 {/* Welcome Message */}
                 <motion.div
-                  className="glass-card-elevated p-6 rounded-2xl border border-primary/20"
-                  animate={{
-                    boxShadow: [
-                      '0 0 20px rgba(91, 126, 245, 0.2)',
-                      '0 0 40px rgba(91, 126, 245, 0.3)',
-                      '0 0 20px rgba(91, 126, 245, 0.2)',
-                    ],
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
+                  className="glass-card p-6 rounded-2xl border border-primary/20"
                 >
                   <div className="flex items-center gap-3">
-                    <motion.div
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                      className="p-2 rounded-xl bg-primary/20"
-                    >
-                      <Sparkles className="h-5 w-5 text-primary" />
-                    </motion.div>
+                    <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                    </div>
                     <div>
                       <p className="font-semibold text-foreground">Connected Successfully!</p>
                       <p className="text-sm text-foreground-secondary">Explore interactive features below</p>
@@ -175,11 +163,10 @@ export function Hero() {
                   </div>
                 </motion.div>
 
-                {/* Network Stats */}
-                <div className="flex flex-wrap items-center gap-3">
-                  <NetworkIndicator />
-                  <GasTracker />
-                  <BlockHeightCounter />
+                {/* Network Status */}
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-glass-bg border border-glass-border">
+                  <div className="w-1.5 h-1.5 rounded-full bg-success" />
+                  <span className="text-sm text-foreground-secondary">Base Network</span>
                 </div>
               </motion.div>
             )}
@@ -189,7 +176,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5 }}
-              className="flex items-center gap-4 pt-4"
+              className="flex items-center gap-4 sm:gap-5 pt-4"
             >
               {[
                 { icon: Github, href: 'https://github.com/Officialhomie', label: 'GitHub' },
@@ -245,41 +232,32 @@ export function Hero() {
               transition={{ duration: 1, delay: 0.6 }}
               className="relative"
             >
-              <div className="glass-card rounded-2xl p-8 border border-glass-border overflow-hidden">
-                {/* Animated background grid */}
-                <div
-                  className="absolute inset-0 opacity-[0.02]"
-                  style={{
-                    backgroundImage: `radial-gradient(circle at 1px 1px, rgb(255 255 255) 1px, transparent 0)`,
-                    backgroundSize: '32px 32px',
-                  }}
-                />
-
+              <div className="glass-card rounded-2xl p-10 sm:p-12 border border-glass-border overflow-hidden">
                 {/* Content */}
-                <div className="relative space-y-6">
-                  <div className="flex items-center justify-between mb-6">
+                <div className="space-y-8 sm:space-y-10">
+                  <div className="flex items-center justify-between gap-4">
                     <h3 className="font-mono font-bold text-xl text-foreground">
                       Technical Skills
                     </h3>
-                    <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                    <div className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 flex-shrink-0">
                       <span className="text-xs font-medium text-primary">Verified</span>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6 sm:space-y-8">
                     {[
                       { label: 'Smart Contract Development', value: '98%' },
                       { label: 'Frontend Engineering', value: '95%' },
                       { label: 'Web3 Integration', value: '97%' },
                     ].map((skill, index) => (
-                      <div key={skill.label} className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
+                      <div key={skill.label} className="space-y-3 sm:space-y-4">
+                        <div className="flex items-center justify-between gap-4 text-sm">
                           <span className="text-foreground-secondary">{skill.label}</span>
-                          <span className="font-mono text-sm text-foreground">
+                          <span className="font-mono text-sm text-foreground flex-shrink-0">
                             {skill.value}
                           </span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-glass-bg overflow-hidden">
+                        <div className="h-2 rounded-full bg-glass-bg overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: skill.value }}
@@ -291,10 +269,10 @@ export function Hero() {
                     ))}
                   </div>
 
-                  <div className="pt-4 border-t border-glass-border">
-                    <div className="flex items-center justify-between text-sm">
+                  <div className="pt-6 sm:pt-8 border-t border-glass-border">
+                    <div className="flex items-center justify-between gap-4 text-sm">
                       <span className="text-foreground-secondary">Deployed on Base</span>
-                      <span className="status-indicator status-online">Live</span>
+                      <span className="status-indicator status-online flex-shrink-0">Live</span>
                     </div>
                   </div>
                 </div>

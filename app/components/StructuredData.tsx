@@ -33,7 +33,7 @@ export function StructuredData() {
       name: 'Full-Stack Blockchain Developer',
       occupationLocation: {
         '@type': 'Place',
-        name: 'Base Mainnet',
+        name: 'Base',
       },
     },
     hasCredential: projects.map(project => ({
