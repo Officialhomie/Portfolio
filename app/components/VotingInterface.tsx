@@ -18,6 +18,7 @@ interface VotingInterfaceProps {
 
 export function VotingInterface({ projectId, projectName }: VotingInterfaceProps) {
   const { address, isConnected } = useAppKitAccount()
+  const walletAddress = address as `0x${string}` | undefined
   const [isVoting, setIsVoting] = useState(false)
   const [isApproving, setIsApproving] = useState(false)
   const [approveTxHash, setApproveTxHash] = useState<`0x${string}` | null>(null)
@@ -32,7 +33,7 @@ export function VotingInterface({ projectId, projectName }: VotingInterfaceProps
     address: votingContractAddress!,
     abi: PROJECT_VOTING_ABI,
     functionName: 'checkVote',
-    args: [address!, projectId],
+    args: walletAddress ? [walletAddress, projectId] : undefined,
     query: {
       enabled: !!address && !!votingContractAddress,
     },
@@ -64,7 +65,7 @@ export function VotingInterface({ projectId, projectName }: VotingInterfaceProps
     address: tokenContractAddress!,
     abi: PORTFOLIO_TOKEN_ABI,
     functionName: 'balanceOf',
-    args: [address!],
+    args: walletAddress ? [walletAddress] : undefined,
     query: {
       enabled: !!address && !!tokenContractAddress,
     },
@@ -75,7 +76,7 @@ export function VotingInterface({ projectId, projectName }: VotingInterfaceProps
     address: tokenContractAddress!,
     abi: PORTFOLIO_TOKEN_ABI,
     functionName: 'allowance',
-    args: [address!, votingContractAddress!],
+    args: walletAddress ? [walletAddress, votingContractAddress!] : undefined,
     query: {
       enabled: !!address && !!tokenContractAddress && !!votingContractAddress,
     },
@@ -116,7 +117,7 @@ export function VotingInterface({ projectId, projectName }: VotingInterfaceProps
     }
   }, [isVoteConfirmed, voteTxHash, success, projectName])
 
-  const { writeContract } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
 
   const handleApprove = async () => {
     if (!isConnected || !address || !voteCost || !tokenContractAddress || !votingContractAddress) {
@@ -130,7 +131,7 @@ export function VotingInterface({ projectId, projectName }: VotingInterfaceProps
     const loadingToastId = showLoadingToast('Approving tokens...')
     
     try {
-      const hash = await writeContract({
+      const hash = await writeContractAsync({
         address: tokenContractAddress,
         abi: PORTFOLIO_TOKEN_ABI,
         functionName: 'approve',
@@ -165,7 +166,7 @@ export function VotingInterface({ projectId, projectName }: VotingInterfaceProps
     const loadingToastId = showLoadingToast('Submitting vote...')
     
     try {
-      const hash = await writeContract({
+      const hash = await writeContractAsync({
         address: votingContractAddress,
         abi: PROJECT_VOTING_ABI,
         functionName: 'vote',
