@@ -70,7 +70,8 @@ function VisitorItem({ visitor, index }: { visitor: Visitor; index: number }) {
 
 export function VisitorBook() {
   const { address, isConnected } = useAppKitAccount()
-  const { data: ensName } = useEnsNameHook({ address })
+  const walletAddress = address as `0x${string}` | undefined
+  const { data: ensName } = useEnsNameHook({ address: walletAddress })
   const [message, setMessage] = useState('')
   const [visitors, setVisitors] = useState<Visitor[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -80,7 +81,7 @@ export function VisitorBook() {
   const { success, error, loading: showLoadingToast, removeToast } = useToast()
   const contractAddress = getContractAddress('VISITOR_BOOK')
 
-  const { writeContract } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
 
   // Fetch visitors from contract
   const { data: totalVisitorsCount } = useReadContract({
@@ -163,7 +164,7 @@ export function VisitorBook() {
     const loadingToastId = showLoadingToast('Signing visitor book...')
     
     try {
-      const hash = await writeContract({
+      const hash = await writeContractAsync({
         address: contractAddress,
         abi: VISITOR_BOOK_ABI,
         functionName: 'signVisitorBook',
