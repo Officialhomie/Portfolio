@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/lib/errors'
 
 export function NFTMint() {
   const { address, isConnected } = useAppKitAccount()
+  const walletAddress = address as `0x${string}` | undefined
   const [isMinting, setIsMinting] = useState(false)
   const [hasMinted, setHasMinted] = useState(false)
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null)
@@ -23,7 +24,7 @@ export function NFTMint() {
     address: contractAddress!,
     abi: VISIT_NFT_ABI,
     functionName: 'hasMinted',
-    args: [address!],
+    args: walletAddress ? [walletAddress] : undefined,
     query: {
       enabled: !!address && !!contractAddress,
     },
@@ -67,7 +68,7 @@ export function NFTMint() {
     }
   }, [isConfirmed, txHash, success])
 
-  const { writeContract } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
 
   const handleMint = async () => {
     if (!isConnected || !address || !contractAddress) {
@@ -81,7 +82,7 @@ export function NFTMint() {
     const loadingToastId = showLoadingToast('Minting NFT...')
     
     try {
-      const hash = await writeContract({
+      const hash = await writeContractAsync({
         address: contractAddress,
         abi: VISIT_NFT_ABI,
         functionName: 'mintVisitNFT',
