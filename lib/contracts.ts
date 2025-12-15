@@ -63,6 +63,14 @@ export const PORTFOLIO_TOKEN_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  // Total supply helper for ticker metrics
+  {
+    inputs: [],
+    name: 'totalSupply',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
   {
     inputs: [],
     name: 'symbol',
