@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/lib/errors'
 
 export function TokenFaucet() {
   const { address, isConnected } = useAppKitAccount()
+  const walletAddress = address as `0x${string}` | undefined
   const [isClaiming, setIsClaiming] = useState(false)
   const [canClaim, setCanClaim] = useState(false)
   const [timeUntilClaim, setTimeUntilClaim] = useState(0)
@@ -24,7 +25,7 @@ export function TokenFaucet() {
     address: contractAddress!,
     abi: PORTFOLIO_TOKEN_ABI,
     functionName: 'canClaimFaucet',
-    args: [address!],
+    args: walletAddress ? [walletAddress] : undefined,
     query: {
       enabled: !!address && !!contractAddress,
     },
@@ -35,7 +36,7 @@ export function TokenFaucet() {
     address: contractAddress!,
     abi: PORTFOLIO_TOKEN_ABI,
     functionName: 'balanceOf',
-    args: [address!],
+    args: walletAddress ? [walletAddress] : undefined,
     query: {
       enabled: !!address && !!contractAddress,
     },
@@ -56,7 +57,7 @@ export function TokenFaucet() {
     hash: txHash || undefined,
   })
 
-  const { writeContract } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
 
   useEffect(() => {
     if (faucetStatus) {
@@ -97,7 +98,7 @@ export function TokenFaucet() {
     const loadingToastId = showLoadingToast('Claiming tokens...')
     
     try {
-      const hash = await writeContract({
+      const hash = await writeContractAsync({
         address: contractAddress,
         abi: PORTFOLIO_TOKEN_ABI,
         functionName: 'claimFaucet',
