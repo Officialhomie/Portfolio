@@ -6,22 +6,27 @@
  */
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Github, Twitter } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border bg-muted/50">
+    <footer className="border-t-2 border-primary/40 bg-gradient-to-r from-muted/50 via-primary/25 to-muted/50">
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">OTH</span>
-              </div>
+              <Image 
+                src="/IMG_6745.JPG" 
+                alt="OneTrueHomie Logo" 
+                width={32}
+                height={32}
+                className="rounded-lg object-cover"
+              />
               <span className="font-bold">OneTrueHomie</span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -110,7 +115,7 @@ export function Footer() {
               © {currentYear} OneTrueHomie. Built on Base L2 with ❤️
             </p>
             <div className="flex items-center gap-4">
-              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+              <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded border border-primary/30">
                 Powered by Web3
               </span>
             </div>

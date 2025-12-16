@@ -7,10 +7,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ConnectButton } from '@/components/wallet/connect-button';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, FolderKanban, Vote, BookOpen, Droplet } from 'lucide-react';
+import { Menu, X, Home, FolderKanban, Vote, BookOpen, Droplet, Fingerprint } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 const navigation = [
@@ -19,6 +20,7 @@ const navigation = [
   { name: 'Voting', href: '/voting', icon: Vote },
   { name: 'Visitor Book', href: '/visitor-book', icon: BookOpen },
   { name: 'Faucet', href: '/faucet', icon: Droplet },
+  { name: 'Biometric', href: '/biometric', icon: Fingerprint },
 ];
 
 export function Header() {
@@ -26,18 +28,22 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+    <header className="border-b-2 border-primary/40 bg-gradient-to-r from-background via-primary/25 to-background backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-0 z-50 shadow-sm shadow-primary/20">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">OTH</span>
-            </div>
-            <span className="font-bold text-lg hidden sm:inline">
+          <Link href="/" className="flex items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95">
+            <Image 
+              src="/IMG_6745.JPG" 
+              alt="OneTrueHomie Logo" 
+              width={40}
+              height={40}
+              className="rounded-lg object-cover transition-transform duration-200 hover:rotate-3"
+              priority
+            />
+            <span className="font-bold text-base sm:text-lg transition-colors duration-200 hover:text-primary">
               OneTrueHomie
             </span>
-            <span className="font-bold text-lg sm:hidden">OTH</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -52,9 +58,9 @@ export function Header() {
                   <Button
                     variant={isActive ? 'default' : 'ghost'}
                     size="sm"
-                    className="gap-2"
+                    className="gap-2 transition-all duration-200 hover:scale-105 active:scale-95"
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                     {item.name}
                   </Button>
                 </Link>
