@@ -1,0 +1,119 @@
+{
+  "projects": [
+    {
+      "id": "multisig-wallet",
+      "name": "MultiSig Wallet",
+      "description": "A multi-signature wallet application built with Thirdweb and Vite. Features secure multi-sig functionality with user-friendly onboarding using ConnectButton.",
+      "image": "/images/projects/multisig-wallet.png",
+      "external_url": "https://github.com/Officialhomie/MultiSig-Wallet",
+      "demo_url": "https://multi-sig-wallet-xi.vercel.app",
+      "tech_stack": "TypeScript, Solidity, Vite, Thirdweb, Tailwind CSS",
+      "category": "DeFi",
+      "status": "Live",
+      "year": 2024
+    },
+    {
+      "id": "healthtrove",
+      "name": "HealthTrove",
+      "description": "Decentralized healthcare management system on Base Network. Features appointment scheduling, secure healthcare record management using IPFS, role-based access control, and doctor content monetization platform.",
+      "image": "/images/projects/healthtrove.png",
+      "external_url": "https://github.com/Officialhomie/HealthTrove",
+      "tech_stack": "React, Vite, Solidity, IPFS, Wagmi, Viem, Pinata, Base Network",
+      "category": "Infrastructure",
+      "status": "Live",
+      "year": 2024
+    },
+    {
+      "id": "ifindr",
+      "name": "iFindr",
+      "description": "A Next.js web application with TypeScript focused on discovery and search functionality. Modern web application with optimized font loading and hot reloading.",
+      "image": "/images/projects/ifindr.png",
+      "external_url": "https://github.com/Officialhomie/iFindr",
+      "demo_url": "https://i-findr.vercel.app",
+      "tech_stack": "Next.js, TypeScript, Tailwind CSS",
+      "category": "Tools",
+      "status": "In Development",
+      "year": 2024
+    },
+    {
+      "id": "decentralized-school-tree",
+      "name": "EducationChain (Decentralized School Tree)",
+      "description": "Ethereum-based platform for educational institutions to manage student enrollment, attendance, and program administration with transparent financial tracking. Features NFT certificates, revenue sharing, and role-based access control.",
+      "image": "/images/projects/education-chain.png",
+      "external_url": "https://github.com/Officialhomie/Decentralized-School-Tree",
+      "tech_stack": "Solidity, Ethereum, Foundry, ethers.js",
+      "category": "Infrastructure",
+      "status": "Live",
+      "year": 2024
+    },
+    {
+      "id": "dex-dapp-next",
+      "name": "DEX dApp Template",
+      "description": "Starter template for building decentralized exchange applications using Next.js and thirdweb SDK. Provides quick setup for blockchain-based trading platforms.",
+      "image": "/images/projects/dex-dapp.png",
+      "external_url": "https://github.com/Officialhomie/dex-DAPP-next",
+      "tech_stack": "Next.js, TypeScript, thirdweb SDK, Tailwind CSS",
+      "category": "DeFi",
+      "status": "Live",
+      "year": 2024
+    },
+    {
+      "id": "cavefi",
+      "name": "CaveFi",
+      "description": "Transform any group chat into a sophisticated investment fund. Friends pool money through messages, vote on investments via reactions, and get automated portfolio management—all without leaving their chat.",
+      "image": "/images/projects/cavefi.png",
+      "external_url": "https://github.com/Officialhomie/CaveFi",
+      "tech_stack": "Next.js, TypeScript, Solidity, Tailwind CSS",
+      "category": "DeFi",
+      "status": "In Development",
+      "year": 2025
+    },
+    {
+      "id": "dx-bloom",
+      "name": "DX Bloom",
+      "description": "A decentralized content monetization platform where creators publish premium content and charge USDC for pay-per-view or subscriptions, with automatic royalty distribution.",
+      "image": "/images/projects/dx-bloom.png",
+      "external_url": "https://github.com/ThePsalmsLabs/DX_BLOOM-Contracts",
+      "demo_url": "https://dx-blooom-app.vercel.app",
+      "github_url": "https://github.com/ThePsalmsLabs/dx_blooom-app",
+      "tech_stack": "Solidity, Next.js, TypeScript, Foundry, OnchainKit, Base",
+      "category": "Social",
+      "status": "Live",
+      "year": 2025
+    },
+    {
+      "id": "oneseed",
+      "name": "OneSeed",
+      "description": "Personal savings protocol built on Uniswap V4 that automatically saves a portion of every token swap. Features configurable savings percentage, automated vault tracking, and gas-optimized contracts using custom hooks.",
+      "image": "/images/projects/oneseed.png",
+      "external_url": "https://github.com/ThePsalmsLabs/ONESEED",
+      "demo_url": "https://oneseed-mu.vercel.app",
+      "tech_stack": "Uniswap V4, Solidity, Next.js 15, Biconomy, ERC6909",
+      "category": "DeFi",
+      "status": "Beta",
+      "year": 2025
+    },
+    {
+      "id": "bridge-scope",
+      "name": "Bridge Scope",
+      "description": "Web application built with Next.js and TypeScript, featuring Prisma database integration. Focus on cross-chain bridge monitoring and analytics.",
+      "image": "/images/projects/bridge-scope.png",
+      "external_url": "https://github.com/ThePsalmsLabs/BRIDGE-SCOPE",
+      "tech_stack": "TypeScript, Next.js, Prisma, Tailwind CSS",
+      "category": "Tools",
+      "status": "In Development",
+      "year": 2025
+    },
+    {
+      "id": "paysteam-contracts",
+      "name": "PaySteam",
+      "description": "Smart contract platform for streaming payments. Enables continuous, programmable payment flows for various use cases.",
+      "image": "/images/projects/paysteam.png",
+      "external_url": "https://github.com/ThePsalmsLabs/PaySteam-contracts",
+      "tech_stack": "Solidity",
+      "category": "DeFi",
+      "status": "In Development",
+      "year": 2025
+    }
+  ]
+}
