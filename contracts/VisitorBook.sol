@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/P256.sol";
 
 /**
  * @title VisitorBook
@@ -36,6 +37,9 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
     uint256 public maxMessageLength = 500;
     uint256 public minMessageLength = 1;
     
+    // Biometric authentication support (EIP-7951)
+    mapping(bytes32 => address) public secp256r1ToAddress;
+    
     event VisitorSigned(
         address indexed visitor,
         string message,
@@ -45,6 +49,7 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
     
     event MessageLengthUpdated(uint256 oldLength, uint256 newLength);
     event VisitorRemoved(address indexed visitor, uint256 index);
+    event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
 
     constructor() EIP712("VisitorBook", "1") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -220,6 +225,73 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
         }
         
         return result;
+    }
+
+    /**
+     * @notice Register secp256r1 public key for biometric authentication
+     * @param publicKeyX X coordinate of public key
+     * @param publicKeyY Y coordinate of public key
+     */
+    function registerSecp256r1Key(bytes32 publicKeyX, bytes32 publicKeyY) external {
+        require(P256.isValidPublicKey(publicKeyX, publicKeyY), "Invalid public key");
+        
+        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
+        require(secp256r1ToAddress[publicKeyHash] == address(0), "Public key already registered");
+        
+        secp256r1ToAddress[publicKeyHash] = msg.sender;
+        emit BiometricKeyRegistered(msg.sender, publicKeyX, publicKeyY);
+    }
+
+    /**
+     * @notice Sign visitor book using biometric signature (EIP-7951)
+     * @param message The message left by the visitor
+     * @param r Signature r component
+     * @param s Signature s component
+     * @param publicKeyX Public key X coordinate
+     * @param publicKeyY Public key Y coordinate
+     */
+    function signVisitorBookWithBiometric(
+        string memory message,
+        bytes32 r,
+        bytes32 s,
+        bytes32 publicKeyX,
+        bytes32 publicKeyY
+    ) external whenNotPaused nonReentrant {
+        uint256 messageLength = bytes(message).length;
+        require(
+            messageLength >= minMessageLength && messageLength <= maxMessageLength,
+            "Message length invalid"
+        );
+        
+        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
+        address user = secp256r1ToAddress[publicKeyHash];
+        require(user != address(0), "Public key not registered");
+        
+        uint256 timestamp = block.timestamp;
+        
+        // Generate message hash
+        bytes32 messageHash = keccak256(abi.encodePacked(
+            "signVisitorBook",
+            block.chainid,
+            address(this),
+            user,
+            keccak256(bytes(message)),
+            timestamp
+        ));
+        
+        // Verify secp256r1 signature
+        require(P256.verify(messageHash, r, s, publicKeyX, publicKeyY), "Invalid signature");
+        
+        visitors.push(Visitor({
+            visitor: user,
+            message: message,
+            timestamp: timestamp
+        }));
+        
+        hasVisited[user] = true;
+        visitCount[user]++;
+        
+        emit VisitorSigned(user, message, timestamp, visitCount[user]);
     }
 }
 

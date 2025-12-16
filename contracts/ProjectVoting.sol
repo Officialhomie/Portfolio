@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./PortfolioToken.sol";
+import "./Homie.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/cryptography/P256.sol";
 
 /**
  * @title ProjectVoting
@@ -16,7 +17,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     PortfolioToken public portfolioToken;
-    uint256 public voteCost = 10 * 10**18; // 10 PPT tokens per vote (configurable)
+    uint256 public voteCost = 10 * 10**18; // 10 HOMIE tokens per vote (configurable)
     
     struct Vote {
         address voter;
@@ -33,6 +34,9 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     uint256 public minVoteCost = 1 * 10**18; // Minimum 1 token
     uint256 public maxVoteCost = 1000 * 10**18; // Maximum 1000 tokens
     
+    // Biometric authentication support (EIP-7951)
+    mapping(bytes32 => address) public secp256r1ToAddress;
+    
     event VoteCast(
         address indexed voter,
         string indexed projectId,
@@ -41,6 +45,7 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     );
     
     event VoteCostUpdated(uint256 oldCost, uint256 newCost);
+    event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
 
     constructor(address _portfolioToken) {
         portfolioToken = PortfolioToken(_portfolioToken);
@@ -164,5 +169,76 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     function getVote(uint256 index) external view returns (Vote memory) {
         require(index < votes.length, "Index out of bounds");
         return votes[index];
+    }
+
+    /**
+     * @notice Register secp256r1 public key for biometric authentication
+     * @param publicKeyX X coordinate of public key
+     * @param publicKeyY Y coordinate of public key
+     */
+    function registerSecp256r1Key(bytes32 publicKeyX, bytes32 publicKeyY) external {
+        require(P256.isValidPublicKey(publicKeyX, publicKeyY), "Invalid public key");
+        
+        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
+        require(secp256r1ToAddress[publicKeyHash] == address(0), "Public key already registered");
+        
+        secp256r1ToAddress[publicKeyHash] = msg.sender;
+        emit BiometricKeyRegistered(msg.sender, publicKeyX, publicKeyY);
+    }
+
+    /**
+     * @notice Vote for a project using biometric signature (EIP-7951)
+     * @param projectId The project identifier to vote for
+     * @param r Signature r component
+     * @param s Signature s component
+     * @param publicKeyX Public key X coordinate
+     * @param publicKeyY Public key Y coordinate
+     */
+    function voteWithBiometric(
+        string memory projectId,
+        bytes32 r,
+        bytes32 s,
+        bytes32 publicKeyX,
+        bytes32 publicKeyY
+    ) external whenNotPaused nonReentrant {
+        require(bytes(projectId).length > 0, "Project ID cannot be empty");
+        
+        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
+        address user = secp256r1ToAddress[publicKeyHash];
+        require(user != address(0), "Public key not registered");
+        
+        // Generate message hash
+        bytes32 messageHash = keccak256(abi.encodePacked(
+            "vote",
+            block.chainid,
+            address(this),
+            user,
+            projectId
+        ));
+        
+        // Verify secp256r1 signature
+        require(P256.verify(messageHash, r, s, publicKeyX, publicKeyY), "Invalid signature");
+        
+        require(!hasVoted[user][projectId], "Already voted for this project");
+        require(
+            portfolioToken.balanceOf(user) >= voteCost,
+            "Insufficient tokens"
+        );
+        
+        // Burn tokens for voting
+        portfolioToken.burnFrom(user, voteCost);
+        
+        projectVotes[projectId]++;
+        hasVoted[user][projectId] = true;
+        totalVotesByAddress[user]++;
+        
+        votes.push(Vote({
+            voter: user,
+            projectId: projectId,
+            timestamp: block.timestamp,
+            tokensBurned: voteCost
+        }));
+        
+        emit VoteCast(user, projectId, block.timestamp, voteCost);
     }
 }

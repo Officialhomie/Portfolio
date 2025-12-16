@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/cryptography/P256.sol";
 
 /**
  * @title VisitNFT
@@ -31,6 +32,9 @@ contract VisitNFT is
     mapping(address => bool) public hasMinted;
     mapping(uint256 => uint256) public mintTimestamps; // Track mint timestamps
     
+    // Biometric authentication support (EIP-7951)
+    mapping(bytes32 => address) public secp256r1ToAddress;
+    
     event VisitNFTMinted(
         uint256 indexed tokenId,
         address indexed recipient,
@@ -38,6 +42,7 @@ contract VisitNFT is
     );
     
     event BaseURIUpdated(string newBaseURI);
+    event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
 
     constructor() ERC721("Portfolio Visit NFT", "VISIT") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -201,6 +206,63 @@ contract VisitNFT is
             value /= 10;
         }
         return string(buffer);
+    }
+
+    /**
+     * @notice Register secp256r1 public key for biometric authentication
+     * @param publicKeyX X coordinate of public key
+     * @param publicKeyY Y coordinate of public key
+     */
+    function registerSecp256r1Key(bytes32 publicKeyX, bytes32 publicKeyY) external {
+        require(P256.isValidPublicKey(publicKeyX, publicKeyY), "Invalid public key");
+        
+        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
+        require(secp256r1ToAddress[publicKeyHash] == address(0), "Public key already registered");
+        
+        secp256r1ToAddress[publicKeyHash] = msg.sender;
+        emit BiometricKeyRegistered(msg.sender, publicKeyX, publicKeyY);
+    }
+
+    /**
+     * @notice Mint a free Visit NFT using biometric signature (EIP-7951)
+     * @param r Signature r component
+     * @param s Signature s component
+     * @param publicKeyX Public key X coordinate
+     * @param publicKeyY Public key Y coordinate
+     */
+    function mintVisitNFTWithBiometric(
+        bytes32 r,
+        bytes32 s,
+        bytes32 publicKeyX,
+        bytes32 publicKeyY
+    ) external whenNotPaused nonReentrant {
+        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
+        address user = secp256r1ToAddress[publicKeyHash];
+        require(user != address(0), "Public key not registered");
+        
+        // Generate message hash
+        bytes32 messageHash = keccak256(abi.encodePacked(
+            "mintVisitNFT",
+            block.chainid,
+            address(this),
+            user
+        ));
+        
+        // Verify secp256r1 signature
+        require(P256.verify(messageHash, r, s, publicKeyX, publicKeyY), "Invalid signature");
+        
+        require(!hasMinted[user], "Already minted");
+        require(_tokenIds < MAX_SUPPLY, "Max supply reached");
+        
+        hasMinted[user] = true;
+        _tokenIds++;
+        uint256 newTokenId = _tokenIds;
+        
+        _safeMint(user, newTokenId);
+        _setTokenURI(newTokenId, string(abi.encodePacked(baseURI, _toString(newTokenId))));
+        mintTimestamps[newTokenId] = block.timestamp;
+        
+        emit VisitNFTMinted(newTokenId, user, block.timestamp);
     }
 }
 
