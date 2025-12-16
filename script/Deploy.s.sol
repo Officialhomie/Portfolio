@@ -6,7 +6,7 @@ import {VisitorBook} from "../contracts/VisitorBook.sol";
 import {ProjectNFT} from "../contracts/ProjectNFT.sol";
 import {ProjectVoting} from "../contracts/ProjectVoting.sol";
 import {VisitNFT} from "../contracts/VisitNFT.sol";
-import {PortfolioToken} from "../contracts/PortfolioToken.sol";
+import {PortfolioToken} from "../contracts/Homie.sol";
 
 contract DeployScript is Script {
     function run() external {
