@@ -50,9 +50,12 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign the Visitor Book</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          ✍️ Sign the Visitor Book
+        </CardTitle>
         <CardDescription>
-          Leave a permanent message on the blockchain (1-500 characters)
+          Leave a permanent message on the blockchain (1-500 characters). 
+          Your message will be stored forever and you'll receive a Visit NFT!
         </CardDescription>
       </CardHeader>
       <CardContent>
