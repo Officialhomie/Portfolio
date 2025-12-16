@@ -2,7 +2,6 @@
  * Wagmi configuration for Web3 integration with Reown AppKit
  */
 
-import { createAppKit } from '@reown/appkit/react';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
 import { http } from 'wagmi';
@@ -22,9 +21,18 @@ if (!projectId || projectId === 'your_project_id_here' || projectId === 'YOUR_PR
 }
 
 // Create Wagmi adapter (it will create the wagmi config internally)
+// Use fallback Project ID if not configured (for development only)
+const fallbackProjectId = '000000000000000000000000000000000000000000';
+const effectiveProjectId = projectId && 
+  projectId !== 'your_project_id_here' && 
+  projectId !== 'YOUR_PROJECT_ID' &&
+  projectId.length > 20
+  ? projectId 
+  : fallbackProjectId;
+
 const wagmiAdapter = new WagmiAdapter({
   networks: [base, baseSepolia],
-  projectId: projectId || '000000000000000000000000000000000000000000',
+  projectId: effectiveProjectId,
   transports: {
     [base.id]: http(process.env.NEXT_PUBLIC_BASE_RPC_URL || 'https://mainnet.base.org'),
     [baseSepolia.id]: http(
@@ -34,31 +42,8 @@ const wagmiAdapter = new WagmiAdapter({
   ssr: true,
 });
 
-// Create AppKit instance
-export const appKit = createAppKit({
-  adapters: [wagmiAdapter],
-  networks: [base, baseSepolia],
-  projectId: projectId || '000000000000000000000000000000000000000000',
-  metadata: {
-    name: 'Web3 Portfolio',
-    description: 'Decentralized Developer Portfolio Platform on Base L2',
-    url: typeof window !== 'undefined' ? window.location.origin : 'https://yourportfolio.com',
-    icons: [
-      typeof window !== 'undefined' 
-        ? `${window.location.origin}/favicon.ico` 
-        : 'https://yourportfolio.com/favicon.ico'
-    ],
-  },
-  features: {
-    analytics: true,
-    email: false,
-    socials: ['google', 'x', 'github', 'apple', 'discord'],
-  },
-  themeMode: 'light',
-  themeVariables: {
-    '--w3m-accent': 'hsl(var(--primary))',
-  },
-});
+// Note: AppKit is initialized via AppKitProvider in web3-provider.tsx
+// We only create the wagmi adapter here, not the AppKit instance
 
 // Export wagmi config from adapter
 export const wagmiConfig = wagmiAdapter.wagmiConfig;
