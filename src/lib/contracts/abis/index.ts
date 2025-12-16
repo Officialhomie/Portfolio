@@ -10,12 +10,23 @@ import VisitNFTABI from './VisitNFT.json';
 import VisitorBookABI from './VisitorBook.json';
 import type { Abi } from 'viem';
 
+// Extract ABI from JSON structure (JSON files may have { abi: [...] } or be direct arrays)
+const extractAbi = (json: any): Abi => {
+  if (Array.isArray(json)) {
+    return json as Abi;
+  }
+  if (json && json.abi && Array.isArray(json.abi)) {
+    return json.abi as Abi;
+  }
+  return json as Abi;
+};
+
 // Export ABIs with proper typing
-export const PORTFOLIO_TOKEN_ABI = PortfolioTokenABI as Abi;
-export const PROJECT_NFT_ABI = ProjectNFTABI as Abi;
-export const PROJECT_VOTING_ABI = ProjectVotingABI as Abi;
-export const VISIT_NFT_ABI = VisitNFTABI as Abi;
-export const VISITOR_BOOK_ABI = VisitorBookABI as Abi;
+export const PORTFOLIO_TOKEN_ABI = extractAbi(PortfolioTokenABI);
+export const PROJECT_NFT_ABI = extractAbi(ProjectNFTABI);
+export const PROJECT_VOTING_ABI = extractAbi(ProjectVotingABI);
+export const VISIT_NFT_ABI = extractAbi(VisitNFTABI);
+export const VISITOR_BOOK_ABI = extractAbi(VisitorBookABI);
 
 // Re-export for convenience
 export {
