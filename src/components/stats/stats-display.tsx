@@ -42,15 +42,27 @@ export function StatsDisplay() {
     },
   ];
 
+  const colorVariants = [
+    'bg-gradient-to-br from-primary/30 to-primary/20 border-primary/50 shadow-md shadow-primary/10',
+    'bg-gradient-to-br from-accent/30 to-accent/20 border-accent/50 shadow-md shadow-accent/10',
+    'bg-gradient-to-br from-base-green/30 to-base-green/20 border-base-green/50 shadow-md',
+    'bg-gradient-to-br from-base-yellow/30 to-base-yellow/20 border-base-yellow/50 shadow-md',
+  ];
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-      {stats.map((stat) => (
-        <Card key={stat.label} className="p-6 text-center">
-          <p className="text-sm text-muted-foreground mb-2">{stat.label}</p>
+      {stats.map((stat, index) => (
+        <Card 
+          key={stat.label} 
+          className={`p-6 text-center border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${colorVariants[index % colorVariants.length]}`}
+        >
+          <p className="text-sm font-medium mb-2">{stat.label}</p>
           {stat.isLoading ? (
             <Skeleton className="h-9 w-20 mx-auto" />
           ) : (
-            <p className="text-3xl font-bold">{stat.value}</p>
+            <p className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              {stat.value}
+            </p>
           )}
         </Card>
       ))}
