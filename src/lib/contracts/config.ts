@@ -68,5 +68,5 @@ export function getContract(contractName: ContractName, chainId: number) {
 /**
  * Export individual contract configs
  */
-export { CONTRACT_ADDRESSES, getContractAddress };
+export { CONTRACT_ADDRESSES, getContractAddress, type ContractName };
 export { PORTFOLIO_TOKEN_ABI, PROJECT_NFT_ABI, PROJECT_VOTING_ABI, VISIT_NFT_ABI, VISITOR_BOOK_ABI };
