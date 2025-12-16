@@ -173,6 +173,48 @@ export function useProjectByProjectId(projectId: string | undefined) {
 }
 
 /**
+ * Mint a new project NFT
+ */
+export function useMintProject() {
+  const { chainId, address } = useAccount();
+  const contractAddress = getProjectNFTAddress(chainId);
+  const { refetch } = useProjectList();
+
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const mintProject = async (projectId: string, projectName: string, ipfsMetadataURI: string) => {
+    if (!address) {
+      throw new Error('Wallet not connected');
+    }
+
+    await writeContract({
+      address: contractAddress,
+      abi: PROJECT_NFT_ABI,
+      functionName: 'mintProject',
+      args: [address, projectId, projectName, ipfsMetadataURI],
+      chainId: chainId || base.id,
+    });
+  };
+
+  // Auto-refetch on success
+  if (isSuccess && hash) {
+    refetch();
+  }
+
+  return {
+    mintProject,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    txHash: hash,
+  };
+}
+
+/**
  * Endorse a project
  */
 export function useEndorseProject(tokenId: bigint | undefined) {
