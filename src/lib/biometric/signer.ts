@@ -70,32 +70,32 @@ export async function signTransactionHashWithBiometric(
 export function generateMessageHash(options: BiometricSignOptions): `0x${string}` {
   const { functionName, chainId, contractAddress, userAddress, functionParams = [] } = options;
 
-  // Create packed data: functionName (as string), chainId, contractAddress, userAddress, ...params
-  const packedData = [
-    'string',
-    functionName,
-    'uint256',
-    BigInt(chainId),
-    'address',
-    contractAddress,
-    'address',
-    userAddress,
-    ...functionParams.flatMap((param, index) => {
-      // Handle different parameter types
-      if (typeof param === 'string') {
-        return ['string', param];
-      } else if (typeof param === 'bigint' || typeof param === 'number') {
-        return ['uint256', BigInt(param)];
-      } else if (typeof param === 'boolean') {
-        return ['bool', param];
-      } else {
-        // Default to bytes32 for unknown types
-        return ['bytes32', param];
-      }
-    }),
-  ] as Parameters<typeof encodePacked>;
+  // Build types and values arrays separately for encodePacked
+  const types: string[] = ['string', 'uint256', 'address', 'address'];
+  const values: unknown[] = [functionName, BigInt(chainId), contractAddress, userAddress];
 
-  return keccak256(encodePacked(...packedData));
+  // Add function parameters dynamically
+  for (const param of functionParams) {
+    // Handle different parameter types
+    if (typeof param === 'string') {
+      types.push('string');
+      values.push(param);
+    } else if (typeof param === 'bigint' || typeof param === 'number') {
+      types.push('uint256');
+      values.push(BigInt(param));
+    } else if (typeof param === 'boolean') {
+      types.push('bool');
+      values.push(param);
+    } else {
+      // Default to bytes32 for unknown types
+      types.push('bytes32');
+      values.push(param);
+    }
+  }
+
+  // Encode and hash - encodePacked takes types and values as separate arguments
+  // Cast to satisfy TypeScript's type checking for encodePacked
+  return keccak256(encodePacked(types as readonly string[], values as readonly unknown[]));
 }
 
 /**

@@ -244,8 +244,10 @@ export async function signWithBiometric(
 
   // Create assertion request with the message hash as challenge
   // The biometric prompt will appear here
+  // Convert to proper BufferSource type
+  const challenge = new Uint8Array(messageHash);
   const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
-    challenge: messageHash.buffer, // Use message hash as challenge
+    challenge: challenge as BufferSource, // Use message hash as challenge
     rpId: window.location.hostname,
     allowCredentials: [
       {
