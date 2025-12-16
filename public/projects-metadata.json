@@ -74,12 +74,14 @@
       "description": "A decentralized content monetization platform where creators publish premium content and charge USDC for pay-per-view or subscriptions, with automatic royalty distribution.",
       "image": "/images/projects/dx-bloom.png",
       "external_url": "https://github.com/ThePsalmsLabs/DX_BLOOM-Contracts",
-      "demo_url": "https://dx-blooom-app.vercel.app",
+      "demo_url": "https://dxbloom.com",
       "github_url": "https://github.com/ThePsalmsLabs/dx_blooom-app",
       "tech_stack": "Solidity, Next.js, TypeScript, Foundry, OnchainKit, Base",
       "category": "Social",
       "status": "Live",
-      "year": 2025
+      "year": 2025,
+      "featured": true,
+      "tags": ["content-monetization", "web3", "base"]
     },
     {
       "id": "oneseed",
@@ -87,11 +89,13 @@
       "description": "Personal savings protocol built on Uniswap V4 that automatically saves a portion of every token swap. Features configurable savings percentage, automated vault tracking, and gas-optimized contracts using custom hooks.",
       "image": "/images/projects/oneseed.png",
       "external_url": "https://github.com/ThePsalmsLabs/ONESEED",
-      "demo_url": "https://oneseed-mu.vercel.app",
+      "demo_url": "https://1seed.app",
       "tech_stack": "Uniswap V4, Solidity, Next.js 15, Biconomy, ERC6909",
       "category": "DeFi",
       "status": "Beta",
-      "year": 2025
+      "year": 2025,
+      "featured": true,
+      "tags": ["uniswap-v4", "savings", "defi"]
     },
     {
       "id": "bridge-scope",
