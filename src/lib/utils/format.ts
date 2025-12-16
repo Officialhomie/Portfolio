@@ -131,3 +131,12 @@ export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength)}...`;
 }
+
+/**
+ * Get BaseScan URL for an address
+ */
+export function getBaseScanURL(address: string, type: 'address' | 'tx' = 'address'): string {
+  if (!address) return '';
+  const baseUrl = 'https://basescan.org';
+  return `${baseUrl}/${type}/${address}`;
+}
