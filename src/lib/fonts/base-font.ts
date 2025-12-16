@@ -1,27 +1,24 @@
-import { Inter } from 'next/font/google';
+import { Inter_Tight, Inter } from 'next/font/google';
 import localFont from 'next/font/local';
 
 /**
  * Base Font Configuration
  * 
- * Base uses Coinbase Sans, which is a proprietary font.
+ * Base uses Base Sans (proprietary), which is not publicly available.
+ * According to Base's typography guidelines, the recommended fallback fonts are:
+ * - Inter Tight (primary fallback)
+ * - Inter (secondary fallback)
+ * - Roboto Mono (for monospace)
  * 
- * TO USE COINBASE SANS:
- * 1. Download Coinbase Sans font files from Base brand resources
- * 2. Place them in public/fonts/:
- *    - CoinbaseSans-Regular.woff2
- *    - CoinbaseSans-Medium.woff2
- *    - CoinbaseSans-Bold.woff2
- *    - CoinbaseMono-Regular.woff2 (optional, for monospace)
- *    - CoinbaseMono-Medium.woff2 (optional, for monospace)
- * 3. Uncomment the localFont code below and comment out the Inter import
+ * Base Sans is based on Modern Gothic with customizations, and is purpose-built
+ * for legibility in the onchain world. Since it's not available for download,
+ * we use Inter Tight as the primary font, which closely matches Base Sans.
  * 
- * Currently using Inter as the primary font (similar to Coinbase Sans)
- * which is what Base uses as a fallback.
+ * Reference: https://www.base.org/brand/typography
  */
 
-// Primary font: Inter (similar to Coinbase Sans, used by Base as fallback)
-export const baseSans = Inter({
+// Primary font: Inter Tight (Base's recommended fallback, closest to Base Sans)
+export const baseSans = Inter_Tight({
   subsets: ['latin'],
   variable: '--font-base-sans',
   display: 'swap',
