@@ -27,13 +27,6 @@ export function BiometricPrompt({ open, onSuccess, onCancel, message }: Biometri
   const { requestAuth, isAuthenticating, lastAuthResult } = useBiometricAuth();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    if (open && capability?.isAvailable) {
-      // Automatically trigger authentication when dialog opens
-      handleAuthenticate();
-    }
-  }, [open]);
-
   const handleAuthenticate = async () => {
     setIsProcessing(true);
     const success = await requestAuth(message || 'Please authenticate to continue');
@@ -45,6 +38,14 @@ export function BiometricPrompt({ open, onSuccess, onCancel, message }: Biometri
       }, 500); // Small delay for visual feedback
     }
   };
+
+  useEffect(() => {
+    if (open && capability?.isAvailable) {
+      // Automatically trigger authentication when dialog opens
+      handleAuthenticate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const getBiometricIcon = () => {
     if (!capability) return null;
