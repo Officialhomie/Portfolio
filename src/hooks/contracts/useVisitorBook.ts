@@ -209,12 +209,13 @@ export function useSignVisitorBook() {
           timestamp
         );
 
-        // Call signVisitorBookWithSignature
+        // Call signVisitorBookWithSignature with timestamp parameter
+        // Contract now accepts timestamp to match the signed timestamp
         await writeContract({
           address: contractAddress,
           abi: VISITOR_BOOK_ABI,
           functionName: 'signVisitorBookWithSignature',
-          args: [message, eip712Signature],
+          args: [message, eip712Signature, timestamp],
           chainId: currentChainId,
         });
         return;
