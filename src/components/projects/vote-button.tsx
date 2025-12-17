@@ -104,7 +104,7 @@ export function VoteButton({
         disabled
         title={reason || undefined}
       >
-        {reason === 'Already voted for this project' ? 'Already Voted' : 'Vote (10 HOMIE)'}
+        {reason === 'Already voted for this project' ? 'Already Voted' : 'Vote (10 $HOMIE)'}
       </Button>
     );
   }
@@ -123,7 +123,7 @@ export function VoteButton({
         {biometricEnabled && !isLoading && <Fingerprint className="h-4 w-4" />}
         {isPending && 'Voting...'}
         {isConfirming && 'Confirming...'}
-        {!isLoading && `Vote (10 HOMIE)`}
+        {!isLoading && `Vote (10 $HOMIE)`}
       </Button>
 
       {/* Biometric Prompt */}
