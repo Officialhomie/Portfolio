@@ -13,6 +13,7 @@ import { ConnectButton } from '@/components/wallet/connect-button';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Home, FolderKanban, Vote, BookOpen, Droplet, Fingerprint } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
@@ -28,20 +29,26 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="border-b-2 border-primary/40 bg-gradient-to-r from-background via-primary/25 to-background backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-0 z-50 shadow-sm shadow-primary/20">
+    <header className="border-b-2 border-primary/40 bg-gradient-to-r from-background via-primary/20 to-background backdrop-blur supports-[backdrop-filter]:bg-background/80 sticky top-0 z-50 shadow-sm shadow-primary/20 relative border-gradient">
+      {/* Subtle border glow effect */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-60"></div>
+      
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 transition-all duration-200 hover:scale-105 active:scale-95">
-            <Image 
-              src="/IMG_6745.JPG" 
-              alt="OneTrueHomie Logo" 
-              width={40}
-              height={40}
-              className="rounded-lg object-cover transition-transform duration-200 hover:rotate-3"
-              priority
-            />
-            <span className="font-bold text-base sm:text-lg transition-colors duration-200 hover:text-primary">
+          <Link href="/" className="flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 group">
+            <div className="relative">
+              <Image 
+                src="/IMG_6745.JPG" 
+                alt="OneTrueHomie Logo" 
+                width={40}
+                height={40}
+                className="rounded-lg object-cover transition-all duration-300 hover:rotate-3 border border-primary/20 hover:border-primary/50 hover:shadow-md hover:shadow-primary/30"
+                priority
+              />
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/0 to-accent/0 group-hover:from-primary/20 group-hover:to-accent/20 transition-all duration-300"></div>
+            </div>
+            <span className="font-bold text-base sm:text-lg gradient-text transition-all duration-300">
               OneTrueHomie
             </span>
           </Link>
@@ -54,14 +61,34 @@ export function Header() {
                 (item.href !== '/' && pathname.startsWith(item.href));
 
               return (
-                <Link key={item.name} href={item.href}>
+                <Link key={item.name} href={item.href} className="group">
                   <Button
                     variant={isActive ? 'default' : 'ghost'}
                     size="sm"
-                    className="gap-2 transition-all duration-200 hover:scale-105 active:scale-95"
+                    className={cn(
+                      "gap-2 relative transition-all duration-300 hover:scale-105 active:scale-95",
+                      isActive 
+                        ? "nav-item-active shadow-sm shadow-primary/20" 
+                        : "nav-item hover:bg-primary/5"
+                    )}
                   >
-                    <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-                    {item.name}
+                    <Icon className={cn(
+                      "h-4 w-4 transition-all duration-300",
+                      isActive 
+                        ? "text-primary-foreground" 
+                        : "text-muted-foreground group-hover:text-primary group-hover:scale-110"
+                    )} />
+                    <span className={cn(
+                      "transition-colors duration-300",
+                      isActive 
+                        ? "text-primary-foreground font-medium" 
+                        : "group-hover:text-primary"
+                    )}>
+                      {item.name}
+                    </span>
+                    {isActive && (
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full"></div>
+                    )}
                   </Button>
                 </Link>
               );
@@ -69,9 +96,12 @@ export function Header() {
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
             {/* Wallet Connect */}
-            <div className="hidden sm:block">
+            <div className="hidden sm:flex items-center">
               <ConnectButton />
             </div>
 
@@ -94,7 +124,7 @@ export function Header() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-border py-4 space-y-2">
+          <div className="lg:hidden border-t border-primary/30 border-gradient py-4 space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href ||
@@ -105,13 +135,31 @@ export function Header() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
+                  className="group"
                 >
                   <Button
                     variant={isActive ? 'default' : 'ghost'}
-                    className="w-full justify-start gap-2"
+                    className={cn(
+                      "w-full justify-start gap-2 transition-all duration-300",
+                      isActive 
+                        ? "nav-item-active shadow-sm shadow-primary/20" 
+                        : "hover:bg-primary/5"
+                    )}
                   >
-                    <Icon className="h-4 w-4" />
-                    {item.name}
+                    <Icon className={cn(
+                      "h-4 w-4 transition-all duration-300",
+                      isActive 
+                        ? "text-primary-foreground" 
+                        : "text-muted-foreground group-hover:text-primary group-hover:scale-110"
+                    )} />
+                    <span className={cn(
+                      "transition-colors duration-300",
+                      isActive 
+                        ? "text-primary-foreground font-medium" 
+                        : "group-hover:text-primary"
+                    )}>
+                      {item.name}
+                    </span>
                   </Button>
                 </Link>
               );
