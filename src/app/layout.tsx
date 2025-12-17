@@ -30,7 +30,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${baseSans.variable} ${baseMono.variable || ''}`}>
+      <body className={`${baseSans.variable} ${baseSans.className}`}>
         <ClientErrorHandler>
           <ThemeProvider
             attribute="class"
