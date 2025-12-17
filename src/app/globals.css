@@ -71,16 +71,18 @@
 
 @layer base {
   html {
+    font-family: var(--font-base-sans), ui-sans-serif, system-ui, sans-serif;
     scroll-behavior: smooth;
   }
-
+  
   * {
     border-color: hsl(var(--border));
   }
-
+  
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    font-family: inherit;
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 }
