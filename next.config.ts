@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Ensure we use src/app directory, not root app directory
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -20,6 +22,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Turbopack configuration (for dev mode)
+  turbopack: {
+    resolveAlias: {
+      '@react-native-async-storage/async-storage': './src/lib/utils/noop.ts',
+    },
+  },
+  // Webpack configuration (for production build)
   webpack: (config, { isServer }) => {
     config.resolve.fallback = { 
       fs: false, 
