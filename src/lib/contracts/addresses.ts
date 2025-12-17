@@ -10,7 +10,7 @@ export const CONTRACT_ADDRESSES = {
     ProjectNFT: '0x4C5f6b2658f6Fc25B2D285758ece987B8a7c3505' as `0x${string}`,
     ProjectVoting: '0x9F889b7DB73b2ce722F085B64c9ed7598AdD4A72' as `0x${string}`,
     VisitNFT: '0x4D09D6FC2D41daD91399346bB167256480C9b378' as `0x${string}`,
-    VisitorBook: '0xBE49E892Ff8d36b45a783DA56A68eC08bAA3E8aF' as `0x${string}`,
+    VisitorBook: '0x1A04b2cc37bb29Cbe8Ce4172B672e58c5f53223a' as `0x${string}`,
   },
   [baseSepolia.id]: {
     PortfolioToken: '0x0000000000000000000000000000000000000000' as `0x${string}`,
