@@ -5,9 +5,11 @@
  * Displays a project with image, details, and action buttons
  */
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VoteButton } from './vote-button';
 import { EndorseButton } from './endorse-button';
@@ -16,6 +18,7 @@ import { useIPFSMetadata } from '@/hooks/use-ipfs-metadata';
 import { resolveIPFSUri } from '@/lib/ipfs/client';
 import { extractTechStack } from '@/lib/ipfs/metadata';
 import type { Project } from '@/lib/types/contracts';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
@@ -25,9 +28,22 @@ interface ProjectCardProps {
 export function ProjectCard({ project, showActions = true }: ProjectCardProps) {
   const { metadata, isLoading: metadataLoading } = useIPFSMetadata(project.ipfsMetadataURI);
   const { voteCount, isLoading: votesLoading } = useProjectVotes(project.projectId);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const imageUrl = metadata?.image ? resolveIPFSUri(metadata.image) : '/images/placeholder-project.png';
   const techStack = metadata ? extractTechStack(metadata.attributes) : [];
+  
+  // Make description more friendly
+  const description = metadata?.description || 'No description available';
+  const friendlyDescription = description === 'No description available' 
+    ? "✨ This project is still growing! Check back soon for more details." 
+    : `✨ ${description}`;
+  
+  // Check if description is long enough to need "read more"
+  const needsReadMore = friendlyDescription.length > 100;
+  const displayDescription = isExpanded || !needsReadMore 
+    ? friendlyDescription 
+    : `${friendlyDescription.slice(0, 100)}...`;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -60,9 +76,31 @@ export function ProjectCard({ project, showActions = true }: ProjectCardProps) {
         {metadataLoading ? (
           <Skeleton className="h-10 w-full" />
         ) : (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {metadata?.description || 'No description available'}
-          </p>
+          <div className="space-y-2">
+            <p className={`text-sm text-muted-foreground leading-relaxed ${!isExpanded && needsReadMore ? 'line-clamp-2' : ''}`}>
+              {displayDescription}
+            </p>
+            {needsReadMore && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="h-auto p-0 text-xs text-primary hover:text-primary/80 font-medium"
+              >
+                {isExpanded ? (
+                  <>
+                    Read less
+                    <ChevronUp className="w-3 h-3 ml-1" />
+                  </>
+                ) : (
+                  <>
+                    Read more
+                    <ChevronDown className="w-3 h-3 ml-1" />
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         )}
 
         {/* Tech Stack Tags */}
