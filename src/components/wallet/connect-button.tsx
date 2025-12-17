@@ -10,6 +10,7 @@ import { AppKitConnectButton } from '@reown/appkit/react';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { formatAddress } from '@/lib/utils/format';
+import { LogOut } from 'lucide-react';
 
 export function ConnectButton() {
   const { address, isConnected, chain } = useAccount();
@@ -30,26 +31,32 @@ export function ConnectButton() {
     );
   }
 
-  // If connected, show address and disconnect option
+  // If connected, show compact wallet badge
   if (isConnected && address) {
     return (
       <div className="flex items-center gap-2">
-        <div className="flex flex-col items-end">
-          <span className="text-sm font-medium">
-            {formatAddress(address)}
-          </span>
-          {chain && (
-            <span className="text-xs text-muted-foreground">
-              {chain.name}
+        <div className="wallet-badge">
+          <div className="wallet-status-dot"></div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-mono font-semibold text-foreground dark:text-white leading-tight truncate max-w-[120px]">
+              {formatAddress(address)}
             </span>
-          )}
+            {chain && (
+              <span className="text-[10px] text-muted-foreground leading-tight truncate">
+                {chain.name}
+              </span>
+            )}
+          </div>
         </div>
         <Button
-          variant="outline"
+          variant="ghost"
           onClick={() => disconnect()}
           size="sm"
+          className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-md"
+          title="Disconnect wallet"
+          aria-label="Disconnect wallet"
         >
-          Disconnect
+          <LogOut className="w-4 h-4" />
         </Button>
       </div>
     );
