@@ -31,12 +31,14 @@ export default function VisitorBookPage() {
       {/* Page Header */}
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4">Visitor Book</h2>
+          <h2 className="text-4xl font-bold mb-4 gradient-text">
+            <span className="text-highlight-glow">Visitor</span> Book
+          </h2>
           <p className="text-xl text-muted-foreground mb-4">
-            Leave a permanent message stored on the blockchain. All messages are public and immutable.
+            Leave a <span className="accent-highlight">permanent message</span> stored on the blockchain. All messages are <span className="accent-highlight">public and immutable</span>.
           </p>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-            <span className="font-semibold">💡 Tip:</span>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border-gradient p-3 rounded-lg border">
+            <span className="font-semibold gradient-text-subtle">💡 Tip:</span>
             <span>Sign the visitor book to leave your mark and mint a limited edition Visit NFT!</span>
           </div>
         </div>
@@ -44,11 +46,11 @@ export default function VisitorBookPage() {
 
       {/* Stats */}
       <section className="container mx-auto px-4 pb-8">
-        <Card>
+        <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
           <CardContent className="p-6">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">Total Visitors</p>
-              <p className="text-4xl font-bold">{totalVisitors}</p>
+              <p className="text-sm text-muted-foreground mb-2 gradient-text-subtle">Total Visitors</p>
+              <p className="text-4xl font-bold gradient-text">{totalVisitors}</p>
             </div>
           </CardContent>
         </Card>
