@@ -32,12 +32,12 @@ export default function HomePage() {
           heroRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         )}
       >
-        <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient-shift">
-          OneTrueHomie's Decentralized Developer Portfolio
+        <h2 className="text-5xl font-bold mb-6 gradient-text">
+          OneTrueHomie's <span className="text-highlight-glow">Decentralized</span> Developer Portfolio
         </h2>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto transition-all duration-700 delay-100">
-          Showcasing Web3 projects as NFTs, engaging with visitors through on-chain guestbook,
-          and letting the community vote on favorites using blockchain technology on Base L2.
+          Showcasing <span className="accent-highlight">Web3 projects</span> as NFTs, engaging with visitors through <span className="accent-highlight">on-chain guestbook</span>,
+          and letting the community vote on favorites using <span className="accent-highlight">blockchain technology</span> on Base L2.
         </p>
         <div className="flex gap-4 justify-center flex-wrap transition-all duration-700 delay-200">
           <Link href="/projects">
@@ -63,7 +63,7 @@ export default function HomePage() {
 
       {/* Stats Section */}
       <section className="container mx-auto px-4 py-12">
-        <div className="bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 rounded-2xl p-8 border-2 border-primary/50 shadow-lg shadow-primary/20">
+        <div className="bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 rounded-2xl p-8 border-2 border-gradient shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300">
           <StatsDisplay />
         </div>
       </section>
@@ -79,11 +79,11 @@ export default function HomePage() {
         >
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                Featured Projects
+              <h3 className="text-3xl font-bold mb-2 gradient-text">
+                <span className="text-highlight-glow">Featured</span> Projects
               </h3>
               <p className="text-muted-foreground">
-                Check out my latest and most impactful Web3 projects
+                Check out my latest and most <span className="accent-highlight">impactful Web3 projects</span>
               </p>
             </div>
             <Link href="/projects">
@@ -123,8 +123,8 @@ export default function HomePage() {
           featuresRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         )}
       >
-        <h3 className="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-          Key Features
+        <h3 className="text-3xl font-bold text-center mb-12 gradient-text">
+          <span className="text-highlight-glow">Key</span> Features
         </h3>
         <div className="grid md:grid-cols-3 gap-8">
           {[
@@ -136,7 +136,7 @@ export default function HomePage() {
             },
             {
               title: 'Token-Gated Voting',
-              description: 'Vote for your favorite projects using HOMIE tokens. Each vote costs 10 tokens which are burned.',
+              description: 'Vote for your favorite projects using $HOMIE tokens. Each vote costs 10 tokens which are burned.',
               icon: Vote,
               link: '/voting',
             },
@@ -159,12 +159,12 @@ export default function HomePage() {
                   transform: featuresRef.isVisible ? 'translateY(0)' : 'translateY(20px)',
                 }}
               >
-                <div className="bg-gradient-to-br from-card via-primary/20 to-card border-2 border-primary/40 rounded-lg p-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group hover:border-primary/70 hover:bg-gradient-to-br hover:from-primary/30 hover:via-accent/30 hover:to-primary/30">
+                <div className="bg-gradient-to-br from-card via-primary/20 to-card border-2 border-gradient rounded-lg p-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group hover:border-primary/60 hover:bg-gradient-to-br hover:from-primary/30 hover:via-accent/30 hover:to-primary/30">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 bg-gradient-to-br from-primary/40 to-accent/40 rounded-lg group-hover:from-primary/60 group-hover:to-accent/60 group-hover:scale-110 transition-all duration-300 border-2 border-primary/50">
-                      <Icon className="w-5 h-5 text-primary transition-transform duration-300 group-hover:rotate-12" />
+                    <div className="p-2 bg-gradient-to-br from-primary/40 to-accent/40 rounded-lg group-hover:from-primary/60 group-hover:to-accent/60 group-hover:scale-110 transition-all duration-300 border-2 border-primary/50 group-hover:border-primary/80 group-hover:shadow-md group-hover:shadow-primary/30">
+                      <Icon className="w-5 h-5 text-primary transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
                     </div>
-                    <h4 className="text-xl font-semibold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent group-hover:from-primary group-hover:to-accent transition-all duration-200">
+                    <h4 className="text-xl font-semibold gradient-text-subtle group-hover:gradient-text transition-all duration-200">
                       {feature.title}
                     </h4>
                   </div>
@@ -186,12 +186,12 @@ export default function HomePage() {
           ctaRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         )}
       >
-        <div className="bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-2xl p-12 text-center border-2 border-primary/60 hover:border-primary/80 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 backdrop-blur-sm">
-          <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            Ready to Explore?
+        <div className="bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-2xl p-12 text-center border-2 border-gradient hover:border-primary/80 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 backdrop-blur-sm">
+          <h3 className="text-3xl font-bold mb-4 gradient-text">
+            Ready to <span className="text-highlight-glow">Explore</span>?
           </h3>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Connect your wallet, claim some HOMIE tokens, and start voting for your favorite projects!
+            Connect your wallet, claim some <span className="accent-highlight">$HOMIE tokens</span>, and start <span className="accent-highlight">voting for your favorite projects</span>!
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/faucet">
