@@ -139,7 +139,7 @@ export function useCanVote(projectId: string | undefined) {
   if (hasVoted) {
     reason = 'Already voted for this project';
   } else if (!hasEnoughTokens) {
-    reason = 'Insufficient HOMIE tokens (need 10 HOMIE)';
+    reason = 'Insufficient $HOMIE tokens (need 10 $HOMIE)';
   }
 
   return {
