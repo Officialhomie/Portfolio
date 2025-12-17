@@ -87,10 +87,12 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
      * @notice Sign visitor book with EIP-712 structured signature
      * @param message The message
      * @param signature EIP-712 signature
+     * @param timestamp The timestamp used in the signature (must match signed timestamp)
      */
     function signVisitorBookWithSignature(
         string memory message,
-        bytes memory signature
+        bytes memory signature,
+        uint256 timestamp
     ) external whenNotPaused nonReentrant {
         uint256 messageLength = bytes(message).length;
         require(
@@ -98,11 +100,17 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
             "Message length invalid"
         );
 
+        // Validate timestamp is within reasonable window (5 minutes) to prevent replay attacks
+        require(
+            timestamp >= block.timestamp - 300 && timestamp <= block.timestamp + 60,
+            "Timestamp out of window"
+        );
+
         bytes32 structHash = keccak256(abi.encode(
             VISITOR_SIGNATURE_TYPEHASH,
             msg.sender,
             keccak256(bytes(message)),
-            block.timestamp
+            timestamp
         ));
         
         bytes32 hash = _hashTypedDataV4(structHash);
