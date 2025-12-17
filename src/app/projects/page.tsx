@@ -23,9 +23,11 @@ export default function ProjectsPage() {
       {/* Page Header */}
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4">Projects</h2>
+          <h2 className="text-4xl font-bold mb-4 gradient-text">
+            <span className="text-highlight-glow">Projects</span>
+          </h2>
           <p className="text-xl text-muted-foreground">
-            Explore all my projects from GitHub and on-chain NFTs. Vote for your favorites using HOMIE tokens!
+            Explore all my projects from GitHub and on-chain NFTs. <span className="accent-highlight">Vote for your favorites</span> using <span className="accent-highlight">$HOMIE tokens</span>!
           </p>
         </div>
       </section>
@@ -35,7 +37,7 @@ export default function ProjectsPage() {
         <div className="flex flex-col gap-4">
           {/* Project Type Tabs */}
           <Tabs value={projectType} onValueChange={(v) => setProjectType(v as ProjectType)}>
-            <TabsList>
+            <TabsList className="border-gradient">
               <TabsTrigger value="all">All Projects</TabsTrigger>
               <TabsTrigger value="github">GitHub Projects</TabsTrigger>
               <TabsTrigger value="onchain">On-Chain NFTs</TabsTrigger>
@@ -49,7 +51,7 @@ export default function ProjectsPage() {
               placeholder="Search projects by name, description, or tech stack..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
+              className="w-full border-gradient focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>
