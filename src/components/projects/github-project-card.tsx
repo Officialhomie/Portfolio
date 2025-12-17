@@ -5,12 +5,13 @@
  * Displays a GitHub project with modern, interactive design
  */
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Github, Star, GitFork, Calendar, Code } from 'lucide-react';
+import { ExternalLink, Github, Star, GitFork, Calendar, Code, ChevronDown, ChevronUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MintProjectButton } from './mint-project-button';
 import { VoteProjectButton } from './vote-project-button';
@@ -32,8 +33,20 @@ export function GitHubProjectCard({
   onVote,
   voteCount = 0,
 }: GitHubProjectCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const imageUrl = project.image || '/images/placeholder-project.png';
   const techStack = project.tech_stack.split(',').map((t) => t.trim());
+  
+  // Make description more friendly
+  const friendlyDescription = project.description 
+    ? `✨ ${project.description}` 
+    : "✨ This project is still growing! Check back soon for more details.";
+  
+  // Check if description is long enough to need "read more"
+  const needsReadMore = friendlyDescription.length > 120;
+  const displayDescription = isExpanded || !needsReadMore 
+    ? friendlyDescription 
+    : `${friendlyDescription.slice(0, 120)}...`;
 
   const statusColors = {
     Live: 'bg-green-500/10 text-green-600 dark:text-green-400',
@@ -88,9 +101,31 @@ export function GitHubProjectCard({
             <h3 className="font-bold text-lg line-clamp-1 group-hover:text-primary transition-colors duration-200">
               {project.name}
             </h3>
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 transition-colors duration-200 group-hover:text-foreground/80">
-              {project.description}
-            </p>
+            <div className="mt-1 space-y-1">
+              <p className={`text-sm text-muted-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80 ${!isExpanded && needsReadMore ? 'line-clamp-2' : ''}`}>
+                {displayDescription}
+              </p>
+              {needsReadMore && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="h-auto p-0 text-xs text-primary hover:text-primary/80 font-medium -ml-1"
+                >
+                  {isExpanded ? (
+                    <>
+                      Read less
+                      <ChevronUp className="w-3 h-3 ml-1" />
+                    </>
+                  ) : (
+                    <>
+                      Read more
+                      <ChevronDown className="w-3 h-3 ml-1" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </CardHeader>
