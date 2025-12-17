@@ -31,14 +31,14 @@ export function FaucetClaim() {
       <CardHeader>
         <CardTitle>Claim Tokens</CardTitle>
         <CardDescription>
-          Get {faucetAmount} HOMIE tokens to participate in voting (one-time claim with 24h cooldown)
+          Get {faucetAmount} $HOMIE tokens to participate in voting (one-time claim with 24h cooldown)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Current Balance */}
         <div className="text-center py-6 bg-muted rounded-lg">
           <p className="text-sm text-muted-foreground mb-2">Your Balance</p>
-          <p className="text-4xl font-bold">{balance} HOMIE</p>
+          <p className="text-4xl font-bold">{balance} $HOMIE</p>
         </div>
 
         {/* Claim Section */}
@@ -51,17 +51,17 @@ export function FaucetClaim() {
         ) : isSuccess ? (
           <div className="text-center py-8 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
             <p className="text-green-800 dark:text-green-200 font-medium mb-2">
-              ✓ Successfully claimed {faucetAmount} HOMIE!
+              ✓ Successfully claimed {faucetAmount} $HOMIE!
             </p>
             <p className="text-sm text-green-700 dark:text-green-300">
-              New balance: {balance} HOMIE
+              New balance: {balance} $HOMIE
             </p>
           </div>
         ) : canClaimFaucet ? (
           <div className="space-y-4">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                You can claim {faucetAmount} HOMIE tokens
+                You can claim {faucetAmount} $HOMIE tokens
               </p>
             </div>
             <Button
@@ -73,7 +73,7 @@ export function FaucetClaim() {
               {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               {isPending && 'Claiming...'}
               {isConfirming && 'Confirming...'}
-              {!isLoading && `Claim ${faucetAmount} HOMIE`}
+              {!isLoading && `Claim ${faucetAmount} $HOMIE`}
             </Button>
           </div>
         ) : (
@@ -89,9 +89,9 @@ export function FaucetClaim() {
 
         {/* Token Usage Info */}
         <div className="pt-6 border-t border-border space-y-2">
-          <h4 className="font-semibold mb-3">How to use HOMIE tokens:</h4>
+          <h4 className="font-semibold mb-3">How to use $HOMIE tokens:</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• Vote for projects (costs 10 HOMIE per vote)</li>
+            <li>• Vote for projects (costs 10 $HOMIE per vote)</li>
             <li>• Tokens are burned when you vote (deflationary)</li>
             <li>• Support your favorite projects on-chain</li>
           </ul>
