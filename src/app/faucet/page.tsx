@@ -21,10 +21,12 @@ export default function FaucetPage() {
       {/* Page Header */}
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4">Token Faucet</h2>
+          <h2 className="text-4xl font-bold mb-4 gradient-text">
+            Token <span className="text-highlight-glow">Faucet</span>
+          </h2>
           <p className="text-xl text-muted-foreground">
-            Claim free HOMIE tokens to participate in project voting.
-            Vote for your favorite projects and help build the community!
+            Claim free <span className="accent-highlight">$HOMIE tokens</span> to participate in project voting.
+            Vote for your favorite projects and help <span className="accent-highlight">build the community</span>!
           </p>
         </div>
       </section>
@@ -32,22 +34,22 @@ export default function FaucetPage() {
       {/* Stats */}
       <section className="container mx-auto px-4 pb-8">
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
-          <Card>
+          <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Total Supply</CardTitle>
+              <CardTitle className="text-sm font-medium gradient-text-subtle">Total Supply</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">
-                {parseFloat(totalSupply).toLocaleString()} HOMIE
+              <p className="text-3xl font-bold gradient-text">
+                {parseFloat(totalSupply).toLocaleString()} $HOMIE
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-gradient hover:shadow-lg hover:shadow-accent/20 transition-all duration-300">
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Total Votes Cast</CardTitle>
+              <CardTitle className="text-sm font-medium gradient-text-subtle">Total Votes Cast</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{totalVotes}</p>
+              <p className="text-3xl font-bold gradient-text">{totalVotes}</p>
             </CardContent>
           </Card>
         </div>
@@ -64,21 +66,21 @@ export default function FaucetPage() {
           {/* Info - Right Column */}
           <div className="space-y-6">
             {/* About PPT */}
-            <Card>
+            <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
               <CardHeader>
-                <CardTitle>About HOMIE</CardTitle>
+                <CardTitle className="gradient-text-subtle">About $HOMIE</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
                 <div>
                   <h4 className="font-semibold mb-2">Portfolio Protocol Token</h4>
                   <p className="text-muted-foreground">
-                    HOMIE is the native utility token for this Web3 portfolio platform.
+                    $HOMIE is the native utility token for this Web3 portfolio platform.
                   </p>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Use Cases</h4>
                   <ul className="space-y-1 text-muted-foreground">
-                    <li>• Vote for projects (10 HOMIE per vote)</li>
+                    <li>• Vote for projects (10 $HOMIE per vote)</li>
                     <li>• Participate in governance (future)</li>
                     <li>• Access premium features (future)</li>
                   </ul>
@@ -95,9 +97,9 @@ export default function FaucetPage() {
             </Card>
 
             {/* Quick Links */}
-            <Card>
+            <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
               <CardHeader>
-                <CardTitle>Quick Links</CardTitle>
+                <CardTitle className="gradient-text-subtle">Quick Links</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Link
