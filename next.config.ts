@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Exclude problematic packages from server components
+  serverExternalPackages: ['thread-stream', 'why-is-node-running', '@walletconnect/ethereum-provider'],
   images: {
     remotePatterns: [
       {
@@ -35,6 +37,7 @@ const nextConfig: NextConfig = {
       net: false, 
       tls: false,
       '@react-native-async-storage/async-storage': false,
+      'why-is-node-running': false,
     };
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
     
@@ -43,8 +46,23 @@ const nextConfig: NextConfig = {
       config.resolve.alias = {
         ...config.resolve.alias,
         '@react-native-async-storage/async-storage': false,
+        'why-is-node-running': false,
       };
     }
+    
+    // Exclude test files from bundling
+    config.module = config.module || {};
+    config.module.rules = config.module.rules || [];
+    config.module.rules.push({
+      test: /\.(test|spec)\.(js|ts|mjs)$/,
+      use: 'ignore-loader',
+    });
+    
+    // Ignore test directories in node_modules
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'thread-stream/test/helper': false,
+    };
     
     return config;
   },
