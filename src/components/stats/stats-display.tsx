@@ -36,7 +36,7 @@ export function StatsDisplay() {
       isLoading: loadingVotes,
     },
     {
-      label: 'HOMIE in Circulation',
+      label: '$HOMIE in Circulation',
       value: formatLargeNumber(parseFloat(tokenSupply)),
       isLoading: loadingToken,
     },
@@ -56,12 +56,12 @@ export function StatsDisplay() {
           key={stat.label} 
           className={`p-6 text-center border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg ${colorVariants[index % colorVariants.length]}`}
         >
-          <p className="text-sm font-medium mb-2">{stat.label}</p>
+          <p className="text-sm font-medium mb-2 text-foreground/80 dark:text-white/90">{stat.label}</p>
           {stat.isLoading ? (
             <Skeleton className="h-9 w-20 mx-auto" />
           ) : (
-            <p className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {stat.value}
+            <p className="text-3xl font-bold text-foreground dark:text-white drop-shadow-lg">
+              {stat.value ?? 0}
             </p>
           )}
         </Card>
