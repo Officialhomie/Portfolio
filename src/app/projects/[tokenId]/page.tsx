@@ -87,7 +87,7 @@ export default function ProjectDetailPage({
 
             {/* Project Info */}
             <div>
-              <h2 className="text-4xl font-bold mb-4">{project.name}</h2>
+              <h2 className="text-4xl font-bold mb-4 gradient-text">{project.name}</h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 {metadata?.description || 'No description available'}
               </p>
@@ -95,9 +95,9 @@ export default function ProjectDetailPage({
 
             {/* Tech Stack */}
             {techStack.length > 0 && (
-              <Card>
+              <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
                 <CardHeader>
-                  <CardTitle>Tech Stack</CardTitle>
+                  <CardTitle className="gradient-text-subtle">Tech Stack</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
@@ -116,9 +116,9 @@ export default function ProjectDetailPage({
 
             {/* Links */}
             {(metadata?.external_url || metadata?.github_url || metadata?.demo_url) && (
-              <Card>
+              <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
                 <CardHeader>
-                  <CardTitle>Links</CardTitle>
+                  <CardTitle className="gradient-text-subtle">Links</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {metadata.github_url && (
@@ -164,9 +164,9 @@ export default function ProjectDetailPage({
           {/* Sidebar - Right Column */}
           <div className="space-y-6">
             {/* Actions */}
-            <Card>
+            <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
               <CardHeader>
-                <CardTitle>Actions</CardTitle>
+                <CardTitle className="gradient-text-subtle">Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <VoteButton
@@ -183,9 +183,9 @@ export default function ProjectDetailPage({
             </Card>
 
             {/* Stats */}
-            <Card>
+            <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
               <CardHeader>
-                <CardTitle>Stats</CardTitle>
+                <CardTitle className="gradient-text-subtle">Stats</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -193,12 +193,12 @@ export default function ProjectDetailPage({
                   {votesLoading ? (
                     <Skeleton className="h-8 w-16" />
                   ) : (
-                    <p className="text-2xl font-bold">🗳️ {voteCount}</p>
+                    <p className="text-2xl font-bold gradient-text">🗳️ {voteCount}</p>
                   )}
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Endorsements</p>
-                  <p className="text-2xl font-bold">👍 {Number(project.endorsementCount)}</p>
+                  <p className="text-2xl font-bold gradient-text">👍 {Number(project.endorsementCount)}</p>
                 </div>
                 {category && (
                   <div>
@@ -222,9 +222,9 @@ export default function ProjectDetailPage({
             </Card>
 
             {/* Metadata */}
-            <Card>
+            <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-sm">NFT Details</CardTitle>
+                <CardTitle className="text-sm gradient-text-subtle">NFT Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div>
