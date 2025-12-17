@@ -48,3 +48,8 @@ next-env.d.ts
 # temporary app directory (disabled, using /src/app/ instead)
 /app/
 app.backup.temp/
+
+# foundry/forge build artifacts
+/broadcast/
+/cache/
+!cache/.gitkeep
