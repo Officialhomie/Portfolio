@@ -40,10 +40,12 @@ export default function VotingPage() {
       {/* Page Header */}
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4">Voting Leaderboard</h2>
+          <h2 className="text-4xl font-bold mb-4 gradient-text">
+            <span className="text-highlight-glow">Voting</span> Leaderboard
+          </h2>
           <p className="text-xl text-muted-foreground">
-            Vote for your favorite projects! Each vote costs 10 HOMIE tokens which are burned,
-            creating a deflationary mechanism.
+            Vote for your favorite projects! Each vote costs <span className="accent-highlight">10 $HOMIE tokens</span> which are burned,
+            creating a <span className="accent-highlight">deflationary mechanism</span>.
           </p>
         </div>
       </section>
@@ -52,12 +54,12 @@ export default function VotingPage() {
       {isConnected && (
         <section className="container mx-auto px-4 pb-8">
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl">
-            <Card>
+            <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-sm font-medium">Your Balance</CardTitle>
+                <CardTitle className="text-sm font-medium gradient-text-subtle">Your Balance</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{balance} HOMIE</p>
+                <p className="text-2xl font-bold gradient-text">{balance} $HOMIE</p>
                 <Link href="/faucet">
                   <Button variant="link" size="sm" className="px-0">
                     Claim more tokens →
@@ -65,20 +67,20 @@ export default function VotingPage() {
                 </Link>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-gradient hover:shadow-lg hover:shadow-accent/20 transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-sm font-medium">Your Votes</CardTitle>
+                <CardTitle className="text-sm font-medium gradient-text-subtle">Your Votes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{userVotes}</p>
+                <p className="text-2xl font-bold gradient-text">{userVotes}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-sm font-medium">Total Votes</CardTitle>
+                <CardTitle className="text-sm font-medium gradient-text-subtle">Total Votes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{totalVotes}</p>
+                <p className="text-2xl font-bold gradient-text">{totalVotes}</p>
               </CardContent>
             </Card>
           </div>
@@ -88,12 +90,12 @@ export default function VotingPage() {
       {/* Global Stats (if not connected) */}
       {!isConnected && (
         <section className="container mx-auto px-4 pb-8">
-          <Card className="max-w-md">
+          <Card className="max-w-md border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
             <CardHeader>
-              <CardTitle>Total Votes Cast</CardTitle>
+              <CardTitle className="gradient-text-subtle">Total Votes Cast</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold">{totalVotes}</p>
+              <p className="text-4xl font-bold gradient-text">{totalVotes}</p>
               <p className="text-sm text-muted-foreground mt-2">
                 Connect your wallet to participate
               </p>
@@ -104,7 +106,9 @@ export default function VotingPage() {
 
       {/* Leaderboard */}
       <section className="container mx-auto px-4 pb-20">
-        <h3 className="text-2xl font-bold mb-6">Projects Ranked by Votes</h3>
+        <h3 className="text-2xl font-bold mb-6 gradient-text">
+          Projects <span className="text-highlight-glow">Ranked</span> by Votes
+        </h3>
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -130,7 +134,7 @@ export default function VotingPage() {
                 <div key={project.tokenId.toString()} className="relative">
                   {/* Rank Badge */}
                   {index < 3 && (
-                    <div className="absolute -top-2 -left-2 z-10 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg">
+                    <div className="absolute -top-2 -left-2 z-10 bg-gradient-to-br from-primary to-accent text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg shadow-primary/50 border-2 border-primary/30">
                       #{index + 1}
                     </div>
                   )}
