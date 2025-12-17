@@ -203,6 +203,216 @@
   .stagger-5 { animation-delay: 0.5s; }
   .stagger-6 { animation-delay: 0.6s; }
 
+  /* Text Highlighting Effects */
+  .text-highlight {
+    @apply relative inline-block;
+  }
+
+  .text-highlight::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)));
+    opacity: 0.4;
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease;
+  }
+
+  .text-highlight:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+  }
+
+  .text-highlight-glow {
+    @apply relative;
+    color: hsl(var(--primary));
+    background: linear-gradient(120deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 50%, hsl(var(--primary)) 100%);
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer-text 2s ease-in-out infinite;
+    font-weight: 600;
+  }
+
+  @keyframes shimmer-text {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  /* Border Effects */
+  .border-glow {
+    @apply relative;
+    border: 2px solid hsl(var(--primary) / 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .border-glow::before {
+    content: '';
+    @apply absolute inset-0 rounded-md;
+    padding: 2px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.5), hsl(var(--primary) / 0.5));
+    background-size: 200% 200%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  .border-glow:hover::before {
+    opacity: 1;
+  }
+
+  .border-glow:hover {
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.2), 0 0 40px hsl(var(--accent) / 0.1);
+  }
+
+  /* Subtle Border Gradient */
+  .border-gradient {
+    @apply relative;
+    border: 2px solid hsl(var(--primary) / 0.3);
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, hsl(var(--background)), hsl(var(--background))) padding-box;
+  }
+
+  .border-gradient::before {
+    content: '';
+    @apply absolute -inset-[2px] rounded-md -z-10 opacity-0;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.6), hsl(var(--primary) / 0.6));
+    background-size: 200% 200%;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    animation: gradient-shift 3s ease infinite;
+    border-radius: inherit;
+  }
+
+  .border-gradient::after {
+    content: '';
+    @apply absolute inset-0 rounded-md opacity-0;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1));
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .border-gradient:hover {
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 0 4px 16px hsl(var(--primary) / 0.25), 0 0 24px hsl(var(--accent) / 0.15), inset 0 0 20px hsl(var(--primary) / 0.05);
+    transform: translateY(-2px);
+  }
+
+  .border-gradient:hover::before {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+
+  .border-gradient:hover::after {
+    opacity: 1;
+  }
+
+  /* Navigation Hover Effects */
+  .nav-item {
+    @apply relative px-3 py-2 rounded-md transition-all duration-300;
+  }
+
+  .nav-item::before {
+    content: '';
+    @apply absolute inset-0 rounded-md;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .nav-item:hover::before {
+    opacity: 1;
+  }
+
+  .nav-item::after {
+    content: '';
+    @apply absolute bottom-0 left-1/2 w-0 h-0.5;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
+    transform: translateX(-50%);
+    transition: width 0.3s ease;
+  }
+
+  .nav-item:hover::after {
+    width: calc(100% - 1rem);
+  }
+
+  .nav-item-active {
+    background: linear-gradient(to right, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1), hsl(var(--primary) / 0.1));
+    border: 1px solid hsl(var(--primary) / 0.3);
+  }
+
+  .nav-item-active::after {
+    width: calc(100% - 1rem);
+    opacity: 1;
+  }
+
+  /* Gradient Text with Better Visibility */
+  .gradient-text {
+    background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)));
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  .gradient-text-subtle {
+    background: linear-gradient(to right, hsl(var(--foreground)), hsl(var(--primary)), hsl(var(--foreground)));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Accent Text Highlight */
+  .accent-highlight {
+    @apply relative inline-block px-2 py-0.5 rounded;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--accent) / 0.15));
+    border: 1px solid hsl(var(--primary) / 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .accent-highlight:hover {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--accent) / 0.25));
+    border-color: hsl(var(--primary) / 0.4);
+    box-shadow: 0 2px 8px hsl(var(--primary) / 0.2);
+  }
+
+  /* Wallet Badge Styles */
+  .wallet-badge {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-md;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1));
+    border: 1px solid hsl(var(--primary) / 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .wallet-badge:hover {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--accent) / 0.15));
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow: 0 2px 8px hsl(var(--primary) / 0.2);
+  }
+
+  .wallet-status-dot {
+    @apply w-2 h-2 rounded-full;
+    background: hsl(var(--base-green));
+    box-shadow: 0 0 4px hsl(var(--base-green) / 0.6);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
   /* Reduce motion for accessibility */
   @media (prefers-reduced-motion: reduce) {
     *,
