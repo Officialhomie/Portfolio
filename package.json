@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:webpack": "next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -21,10 +22,10 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.460.0",
-    "next": "^15.1.0",
+    "next": "^16.0.10",
     "next-themes": "^0.4.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "tailwind-merge": "^2.5.0",
     "viem": "^2.21.0",
     "wagmi": "^2.12.0"
@@ -35,10 +36,12 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",
-    "eslint": "^8",
-    "eslint-config-next": "15.1.0",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^16.0.10",
+    "ignore-loader": "^0.1.2",
     "postcss": "^8",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "why-is-node-running": "^3.2.2"
   }
 }
