@@ -29,7 +29,29 @@ export function usePortfolioToken() {
   const { address, chainId } = useAccount();
   const contractAddress = getTokenAddress(chainId);
 
-  const { data, isLoading, refetch } = useReadContracts({
+  // Always fetch totalSupply and FAUCET_AMOUNT (don't need address)
+  const { data: publicData, isLoading: publicLoading, refetch: refetchPublic } = useReadContracts({
+    contracts: [
+      {
+        address: contractAddress,
+        abi: PORTFOLIO_TOKEN_ABI,
+        functionName: 'totalSupply',
+        chainId: chainId || base.id,
+      },
+      {
+        address: contractAddress,
+        abi: PORTFOLIO_TOKEN_ABI,
+        functionName: 'FAUCET_AMOUNT',
+        chainId: chainId || base.id,
+      },
+    ],
+    query: {
+      staleTime: 30_000, // 30 seconds
+    },
+  });
+
+  // Only fetch balance and canClaimFaucet when address is available
+  const { data: userData, isLoading: userLoading, refetch: refetchUser } = useReadContracts({
     contracts: [
       {
         address: contractAddress,
@@ -45,18 +67,6 @@ export function usePortfolioToken() {
         args: address ? [address] : undefined,
         chainId: chainId || base.id,
       },
-      {
-        address: contractAddress,
-        abi: PORTFOLIO_TOKEN_ABI,
-        functionName: 'totalSupply',
-        chainId: chainId || base.id,
-      },
-      {
-        address: contractAddress,
-        abi: PORTFOLIO_TOKEN_ABI,
-        functionName: 'FAUCET_AMOUNT',
-        chainId: chainId || base.id,
-      },
     ],
     query: {
       enabled: !!address,
@@ -64,10 +74,17 @@ export function usePortfolioToken() {
     },
   });
 
-  const balanceRaw = (data?.[0]?.result as bigint) || 0n;
-  const canClaimFaucet = (data?.[1]?.result as boolean) ?? false;
-  const totalSupplyRaw = (data?.[2]?.result as bigint) || 0n;
-  const faucetAmountRaw = (data?.[3]?.result as bigint) || parseUnits('100', 18);
+  const data = publicData && userData ? [...publicData, ...userData] : publicData;
+  const isLoading = publicLoading || userLoading;
+  
+  const refetch = async () => {
+    await Promise.all([refetchPublic(), refetchUser()]);
+  };
+
+  const totalSupplyRaw = (data?.[0]?.result as bigint) || 0n;
+  const faucetAmountRaw = (data?.[1]?.result as bigint) || parseUnits('100', 18);
+  const balanceRaw = (data?.[2]?.result as bigint) || 0n;
+  const canClaimFaucet = (data?.[3]?.result as boolean) ?? false;
 
   return {
     // Formatted values
