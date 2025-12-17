@@ -50,3 +50,11 @@ export function isSupportedChain(chainId: number): boolean {
 export function getSupportedChainIds(): number[] {
   return Object.keys(CONTRACT_ADDRESSES).map(Number);
 }
+
+/**
+ * Get Visitor Book contract address for a given chain ID
+ */
+export function getVisitorBookAddress(chainId: number | undefined): `0x${string}` {
+  if (!chainId) return CONTRACT_ADDRESSES[base.id].VisitorBook;
+  return CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES]?.VisitorBook || CONTRACT_ADDRESSES[base.id].VisitorBook;
+}
