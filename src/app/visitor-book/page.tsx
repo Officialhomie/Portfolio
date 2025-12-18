@@ -29,12 +29,12 @@ export default function VisitorBookPage() {
   return (
     <PageLayout>
       {/* Page Header */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12 max-w-full overflow-x-hidden">
         <div className="max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4 gradient-text">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 gradient-text break-words">
             <span className="text-highlight-glow">Visitor</span> Book
           </h2>
-          <p className="text-xl text-muted-foreground mb-4">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-4 break-words">
             Leave a <span className="accent-highlight">permanent message</span> stored on the blockchain. All messages are <span className="accent-highlight">public and immutable</span>.
           </p>
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border-gradient p-3 rounded-lg border">
@@ -45,7 +45,7 @@ export default function VisitorBookPage() {
       </section>
 
       {/* Stats */}
-      <section className="container mx-auto px-4 pb-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 max-w-full overflow-x-hidden">
         <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
           <CardContent className="p-6">
             <div className="text-center">
@@ -57,8 +57,8 @@ export default function VisitorBookPage() {
       </section>
 
       {/* Content Grid */}
-      <section className="container mx-auto px-4 pb-20">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16 md:pb-20 max-w-full overflow-x-hidden">
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Form - Left Column (sticky on desktop) */}
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24">
