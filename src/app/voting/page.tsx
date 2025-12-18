@@ -38,12 +38,12 @@ export default function VotingPage() {
   return (
     <PageLayout>
       {/* Page Header */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12 max-w-full overflow-x-hidden">
         <div className="max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4 gradient-text">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 gradient-text break-words">
             <span className="text-highlight-glow">Voting</span> Leaderboard
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground break-words">
             Vote for your favorite projects! Each vote costs <span className="accent-highlight">10 $HOMIE tokens</span> which are burned,
             creating a <span className="accent-highlight">deflationary mechanism</span>.
           </p>
@@ -52,7 +52,7 @@ export default function VotingPage() {
 
       {/* User Stats (if connected) */}
       {isConnected && (
-        <section className="container mx-auto px-4 pb-8">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 max-w-full overflow-x-hidden">
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl">
             <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
               <CardHeader>
@@ -89,7 +89,7 @@ export default function VotingPage() {
 
       {/* Global Stats (if not connected) */}
       {!isConnected && (
-        <section className="container mx-auto px-4 pb-8">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 max-w-full overflow-x-hidden">
           <Card className="max-w-md border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
             <CardHeader>
               <CardTitle className="gradient-text-subtle">Total Votes Cast</CardTitle>
@@ -105,7 +105,7 @@ export default function VotingPage() {
       )}
 
       {/* Leaderboard */}
-      <section className="container mx-auto px-4 pb-20">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16 md:pb-20 max-w-full overflow-x-hidden">
         <h3 className="text-2xl font-bold mb-6 gradient-text">
           Projects <span className="text-highlight-glow">Ranked</span> by Votes
         </h3>
