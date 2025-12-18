@@ -27,19 +27,19 @@ export default function HomePage() {
       {/* Hero Section */}
       <section
         ref={heroRef.ref}
-        className={cn(
-          'container mx-auto px-4 py-20 text-center transition-all duration-700',
-          heroRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        )}
+          className={cn(
+            'container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 text-center transition-all duration-700 max-w-full overflow-x-hidden',
+            heroRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          )}
       >
-        <h2 className="text-5xl font-bold mb-6 gradient-text">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 gradient-text px-2 break-words">
           OneTrueHomie's <span className="text-highlight-glow">Decentralized</span> Developer Portfolio
         </h2>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto transition-all duration-700 delay-100">
+        <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto px-2 transition-all duration-700 delay-100 break-words">
           Showcasing <span className="accent-highlight">Web3 projects</span> as NFTs, engaging with visitors through <span className="accent-highlight">on-chain guestbook</span>,
           and letting the community vote on favorites using <span className="accent-highlight">blockchain technology</span> on Base L2.
         </p>
-        <div className="flex gap-4 justify-center flex-wrap transition-all duration-700 delay-200">
+        <div className="flex gap-2 sm:gap-4 justify-center flex-wrap px-2 transition-all duration-700 delay-200">
           <Link href="/projects">
             <Button size="lg" className="gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25 active:scale-95">
               Explore Projects
@@ -62,7 +62,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12 max-w-full overflow-x-hidden">
         <div className="bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 rounded-2xl p-8 border-2 border-gradient shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300">
           <StatsDisplay />
         </div>
@@ -73,11 +73,11 @@ export default function HomePage() {
         <section
           ref={featuredRef.ref}
           className={cn(
-            'container mx-auto px-4 py-20 transition-all duration-700',
+            'container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 transition-all duration-700 max-w-full overflow-x-hidden',
             featuredRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           )}
         >
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <div>
               <h3 className="text-3xl font-bold mb-2 gradient-text">
                 <span className="text-highlight-glow">Featured</span> Projects
@@ -118,10 +118,10 @@ export default function HomePage() {
       {/* Features Section */}
       <section
         ref={featuresRef.ref}
-        className={cn(
-          'container mx-auto px-4 py-20 transition-all duration-700',
-          featuresRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        )}
+          className={cn(
+            'container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 transition-all duration-700 max-w-full overflow-x-hidden',
+            featuresRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          )}
       >
         <h3 className="text-3xl font-bold text-center mb-12 gradient-text">
           <span className="text-highlight-glow">Key</span> Features
@@ -181,16 +181,16 @@ export default function HomePage() {
       {/* CTA Section */}
       <section
         ref={ctaRef.ref}
-        className={cn(
-          'container mx-auto px-4 py-20 transition-all duration-700',
-          ctaRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        )}
+          className={cn(
+            'container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 transition-all duration-700 max-w-full overflow-x-hidden',
+            ctaRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          )}
       >
-        <div className="bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-2xl p-12 text-center border-2 border-gradient hover:border-primary/80 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 backdrop-blur-sm">
-          <h3 className="text-3xl font-bold mb-4 gradient-text">
+        <div className="bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-2xl p-6 sm:p-8 md:p-12 text-center border-2 border-gradient hover:border-primary/80 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 backdrop-blur-sm">
+          <h3 className="text-2xl sm:text-3xl font-bold mb-4 gradient-text px-2 break-words">
             Ready to <span className="text-highlight-glow">Explore</span>?
           </h3>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto px-2 break-words">
             Connect your wallet, claim some <span className="accent-highlight">$HOMIE tokens</span>, and start <span className="accent-highlight">voting for your favorite projects</span>!
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
