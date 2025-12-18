@@ -55,8 +55,9 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
 
   // Disable analytics and reduce API calls when Project ID is invalid
   // This prevents 403 errors and reduces unnecessary network requests
+  // Analytics SDK errors are suppressed via error handlers
   const features: Features = isValidProjectId ? {
-    analytics: true,
+    analytics: true, // Enabled but errors are suppressed
     email: false,
     socials: ['google', 'x', 'github', 'apple', 'discord'],
   } : {
