@@ -33,8 +33,8 @@ export function Header() {
       {/* Subtle border glow effect */}
       <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-60"></div>
       
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-full overflow-x-hidden">
+        <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 group">
             <div className="relative">
@@ -54,7 +54,7 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1 flex-shrink-0">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href ||
@@ -96,7 +96,7 @@ export function Header() {
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {/* Theme Toggle */}
             <ThemeToggle />
             
