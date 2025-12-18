@@ -47,7 +47,7 @@ export default function ProjectDetailPage({
   if (!project) {
     return (
       <PageLayout>
-        <div className="container mx-auto px-4 py-20 text-center">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 text-center max-w-full overflow-x-hidden">
           <h2 className="text-2xl font-bold mb-4">Project Not Found</h2>
           <p className="text-muted-foreground mb-8">
             This project doesn't exist or hasn't been minted yet.
@@ -63,7 +63,7 @@ export default function ProjectDetailPage({
   return (
     <PageLayout>
       {/* Content */}
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12 max-w-full overflow-x-hidden">
         {/* Back link */}
         <Link href="/projects">
           <Button variant="ghost" size="sm" className="mb-6">
@@ -87,7 +87,7 @@ export default function ProjectDetailPage({
 
             {/* Project Info */}
             <div>
-              <h2 className="text-4xl font-bold mb-4 gradient-text">{project.name}</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4 gradient-text break-words">{project.name}</h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 {metadata?.description || 'No description available'}
               </p>
@@ -247,7 +247,7 @@ export default function ProjectDetailPage({
 function ProjectDetailSkeleton() {
   return (
     <PageLayout>
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12 max-w-full overflow-x-hidden">
         <Skeleton className="h-10 w-32 mb-6" />
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
