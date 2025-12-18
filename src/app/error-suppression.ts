@@ -16,7 +16,10 @@ if (typeof window !== 'undefined') {
       message.includes('ambire-inpage') ||
       (message.includes('TypeError') && message.includes('clone')) ||
       message.includes('FetchUtil.ts') ||
-      (message.includes('ApiController') && message.includes('clone'))
+      (message.includes('ApiController') && message.includes('clone')) ||
+      // Suppress Web3Modal/AppKit analytics SDK errors
+      (message.includes('Analytics SDK') && message.includes('Failed to fetch')) ||
+      (message.includes('Analytics SDK') && message.includes('TypeError'))
     );
   };
 
