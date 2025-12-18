@@ -18,14 +18,14 @@ export default function BiometricPage() {
   return (
     <PageLayout>
       {/* Page Header */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12 max-w-full overflow-x-hidden">
         <div className="max-w-3xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <Shield className="h-8 w-8 text-primary" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+            <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0">
+              <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
             <div>
-              <h2 className="text-4xl font-bold">Biometric Authentication</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold break-words">Biometric Authentication</h2>
               <p className="text-muted-foreground mt-1">
                 Secure your transactions with fingerprint or Face ID
               </p>
@@ -35,7 +35,7 @@ export default function BiometricPage() {
       </section>
 
       {/* Content */}
-      <section className="container mx-auto px-4 pb-20">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16 md:pb-20 max-w-full overflow-x-hidden">
         <div className="grid lg:grid-cols-2 gap-8 max-w-5xl">
           {/* Setup Section */}
           <div className="space-y-6">
