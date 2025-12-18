@@ -19,12 +19,12 @@ export default function FaucetPage() {
   return (
     <PageLayout>
       {/* Page Header */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12 max-w-full overflow-x-hidden">
         <div className="max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4 gradient-text">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 gradient-text break-words">
             Token <span className="text-highlight-glow">Faucet</span>
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground break-words">
             Claim free <span className="accent-highlight">$HOMIE tokens</span> to participate in project voting.
             Vote for your favorite projects and help <span className="accent-highlight">build the community</span>!
           </p>
@@ -32,7 +32,7 @@ export default function FaucetPage() {
       </section>
 
       {/* Stats */}
-      <section className="container mx-auto px-4 pb-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 max-w-full overflow-x-hidden">
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
           <Card className="border-gradient hover:shadow-lg hover:shadow-primary/20 transition-all duration-300">
             <CardHeader>
@@ -56,7 +56,7 @@ export default function FaucetPage() {
       </section>
 
       {/* Main Content */}
-      <section className="container mx-auto px-4 pb-20">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16 md:pb-20 max-w-full overflow-x-hidden">
         <div className="grid lg:grid-cols-3 gap-8 max-w-6xl">
           {/* Faucet - Left Column */}
           <div className="lg:col-span-2">
