@@ -39,7 +39,6 @@ export const baseSans = Unbounded({
   preload: true, // Preload font files for faster loading
   weight: ['400', '500', '600', '700'],
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-  adjustFontFallback: true, // Automatically adjust fallback font metrics to reduce layout shift
 });
 
 // Fallback font: Inter Tight (Base's recommended fallback)
