@@ -21,19 +21,19 @@ export default function ProjectsPage() {
   return (
     <PageLayout>
       {/* Page Header */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12 max-w-full overflow-x-hidden">
         <div className="max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4 gradient-text">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 gradient-text break-words">
             <span className="text-highlight-glow">Projects</span>
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground break-words">
             Explore all my projects from GitHub and on-chain NFTs. <span className="accent-highlight">Vote for your favorites</span> using <span className="accent-highlight">$HOMIE tokens</span>!
           </p>
         </div>
       </section>
 
       {/* Filters & Search */}
-      <section className="container mx-auto px-4 pb-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 max-w-full overflow-x-hidden">
         <div className="flex flex-col gap-4">
           {/* Project Type Tabs */}
           <Tabs value={projectType} onValueChange={(v) => setProjectType(v as ProjectType)}>
@@ -58,7 +58,7 @@ export default function ProjectsPage() {
       </section>
 
       {/* Projects Grid */}
-      <section className="container mx-auto px-4 pb-20">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16 md:pb-20 max-w-full overflow-x-hidden">
         <UnifiedProjectGrid
           type={projectType}
           searchQuery={searchQuery}
