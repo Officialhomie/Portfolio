@@ -12,9 +12,9 @@ interface PageLayoutProps {
 
 export function PageLayout({ children }: PageLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-primary/20 to-accent/20">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-primary/20 to-accent/20 overflow-x-hidden w-full max-w-full">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">
         {children}
       </main>
       <Footer />
