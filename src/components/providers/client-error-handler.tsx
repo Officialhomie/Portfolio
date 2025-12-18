@@ -18,7 +18,7 @@ export function ClientErrorHandler({ children }: { children: React.ReactNode }) 
       const message = event.message || event.error?.message || '';
       const filename = event.filename || '';
       
-      // Suppress known browser extension errors
+      // Suppress known browser extension errors and analytics SDK errors
       if (
         message.includes('resource.clone is not a function') ||
         message.includes('ambire-inpage.js') ||
@@ -26,7 +26,10 @@ export function ClientErrorHandler({ children }: { children: React.ReactNode }) 
         filename.includes('ambire-inpage') ||
         (message.includes('TypeError') && message.includes('clone')) ||
         message.includes('FetchUtil') ||
-        (message.includes('ApiController') && message.includes('clone'))
+        (message.includes('ApiController') && message.includes('clone')) ||
+        // Suppress Web3Modal/AppKit analytics SDK errors
+        (message.includes('Analytics SDK') && message.includes('Failed to fetch')) ||
+        (message.includes('Analytics SDK') && message.includes('TypeError'))
       ) {
         event.preventDefault();
         event.stopPropagation();
@@ -41,7 +44,10 @@ export function ClientErrorHandler({ children }: { children: React.ReactNode }) 
       if (
         message.includes('resource.clone is not a function') ||
         message.includes('ambire-inpage') ||
-        (message.includes('TypeError') && message.includes('clone'))
+        (message.includes('TypeError') && message.includes('clone')) ||
+        // Suppress Web3Modal/AppKit analytics SDK errors
+        (message.includes('Analytics SDK') && message.includes('Failed to fetch')) ||
+        (message.includes('Analytics SDK') && message.includes('TypeError'))
       ) {
         event.preventDefault();
         return false;
