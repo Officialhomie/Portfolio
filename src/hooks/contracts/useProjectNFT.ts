@@ -5,8 +5,11 @@
  * Handles all ProjectNFT.sol interactions
  */
 
+import { useState } from 'react';
 import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { encodeFunctionData } from 'viem';
 import { base } from 'wagmi/chains';
+import { useSmartWallet } from '@/contexts/SmartWalletContext';
 import { PROJECT_NFT_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import type { Project, ProjectTuple } from '@/lib/types/contracts';
@@ -173,91 +176,136 @@ export function useProjectByProjectId(projectId: string | undefined) {
 }
 
 /**
- * Mint a new project NFT
+ * Mint a new project NFT via CDP smart wallet
  */
 export function useMintProject() {
   const { chainId, address } = useAccount();
   const contractAddress = getProjectNFTAddress(chainId);
   const { refetch } = useProjectList();
-
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const mintProject = async (projectId: string, projectName: string, ipfsMetadataURI: string) => {
     if (!address) {
       throw new Error('Wallet not connected');
     }
 
-    await writeContract({
-      address: contractAddress,
-      abi: PROJECT_NFT_ABI,
-      functionName: 'mintProject',
-      args: [address, projectId, projectName, ipfsMetadataURI],
-      chainId: chainId || base.id,
-    });
-  };
+    if (!smartWalletAddress) {
+      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
+    }
 
-  // Auto-refetch on success
-  if (isSuccess && hash) {
-    refetch();
-  }
+    try {
+      setIsConfirming(true);
+
+      const data = encodeFunctionData({
+        abi: PROJECT_NFT_ABI,
+        functionName: 'mintProject',
+        args: [address, projectId, projectName, ipfsMetadataURI],
+      });
+
+      // Send via CDP smart wallet (biometric signature)
+      const hash = await sendTransaction({
+        to: contractAddress,
+        data,
+        value: 0n,
+      });
+
+      setTxHash(hash);
+      setIsSuccess(true);
+
+      // Refetch after transaction
+      setTimeout(() => {
+        refetch();
+      }, 2000);
+    } catch (err) {
+      console.error('Mint project failed:', err);
+      throw err;
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   return {
     mintProject,
-    isPending,
+    isPending: isSendingTransaction,
     isConfirming,
     isSuccess,
     error,
-    txHash: hash,
+    txHash,
   };
 }
 
 /**
- * Endorse a project
+ * Endorse a project via CDP smart wallet
  */
 export function useEndorseProject(tokenId: bigint | undefined) {
-  const { chainId } = useAccount();
+  const { chainId, address } = useAccount();
   const contractAddress = getProjectNFTAddress(chainId);
   const { refetch } = useProject(tokenId);
-
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const endorseProject = async () => {
     if (tokenId === undefined) {
       throw new Error('Token ID is required');
     }
 
-    await writeContract({
-      address: contractAddress,
-      abi: PROJECT_NFT_ABI,
-      functionName: 'endorseProject',
-      args: [tokenId],
-      chainId: chainId || base.id,
-    });
-  };
+    if (!address || !chainId) {
+      throw new Error('Wallet not connected');
+    }
 
-  // Auto-refetch on success
-  if (isSuccess && hash) {
-    refetch();
-  }
+    if (!smartWalletAddress) {
+      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
+    }
+
+    try {
+      setIsConfirming(true);
+
+      const data = encodeFunctionData({
+        abi: PROJECT_NFT_ABI,
+        functionName: 'endorseProject',
+        args: [tokenId],
+      });
+
+      // Send via CDP smart wallet (biometric signature)
+      const hash = await sendTransaction({
+        to: contractAddress,
+        data,
+        value: 0n,
+      });
+
+      setTxHash(hash);
+      setIsSuccess(true);
+
+      // Refetch after transaction
+      setTimeout(() => {
+        refetch();
+      }, 2000);
+    } catch (err) {
+      console.error('Endorse project failed:', err);
+      throw err;
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   return {
     endorseProject,
-    isPending,
+    isPending: isSendingTransaction,
     isConfirming,
     isSuccess,
     error,
-    txHash: hash,
+    txHash,
   };
 }
 
 /**
  * Endorse a project with biometric signature (EIP-7951)
+ * @deprecated Use useEndorseProject instead - all transactions now use smart wallets
  */
 export function useEndorseProjectWithBiometric(tokenId: bigint | undefined) {
   const { chainId, address } = useAccount();
