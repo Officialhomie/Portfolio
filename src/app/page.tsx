@@ -27,10 +27,10 @@ export default function HomePage() {
       {/* Hero Section */}
       <section
         ref={heroRef.ref}
-          className={cn(
+        className={cn(
             'container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 text-center transition-all duration-700 max-w-full overflow-x-hidden',
-            heroRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          )}
+          heroRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        )}
       >
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 gradient-text px-2 break-words">
           OneTrueHomie's <span className="text-highlight-glow">Decentralized</span> Developer Portfolio
@@ -118,10 +118,10 @@ export default function HomePage() {
       {/* Features Section */}
       <section
         ref={featuresRef.ref}
-          className={cn(
+        className={cn(
             'container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 transition-all duration-700 max-w-full overflow-x-hidden',
-            featuresRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          )}
+          featuresRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        )}
       >
         <h3 className="text-3xl font-bold text-center mb-12 gradient-text">
           <span className="text-highlight-glow">Key</span> Features
@@ -181,10 +181,10 @@ export default function HomePage() {
       {/* CTA Section */}
       <section
         ref={ctaRef.ref}
-          className={cn(
+        className={cn(
             'container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 transition-all duration-700 max-w-full overflow-x-hidden',
-            ctaRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          )}
+          ctaRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        )}
       >
         <div className="bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-2xl p-6 sm:p-8 md:p-12 text-center border-2 border-gradient hover:border-primary/80 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 backdrop-blur-sm">
           <h3 className="text-2xl sm:text-3xl font-bold mb-4 gradient-text px-2 break-words">

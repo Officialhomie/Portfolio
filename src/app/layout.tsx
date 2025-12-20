@@ -3,6 +3,7 @@ import './error-suppression'; // Import early to suppress errors before React lo
 import './globals.css';
 import { Web3Provider } from '@/providers/web3-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
+import { SmartWalletProvider } from '@/contexts/SmartWalletContext';
 import { baseSans, baseMono } from '@/lib/fonts/base-font';
 import { ClientErrorHandler } from '@/components/providers/client-error-handler';
 
@@ -39,7 +40,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Web3Provider>
-              {children}
+              <SmartWalletProvider>
+                {children}
+              </SmartWalletProvider>
             </Web3Provider>
           </ThemeProvider>
         </ClientErrorHandler>
