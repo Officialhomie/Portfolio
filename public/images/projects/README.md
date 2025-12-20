@@ -33,3 +33,5 @@ These 3 projects are featured on the homepage and should have high-quality image
 
 If an image is missing, the component will show a placeholder icon. However, it's recommended to add actual project screenshots or logos for better presentation.
 
+
+

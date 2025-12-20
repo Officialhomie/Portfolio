@@ -1,19 +1,19 @@
 {
   "transactions": [
     {
-      "rpc": "https://base-mainnet.g.alchemy.com/v2/f_SNCtMgIYAJswII3Y2BkjcSAWMpfNTh"
+      "rpc": "https://mainnet.base.org"
     },
     {
-      "rpc": "https://base-mainnet.g.alchemy.com/v2/f_SNCtMgIYAJswII3Y2BkjcSAWMpfNTh"
+      "rpc": "https://mainnet.base.org"
     },
     {
-      "rpc": "https://base-mainnet.g.alchemy.com/v2/f_SNCtMgIYAJswII3Y2BkjcSAWMpfNTh"
+      "rpc": "https://mainnet.base.org"
     },
     {
-      "rpc": "https://base-mainnet.g.alchemy.com/v2/f_SNCtMgIYAJswII3Y2BkjcSAWMpfNTh"
+      "rpc": "https://mainnet.base.org"
     },
     {
-      "rpc": "https://base-mainnet.g.alchemy.com/v2/f_SNCtMgIYAJswII3Y2BkjcSAWMpfNTh"
+      "rpc": "https://mainnet.base.org"
     }
   ]
 }
