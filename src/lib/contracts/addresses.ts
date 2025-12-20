@@ -6,11 +6,14 @@ import { base, baseSepolia } from 'wagmi/chains';
  */
 export const CONTRACT_ADDRESSES = {
   [base.id]: {
-    PortfolioToken: '0x784FDE2AA2FB800dAbb7a9e76582d3E3CF4f9C7a' as `0x${string}`,
-    ProjectNFT: '0x4C5f6b2658f6Fc25B2D285758ece987B8a7c3505' as `0x${string}`,
-    ProjectVoting: '0x9F889b7DB73b2ce722F085B64c9ed7598AdD4A72' as `0x${string}`,
-    VisitNFT: '0x4D09D6FC2D41daD91399346bB167256480C9b378' as `0x${string}`,
-    VisitorBook: '0x1A04b2cc37bb29Cbe8Ce4172B672e58c5f53223a' as `0x${string}`,
+    // Deployed December 2024 - Fusaka-enabled chain
+    PortfolioToken: '0x19573561A147fdb6105762C965a66db6Cb2510F6' as `0x${string}`,
+    ProjectNFT: '0xc0c257a95BbF359c8230b5A24Db96c422F24424C' as `0x${string}`,
+    ProjectVoting: '0x2304C17AD225bE17F968dE529CFd96A80D38f467' as `0x${string}`,
+    VisitNFT: '0xa9f173D7260788701C71427C9Ecc76d553d8ffA3' as `0x${string}`,
+    VisitorBook: '0xF61a59B7B383D46DEcD0Cc4ca7c239871A53686C' as `0x${string}`,
+    BiometricWalletFactory: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    DeploymentPaymaster: '0x0000000000000000000000000000000000000000' as `0x${string}`,
   },
   [baseSepolia.id]: {
     PortfolioToken: '0x0000000000000000000000000000000000000000' as `0x${string}`,
@@ -18,6 +21,8 @@ export const CONTRACT_ADDRESSES = {
     ProjectVoting: '0x0000000000000000000000000000000000000000' as `0x${string}`,
     VisitNFT: '0x0000000000000000000000000000000000000000' as `0x${string}`,
     VisitorBook: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    BiometricWalletFactory: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    DeploymentPaymaster: '0x0000000000000000000000000000000000000000' as `0x${string}`,
   },
 } as const;
 
@@ -49,6 +54,42 @@ export function isSupportedChain(chainId: number): boolean {
  */
 export function getSupportedChainIds(): number[] {
   return Object.keys(CONTRACT_ADDRESSES).map(Number);
+}
+
+/**
+ * Chain feature flags
+ */
+export const CHAIN_FEATURES = {
+  [base.id]: {
+    name: 'Base',
+    fusakaEnabled: true,
+    fusakaActivationDate: 'December 3, 2024',
+    eip7951Support: true,
+    biometricGasCost: 6900,
+    biometricGasSavings: 93,
+  },
+  [baseSepolia.id]: {
+    name: 'Base Sepolia',
+    fusakaEnabled: true,
+    fusakaActivationDate: 'October 16, 2024',
+    eip7951Support: true,
+    biometricGasCost: 6900,
+    biometricGasSavings: 93,
+  },
+} as const;
+
+/**
+ * Check if chain has Fusaka upgrade (EIP-7951 support)
+ */
+export function isFusakaEnabled(chainId: number): boolean {
+  return CHAIN_FEATURES[chainId as keyof typeof CHAIN_FEATURES]?.fusakaEnabled ?? false;
+}
+
+/**
+ * Get expected biometric gas cost for chain
+ */
+export function getBiometricGasCost(chainId: number): number {
+  return CHAIN_FEATURES[chainId as keyof typeof CHAIN_FEATURES]?.biometricGasCost ?? 100000;
 }
 
 /**
