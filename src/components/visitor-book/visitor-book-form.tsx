@@ -18,7 +18,7 @@ import { useAccount, useReadContract } from 'wagmi';
 import { useBiometricCapability, useBiometricAuth, useRegisterBiometricKey } from '@/hooks/useBiometric';
 import { getVisitorBookAddress } from '@/lib/contracts/addresses';
 import { getStoredPublicKey } from '@/lib/biometric/auth';
-import { Loader2, Fingerprint, Shield } from 'lucide-react';
+import { Loader2, Fingerprint, Shield, CheckCircle } from 'lucide-react';
 import { base } from 'wagmi/chains';
 import { keccak256, encodePacked } from 'viem';
 
@@ -29,11 +29,10 @@ interface VisitorBookFormProps {
 export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
   const { isConnected, address, chainId } = useAccount();
   const [message, setMessage] = useState('');
-  const [useBiometric, setUseBiometric] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const validation = useMessageValidation(message);
-  
+
   // Biometric capability check
   const { isAvailable: biometricAvailable, capability, isLoading: checkingBiometric } = useBiometricCapability();
   const { isEnabled: biometricEnabled } = useBiometricAuth();
@@ -70,32 +69,18 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
   // Registration hook
   const { registerKey, isPending: isRegistering, isSuccess: registrationSuccess } = useRegisterBiometricKey(contractAddress);
   
-  // Signing hooks
-  const { signVisitorBook, isPending: isEIP712Pending, isConfirming: isEIP712Confirming, isSuccess: isEIP712Success } = useSignVisitorBook();
-  const { 
-    signVisitorBookWithBiometric, 
-    isPending: isBiometricPending, 
-    isConfirming: isBiometricConfirming, 
-    isSuccess: isBiometricSuccess 
+  // Signing hooks (biometric only)
+  const {
+    signVisitorBookWithBiometric,
+    isPending: isBiometricPending,
+    isConfirming: isBiometricConfirming,
+    isSuccess: isBiometricSuccess
   } = useSignVisitorBookWithBiometric();
   
-  // Determine if biometric should be available
+  // Determine if biometric is ready to use
   const canUseBiometric = biometricAvailable && biometricEnabled && isBiometricRegistered && publicKey;
-  const shouldShowBiometricOption = biometricAvailable && biometricEnabled && publicKey;
-  
-  // Auto-switch to biometric if available and registered
-  useEffect(() => {
-    if (canUseBiometric && !useBiometric) {
-      setUseBiometric(true);
-    }
-  }, [canUseBiometric, useBiometric]);
-  
-  // Handle registration success
-  useEffect(() => {
-    if (registrationSuccess) {
-      setUseBiometric(true);
-    }
-  }, [registrationSuccess]);
+  const needsBiometricSetup = !biometricEnabled;
+  const needsRegistration = biometricEnabled && !isBiometricRegistered && publicKey;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,35 +88,27 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
 
     if (!validation.isValid) return;
 
+    // ENFORCE BIOMETRIC-ONLY SIGNING
+    if (!canUseBiometric) {
+      setError('Biometric authentication is required. Please set up biometric authentication first.');
+      return;
+    }
+
     try {
-      if (useBiometric && canUseBiometric) {
-        // Use biometric signing
-        await signVisitorBookWithBiometric(message);
-      } else {
-        // Fall back to EIP-712 signing
-        await signVisitorBook(message);
-      }
+      // Always use biometric signing (no fallback to EIP-712)
+      await signVisitorBookWithBiometric(message);
       setMessage(''); // Clear form on success
       onSuccess?.();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to sign visitor book';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign visitor book with biometric authentication';
       setError(errorMessage);
-      console.error('Failed to sign visitor book:', error);
-      
-      // If biometric fails, fall back to EIP-712
-      if (useBiometric && canUseBiometric) {
-        try {
-          await signVisitorBook(message);
-          setMessage('');
-          onSuccess?.();
-        } catch (fallbackError) {
-          console.error('Fallback signing also failed:', fallbackError);
-        }
-      }
+      console.error('Biometric signing failed:', error);
     }
   };
 
   const handleRegisterBiometric = async () => {
+    if (isRegistering) return; // Prevent duplicate calls
+    
     try {
       setError(null);
       await registerKey();
@@ -142,8 +119,8 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
     }
   };
 
-  const isLoading = isEIP712Pending || isEIP712Confirming || isBiometricPending || isBiometricConfirming || isRegistering;
-  const isSuccess = isEIP712Success || isBiometricSuccess;
+  const isLoading = isBiometricPending || isBiometricConfirming || isRegistering;
+  const isSuccess = isBiometricSuccess;
 
   // Success state
   useEffect(() => {
@@ -225,77 +202,97 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
               </div>
             )}
 
-            {/* Biometric registration prompt */}
-            {shouldShowBiometricOption && !isBiometricRegistered && !isRegistering && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            {/* Biometric setup required */}
+            {needsBiometricSetup && (
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                  <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
-                      Enable Biometric Signing
+                    <p className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
+                      Biometric Authentication Required
                     </p>
-                    <p className="text-xs text-blue-700 dark:text-blue-300 mb-3">
-                      Register your biometric key to sign with Face ID/Touch ID for enhanced security.
+                    <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
+                      This application requires biometric authentication (Face ID/Touch ID) to sign the visitor book.
+                      Please go to Settings to enable biometric authentication.
                     </p>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={handleRegisterBiometric}
+                      onClick={() => window.location.href = '/biometric'}
                       className="w-full"
                     >
                       <Fingerprint className="h-4 w-4 mr-2" />
-                      Register Biometric Key
+                      Go to Biometric Settings
                     </Button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Signing method selection */}
-            {shouldShowBiometricOption && isBiometricRegistered && (
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={useBiometric ? "default" : "outline"}
-                  onClick={() => setUseBiometric(true)}
-                  disabled={isLoading}
-                  className="flex-1"
-                >
-                  <Fingerprint className="h-4 w-4 mr-2" />
-                  {capability?.methods.includes('face') ? 'Face ID' : capability?.methods.includes('fingerprint') ? 'Touch ID' : 'Biometric'}
-                </Button>
-                <Button
-                  type="button"
-                  variant={!useBiometric ? "default" : "outline"}
-                  onClick={() => setUseBiometric(false)}
-                  disabled={isLoading}
-                  className="flex-1"
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  EIP-712
-                </Button>
+            {/* Registration required */}
+            {needsRegistration && !isRegistering && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      Register Your Biometric Key
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mb-3">
+                      One-time setup: Register your biometric key on-chain to sign with Face ID/Touch ID.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRegisterBiometric}
+                      disabled={isRegistering}
+                      className="w-full"
+                    >
+                      {isRegistering ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Registering...
+                        </>
+                      ) : (
+                        <>
+                          <Fingerprint className="h-4 w-4 mr-2" />
+                          Register Biometric Key
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Biometric ready - show status */}
+            {canUseBiometric && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-200">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-medium">
+                    Ready to sign with {capability?.methods.includes('face') ? 'Face ID' : capability?.methods.includes('fingerprint') ? 'Touch ID' : 'Biometric'}
+                  </span>
+                </div>
               </div>
             )}
 
             <Button
               type="submit"
               className="w-full"
-              disabled={!validation.isValid || isLoading}
+              disabled={!validation.isValid || isLoading || !canUseBiometric}
             >
               {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {isRegistering && 'Registering...'}
-              {isEIP712Pending && 'Signing with EIP-712...'}
-              {isBiometricPending && 'Authenticating...'}
-              {isEIP712Confirming && 'Confirming transaction...'}
-              {isBiometricConfirming && 'Confirming transaction...'}
-              {!isLoading && (
-                <>
-                  {useBiometric && canUseBiometric 
-                    ? `Sign with ${capability?.methods.includes('face') ? 'Face ID' : capability?.methods.includes('fingerprint') ? 'Touch ID' : 'Biometric'}`
-                    : 'Sign Visitor Book'}
-                </>
+              {!isLoading && canUseBiometric && <Fingerprint className="h-4 w-4 mr-2" />}
+              {isRegistering && 'Registering Biometric Key...'}
+              {isBiometricPending && 'Authenticating with Biometric...'}
+              {isBiometricConfirming && 'Confirming Transaction...'}
+              {!isLoading && canUseBiometric && (
+                `Sign with ${capability?.methods.includes('face') ? 'Face ID' : capability?.methods.includes('fingerprint') ? 'Touch ID' : 'Biometric'}`
               )}
+              {!isLoading && !canUseBiometric && 'Biometric Required'}
             </Button>
           </form>
         )}
