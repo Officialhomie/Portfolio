@@ -40,19 +40,17 @@ export function VoteButtonWithBiometric({
   const isSuccess = isSuccessRegular || isSuccessBiometric;
 
   const handleVote = async () => {
-    if (biometricEnabled) {
-      // Show biometric prompt first
-      setShowBiometricPrompt(true);
-      setPendingVote(true);
-    } else {
-      // Regular vote without biometric
-      try {
-        await vote();
-        onSuccess?.();
-      } catch (error) {
-        console.error('Vote failed:', error);
-      }
+    // Only allow biometric voting - no fallback to wallet
+    if (!biometricEnabled) {
+      // Show error or redirect to setup
+      console.error('Biometric authentication required but not enabled');
+      // You could show a toast or modal here prompting user to enable biometric
+      return;
     }
+
+    // Show biometric prompt
+    setShowBiometricPrompt(true);
+    setPendingVote(true);
   };
 
   const handleBiometricSuccess = async () => {
@@ -70,8 +68,7 @@ export function VoteButtonWithBiometric({
   const handleBiometricCancel = () => {
     setShowBiometricPrompt(false);
     setPendingVote(false);
-    // Fallback to regular vote
-    vote().catch(console.error);
+    // No fallback - user must use biometric
   };
 
   const isLoading = isPending || isConfirming || checkingEligibility || pendingVote;
@@ -81,6 +78,15 @@ export function VoteButtonWithBiometric({
     return (
       <Button size={size} variant={variant} disabled>
         Connect Wallet to Vote
+      </Button>
+    );
+  }
+
+  // Biometric not enabled
+  if (!biometricEnabled) {
+    return (
+      <Button size={size} variant="outline" disabled title="Please enable biometric authentication in Settings">
+        Enable Biometric to Vote
       </Button>
     );
   }

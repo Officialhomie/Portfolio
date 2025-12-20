@@ -11,12 +11,20 @@ import { Fingerprint, User, Shield, CheckCircle, XCircle, Loader2 } from 'lucide
 import { useBiometricCapability, useBiometricAuth } from '@/hooks/useBiometric';
 import { useBaseCompatibility } from '@/hooks/useBiometric';
 import { useAccount } from 'wagmi';
+import { FusakaInfoCard, FusakaBadge } from './fusaka-badge';
+import { GasEstimateCard } from './gas-estimate-display';
+import { useFusakaDetection } from '@/hooks/useFusakaDetection';
+import { useSmartWalletAddress, useIsWalletDeployed } from '@/hooks/useSmartWallet';
+import { formatAddress } from '@/lib/utils/format';
 
 export function BiometricStatus() {
   const { chainId } = useAccount();
   const { capability, isLoading } = useBiometricCapability();
   const { isEnabled } = useBiometricAuth();
-  const compatibility = chainId ? useBaseCompatibility(chainId) : null;
+  const compatibility = useBaseCompatibility(chainId || 0);
+  const fusaka = useFusakaDetection();
+  const { walletAddress, isLoading: isLoadingWalletAddress } = useSmartWalletAddress();
+  const { isDeployed: isWalletDeployed, isLoading: isCheckingDeployment } = useIsWalletDeployed(walletAddress);
 
   if (isLoading) {
     return (
@@ -117,7 +125,7 @@ export function BiometricStatus() {
           <div className="space-y-2">
             <span className="text-sm font-medium">Supported Methods</span>
             <div className="flex flex-wrap gap-2">
-              {capability.methods.map((method) => (
+              {Array.from(new Set(capability.methods)).map((method) => (
                 <Badge key={method} variant="outline" className="gap-1">
                   {getMethodIcon(method)}
                   {method.charAt(0).toUpperCase() + method.slice(1)}
@@ -127,8 +135,63 @@ export function BiometricStatus() {
           </div>
         )}
 
-        {/* Base L2 Compatibility */}
-        {compatibility && (
+        {/* Smart Wallet Status */}
+        {isEnabled && !isLoadingWalletAddress && walletAddress && (
+          <div className="pt-4 border-t border-border space-y-2">
+            <span className="text-sm font-medium">Smart Wallet</span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Deployment Status</span>
+                {isCheckingDeployment ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : isWalletDeployed ? (
+                  <Badge variant="default" className="gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Deployed
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="gap-1">
+                    <XCircle className="h-3 w-3" />
+                    Not Deployed
+                  </Badge>
+                )}
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Wallet Address</span>
+                <span className="text-xs font-mono break-all">{formatAddress(walletAddress)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Fusaka Upgrade Info */}
+        {fusaka && fusaka.hasPrecompile && (
+          <div className="pt-4 border-t border-border space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Fusaka Upgrade</span>
+              <FusakaBadge variant="compact" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">EIP-7951 Precompile</span>
+                <Badge variant="default">Active</Badge>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Gas Cost</span>
+                <span className="font-mono text-sm">{fusaka.estimatedGas.toString()}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Savings</span>
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  {fusaka.gasSavingsPercentage}%
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Base L2 Compatibility (legacy) */}
+        {compatibility && !compatibility.isLoading && chainId && !fusaka?.hasPrecompile && (
           <div className="pt-4 border-t border-border space-y-2">
             <span className="text-sm font-medium">Base L2 Compatibility</span>
             <div className="space-y-1">
