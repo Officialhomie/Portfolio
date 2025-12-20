@@ -35,6 +35,9 @@ contract VisitNFT is
     // Biometric authentication support (EIP-7951)
     mapping(bytes32 => address) public secp256r1ToAddress;
     
+    // Smart wallet registry: wallet address => user address
+    mapping(address => address) public walletToUser;
+    
     event VisitNFTMinted(
         uint256 indexed tokenId,
         address indexed recipient,
@@ -86,24 +89,65 @@ contract VisitNFT is
     /**
      * @notice Mint a free Visit NFT (first-time visitors only)
      * @dev Can only mint once per address, limited to MAX_SUPPLY
+     *      Supports both direct calls and smart wallet calls
      */
     function mintVisitNFT() 
         external 
         whenNotPaused 
         nonReentrant 
     {
-        require(!hasMinted[msg.sender], "Already minted");
+        address user = walletToUser[msg.sender];
+        if (user == address(0)) {
+            user = msg.sender; // Direct call from user
+        }
+        
+        require(!hasMinted[user], "Already minted");
         require(_tokenIds < MAX_SUPPLY, "Max supply reached");
         
-        hasMinted[msg.sender] = true;
+        hasMinted[user] = true;
         _tokenIds++;
         uint256 newTokenId = _tokenIds;
         
-        _safeMint(msg.sender, newTokenId);
+        _safeMint(user, newTokenId);
         _setTokenURI(newTokenId, string(abi.encodePacked(baseURI, _toString(newTokenId))));
         mintTimestamps[newTokenId] = block.timestamp;
         
-        emit VisitNFTMinted(newTokenId, msg.sender, block.timestamp);
+        emit VisitNFTMinted(newTokenId, user, block.timestamp);
+    }
+    
+    /**
+     * @notice Register a smart wallet for a user
+     * @param walletAddress Address of the smart wallet
+     * @param userAddress Address of the user
+     */
+    function registerWallet(address walletAddress, address userAddress) external {
+        require(walletAddress != address(0), "Invalid wallet address");
+        require(userAddress != address(0), "Invalid user address");
+        require(walletToUser[walletAddress] == address(0), "Wallet already registered");
+        require(msg.sender == walletAddress || msg.sender == userAddress, "Not authorized");
+        
+        walletToUser[walletAddress] = userAddress;
+    }
+    
+    /**
+     * @notice Execute Visit NFT mint for a user via smart wallet
+     * @param user Address of the user
+     */
+    function executeFor(address user) external whenNotPaused nonReentrant {
+        require(walletToUser[msg.sender] == user, "Wallet not authorized for user");
+        
+        require(!hasMinted[user], "Already minted");
+        require(_tokenIds < MAX_SUPPLY, "Max supply reached");
+        
+        hasMinted[user] = true;
+        _tokenIds++;
+        uint256 newTokenId = _tokenIds;
+        
+        _safeMint(user, newTokenId);
+        _setTokenURI(newTokenId, string(abi.encodePacked(baseURI, _toString(newTokenId))));
+        mintTimestamps[newTokenId] = block.timestamp;
+        
+        emit VisitNFTMinted(newTokenId, user, block.timestamp);
     }
 
     /**
@@ -225,6 +269,7 @@ contract VisitNFT is
 
     /**
      * @notice Mint a free Visit NFT using biometric signature (EIP-7951)
+     * @dev DEPRECATED: Use smart wallet executeFor instead
      * @param r Signature r component
      * @param s Signature s component
      * @param publicKeyX Public key X coordinate

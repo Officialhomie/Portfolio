@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/P256.sol";
+import "./libraries/Secp256r1Verifier.sol";
 
 /**
  * @title ProjectVoting
@@ -36,16 +37,23 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     
     // Biometric authentication support (EIP-7951)
     mapping(bytes32 => address) public secp256r1ToAddress;
+
+    // Replay protection: nonces for biometric transactions
+    mapping(address => uint256) public nonces;
     
+    // Smart wallet registry: wallet address => user address
+    mapping(address => address) public walletToUser;
+
     event VoteCast(
         address indexed voter,
         string indexed projectId,
         uint256 timestamp,
         uint256 tokensBurned
     );
-    
+
     event VoteCostUpdated(uint256 oldCost, uint256 newCost);
     event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
+    event BiometricVoteCast(address indexed user, string indexed projectId, uint256 gasUsed, bool usedPrecompile);
 
     constructor(address _portfolioToken) {
         portfolioToken = PortfolioToken(_portfolioToken);
@@ -56,34 +64,86 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     /**
      * @notice Vote for a project (requires token payment)
      * @param projectId The project identifier to vote for
+     * @dev Supports both direct calls and smart wallet calls
      */
     function vote(string memory projectId) 
         external 
         whenNotPaused 
         nonReentrant 
     {
+        address user = walletToUser[msg.sender];
+        if (user == address(0)) {
+            user = msg.sender; // Direct call from user
+        }
+        
         require(bytes(projectId).length > 0, "Project ID cannot be empty");
-        require(!hasVoted[msg.sender][projectId], "Already voted for this project");
+        require(!hasVoted[user][projectId], "Already voted for this project");
         require(
-            portfolioToken.balanceOf(msg.sender) >= voteCost,
+            portfolioToken.balanceOf(user) >= voteCost,
             "Insufficient tokens"
         );
         
         // Burn tokens for voting
-        portfolioToken.burnFrom(msg.sender, voteCost);
+        portfolioToken.burnFrom(user, voteCost);
         
         projectVotes[projectId]++;
-        hasVoted[msg.sender][projectId] = true;
-        totalVotesByAddress[msg.sender]++;
+        hasVoted[user][projectId] = true;
+        totalVotesByAddress[user]++;
         
         votes.push(Vote({
-            voter: msg.sender,
+            voter: user,
             projectId: projectId,
             timestamp: block.timestamp,
             tokensBurned: voteCost
         }));
         
-        emit VoteCast(msg.sender, projectId, block.timestamp, voteCost);
+        emit VoteCast(user, projectId, block.timestamp, voteCost);
+    }
+    
+    /**
+     * @notice Register a smart wallet for a user
+     * @param walletAddress Address of the smart wallet
+     * @param userAddress Address of the user
+     */
+    function registerWallet(address walletAddress, address userAddress) external {
+        require(walletAddress != address(0), "Invalid wallet address");
+        require(userAddress != address(0), "Invalid user address");
+        require(walletToUser[walletAddress] == address(0), "Wallet already registered");
+        require(msg.sender == walletAddress || msg.sender == userAddress, "Not authorized");
+        
+        walletToUser[walletAddress] = userAddress;
+    }
+    
+    /**
+     * @notice Execute vote for a user via smart wallet
+     * @param user Address of the user
+     * @param projectId The project identifier to vote for
+     */
+    function executeFor(address user, string memory projectId) external whenNotPaused nonReentrant {
+        require(walletToUser[msg.sender] == user, "Wallet not authorized for user");
+        
+        require(bytes(projectId).length > 0, "Project ID cannot be empty");
+        require(!hasVoted[user][projectId], "Already voted for this project");
+        require(
+            portfolioToken.balanceOf(user) >= voteCost,
+            "Insufficient tokens"
+        );
+        
+        // Burn tokens for voting
+        portfolioToken.burnFrom(user, voteCost);
+        
+        projectVotes[projectId]++;
+        hasVoted[user][projectId] = true;
+        totalVotesByAddress[user]++;
+        
+        votes.push(Vote({
+            voter: user,
+            projectId: projectId,
+            timestamp: block.timestamp,
+            tokensBurned: voteCost
+        }));
+        
+        emit VoteCast(user, projectId, block.timestamp, voteCost);
     }
 
     /**
@@ -188,36 +248,50 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
 
     /**
      * @notice Vote for a project using biometric signature (EIP-7951)
+     * @dev DEPRECATED: Use smart wallet executeFor instead
      * @param projectId The project identifier to vote for
      * @param r Signature r component
      * @param s Signature s component
      * @param publicKeyX Public key X coordinate
      * @param publicKeyY Public key Y coordinate
+     * @param nonce User's current nonce for replay protection
      */
     function voteWithBiometric(
         string memory projectId,
         bytes32 r,
         bytes32 s,
         bytes32 publicKeyX,
-        bytes32 publicKeyY
+        bytes32 publicKeyY,
+        uint256 nonce
     ) external whenNotPaused nonReentrant {
         require(bytes(projectId).length > 0, "Project ID cannot be empty");
-        
+
         bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
         address user = secp256r1ToAddress[publicKeyHash];
         require(user != address(0), "Public key not registered");
-        
-        // Generate message hash
+
+        // Verify and increment nonce for replay protection
+        require(nonce == nonces[user], "Invalid nonce");
+        nonces[user]++;
+
+        // Generate message hash with nonce
         bytes32 messageHash = keccak256(abi.encodePacked(
             "vote",
             block.chainid,
             address(this),
             user,
-            projectId
+            projectId,
+            nonce
         ));
-        
-        // Verify secp256r1 signature
-        require(P256.verify(messageHash, r, s, publicKeyX, publicKeyY), "Invalid signature");
+
+        // Verify secp256r1 signature using hybrid verifier
+        // Automatically uses EIP-7951 precompile (6.9k gas) if available, falls back to P256.sol (100k gas)
+        uint256 gasBefore = gasleft();
+        require(
+            Secp256r1Verifier.verify(messageHash, r, s, publicKeyX, publicKeyY),
+            "Invalid signature"
+        );
+        uint256 gasUsed = gasBefore - gasleft();
         
         require(!hasVoted[user][projectId], "Already voted for this project");
         require(
@@ -238,7 +312,38 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
             timestamp: block.timestamp,
             tokensBurned: voteCost
         }));
-        
+
+        // Emit events
         emit VoteCast(user, projectId, block.timestamp, voteCost);
+        emit BiometricVoteCast(user, projectId, gasUsed, Secp256r1Verifier.isPrecompileAvailable());
+    }
+
+    /**
+     * @notice Get current verification method and estimated gas cost
+     * @dev Useful for frontend to display gas estimates to users
+     * @return method "precompile" if EIP-7951 is available, "p256-library" otherwise
+     * @return estimatedGas Approximate gas cost for biometric verification
+     * @return gasSavings Percentage of gas saved with precompile (e.g., 93 = 93%)
+     */
+    function getBiometricVerificationInfo()
+        external
+        view
+        returns (
+            string memory method,
+            uint256 estimatedGas,
+            uint256 gasSavings
+        )
+    {
+        (method, estimatedGas) = Secp256r1Verifier.getVerificationMethod();
+        gasSavings = Secp256r1Verifier.getGasSavingsPercentage();
+    }
+
+    /**
+     * @notice Check if EIP-7951 precompile is available on this chain
+     * @dev Returns true on Fusaka-enabled chains (Base after Dec 3, 2024)
+     * @return available True if precompile exists and works correctly
+     */
+    function isEIP7951Available() external view returns (bool available) {
+        return Secp256r1Verifier.isPrecompileAvailable();
     }
 }

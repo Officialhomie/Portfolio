@@ -46,6 +46,9 @@ contract ProjectNFT is
     // Biometric authentication support (EIP-7951)
     mapping(bytes32 => address) public secp256r1ToAddress;
     
+    // Smart wallet registry: wallet address => user address
+    mapping(address => address) public walletToUser;
+    
     event ProjectMinted(
         uint256 indexed tokenId,
         string indexed projectId,
@@ -159,15 +162,21 @@ contract ProjectNFT is
     /**
      * @notice Endorse a project (increment endorsement count)
      * @param tokenId The token ID of the project to endorse
+     * @dev Supports both direct calls and smart wallet calls
      */
     function endorseProject(uint256 tokenId) 
         external 
         whenNotPaused 
         nonReentrant 
     {
+        address user = walletToUser[msg.sender];
+        if (user == address(0)) {
+            user = msg.sender; // Direct call from user
+        }
+        
         require(_ownerOf(tokenId) != address(0), "Token does not exist");
         require(
-            !endorsements[tokenId][msg.sender],
+            !endorsements[tokenId][user],
             "Already endorsed this project"
         );
         require(
@@ -175,10 +184,48 @@ contract ProjectNFT is
             "Max endorsements reached"
         );
         
-        endorsements[tokenId][msg.sender] = true;
+        endorsements[tokenId][user] = true;
         projects[tokenId].endorsementCount++;
         
-        emit ProjectEndorsed(tokenId, msg.sender, projects[tokenId].endorsementCount);
+        emit ProjectEndorsed(tokenId, user, projects[tokenId].endorsementCount);
+    }
+    
+    /**
+     * @notice Register a smart wallet for a user
+     * @param walletAddress Address of the smart wallet
+     * @param userAddress Address of the user
+     */
+    function registerWallet(address walletAddress, address userAddress) external {
+        require(walletAddress != address(0), "Invalid wallet address");
+        require(userAddress != address(0), "Invalid user address");
+        require(walletToUser[walletAddress] == address(0), "Wallet already registered");
+        require(msg.sender == walletAddress || msg.sender == userAddress, "Not authorized");
+        
+        walletToUser[walletAddress] = userAddress;
+    }
+    
+    /**
+     * @notice Execute project endorsement for a user via smart wallet
+     * @param user Address of the user
+     * @param tokenId The token ID of the project to endorse
+     */
+    function executeFor(address user, uint256 tokenId) external whenNotPaused nonReentrant {
+        require(walletToUser[msg.sender] == user, "Wallet not authorized for user");
+        
+        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        require(
+            !endorsements[tokenId][user],
+            "Already endorsed this project"
+        );
+        require(
+            projects[tokenId].endorsementCount < maxEndorsementsPerProject,
+            "Max endorsements reached"
+        );
+        
+        endorsements[tokenId][user] = true;
+        projects[tokenId].endorsementCount++;
+        
+        emit ProjectEndorsed(tokenId, user, projects[tokenId].endorsementCount);
     }
 
     /**
