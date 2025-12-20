@@ -5,14 +5,16 @@
  * Handles all PortfolioToken.sol interactions
  */
 
+import { useState } from 'react';
 import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { formatUnits, parseUnits } from 'viem';
+import { formatUnits, parseUnits, encodeFunctionData } from 'viem';
 import { base, baseSepolia } from 'wagmi/chains';
 import { PORTFOLIO_TOKEN_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import { useBiometricAuth } from '@/hooks/useBiometric';
 import { signTransactionHashWithBiometric } from '@/lib/biometric/signer';
 import { getStoredBiometricCredential, getStoredPublicKey } from '@/lib/biometric/auth';
+import { useSmartWallet } from '@/contexts/SmartWalletContext';
 
 /**
  * Get Portfolio Token contract address for current chain
@@ -108,49 +110,85 @@ export function usePortfolioToken() {
 }
 
 /**
- * Claim faucet tokens
+ * Claim faucet tokens via CDP smart wallet
  */
 export function useClaimFaucet() {
   const { chainId, address } = useAccount();
   const { refetch } = usePortfolioToken();
   const contractAddress = getTokenAddress(chainId);
-  const { isEnabled } = useBiometricAuth();
-
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const claimFaucet = async () => {
-    if (!address) {
+    console.log('🎯 useClaimFaucet.claimFaucet() called');
+    console.log('   address:', address);
+    console.log('   chainId:', chainId);
+    console.log('   smartWalletAddress:', smartWalletAddress);
+    
+    if (!address || !chainId) {
       throw new Error('Wallet not connected');
     }
 
-    await writeContract({
-      address: contractAddress,
-      abi: PORTFOLIO_TOKEN_ABI,
-      functionName: 'claimFaucet',
-      chainId: chainId || base.id,
-    });
-  };
+    if (!smartWalletAddress) {
+      console.error('❌ Smart wallet not ready!');
+      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
+    }
 
-  // Auto-refetch balance on success
-  if (isSuccess && hash) {
-    refetch();
-  }
+    try {
+      console.log('✅ Pre-flight checks passed, starting transaction...');
+      setIsConfirming(true);
+      
+      // Build transaction data - smart wallet calls claimFaucet() directly
+      // Contract will use walletToUser[msg.sender] to get the user
+      const data = encodeFunctionData({
+        abi: PORTFOLIO_TOKEN_ABI,
+        functionName: 'claimFaucet',
+        args: [],
+      });
+
+      console.log('📦 Transaction data encoded, calling sendTransaction...');
+      console.log('   Contract:', contractAddress);
+      console.log('   Data length:', data.length);
+
+      // Send via CDP smart wallet (biometric signature)
+      const hash = await sendTransaction({
+        to: contractAddress,
+        data,
+        value: 0n,
+      });
+
+      console.log('✅ Transaction hash received:', hash);
+
+      setTxHash(hash);
+      setIsSuccess(true);
+      
+      // Refetch balance after a short delay to allow transaction to be mined
+      setTimeout(() => {
+        refetch();
+      }, 2000);
+    } catch (err) {
+      console.error('Faucet claim failed:', err);
+      throw err;
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   return {
     claimFaucet,
-    isPending,
+    isPending: isSendingTransaction,
     isConfirming,
     isSuccess,
     error,
-    txHash: hash,
+    txHash,
   };
 }
 
 /**
  * Claim faucet tokens with biometric signature (EIP-7951)
+ * @deprecated Use useClaimFaucet instead - all transactions now use smart wallets
  */
 export function useClaimFaucetWithBiometric() {
   const { chainId, address } = useAccount();
