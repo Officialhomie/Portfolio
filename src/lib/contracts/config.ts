@@ -10,6 +10,9 @@ import {
   PROJECT_VOTING_ABI,
   VISIT_NFT_ABI,
   VISITOR_BOOK_ABI,
+  BIOMETRIC_WALLET_ABI,
+  BIOMETRIC_WALLET_FACTORY_ABI,
+  DEPLOYMENT_PAYMASTER_ABI,
 } from './abis';
 import { CONTRACT_ADDRESSES, getContractAddress, type ContractName } from './addresses';
 
@@ -50,6 +53,20 @@ export const CONTRACTS = {
     addresses: {
       [base.id]: CONTRACT_ADDRESSES[base.id].VisitorBook,
       [baseSepolia.id]: CONTRACT_ADDRESSES[baseSepolia.id].VisitorBook,
+    },
+  },
+  BiometricWalletFactory: {
+    abi: BIOMETRIC_WALLET_FACTORY_ABI,
+    addresses: {
+      [base.id]: CONTRACT_ADDRESSES[base.id].BiometricWalletFactory,
+      [baseSepolia.id]: CONTRACT_ADDRESSES[baseSepolia.id].BiometricWalletFactory,
+    },
+  },
+  DeploymentPaymaster: {
+    abi: DEPLOYMENT_PAYMASTER_ABI,
+    addresses: {
+      [base.id]: CONTRACT_ADDRESSES[base.id].DeploymentPaymaster,
+      [baseSepolia.id]: CONTRACT_ADDRESSES[baseSepolia.id].DeploymentPaymaster,
     },
   },
 } as const;
