@@ -7,6 +7,8 @@ import {ProjectNFT} from "../contracts/ProjectNFT.sol";
 import {ProjectVoting} from "../contracts/ProjectVoting.sol";
 import {VisitNFT} from "../contracts/VisitNFT.sol";
 import {PortfolioToken} from "../contracts/Homie.sol";
+import {BiometricWalletFactory} from "../contracts/BiometricWalletFactory.sol";
+import {DeploymentPaymaster} from "../contracts/DeploymentPaymaster.sol";
 
 contract DeployScript is Script {
     function run() external {
@@ -35,6 +37,17 @@ contract DeployScript is Script {
         VisitNFT visitNFT = new VisitNFT();
         console.log("VisitNFT deployed at:", address(visitNFT));
 
+        // 6. Deploy Deployment Paymaster (for sponsoring wallet deployments)
+        DeploymentPaymaster paymaster = new DeploymentPaymaster(msg.sender);
+        console.log("DeploymentPaymaster deployed at:", address(paymaster));
+        
+        // Fund paymaster (optional - can be done later)
+        // paymaster.fundPaymaster{value: 0.1 ether}();
+
+        // 7. Deploy Biometric Wallet Factory (with paymaster address)
+        BiometricWalletFactory walletFactory = new BiometricWalletFactory(address(paymaster));
+        console.log("BiometricWalletFactory deployed at:", address(walletFactory));
+
         vm.stopBroadcast();
 
         console.log("\n=== Deployment Summary ===");
@@ -43,9 +56,11 @@ contract DeployScript is Script {
         console.log("ProjectNFT:", address(projectNFT));
         console.log("ProjectVoting:", address(projectVoting));
         console.log("VisitNFT:", address(visitNFT));
+        console.log("DeploymentPaymaster:", address(paymaster));
+        console.log("BiometricWalletFactory:", address(walletFactory));
         console.log("\nUpdate these addresses in:");
-        console.log("- lib/contracts.ts");
-        console.log("- .env file");
+        console.log("- src/lib/contracts/addresses.ts");
+        console.log("- .env file (if used)");
     }
 }
 
