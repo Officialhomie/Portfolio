@@ -5,15 +5,20 @@
  * Handles all ProjectVoting.sol interactions
  */
 
+import { useState } from 'react';
 import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseUnits } from 'viem';
+import { parseUnits, encodeFunctionData } from 'viem';
 import { base } from 'wagmi/chains';
+import { useSmartWallet } from '@/contexts/SmartWalletContext';
 import { PROJECT_VOTING_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import { usePortfolioToken } from './usePortfolioToken';
 import { useBiometricAuth } from '@/hooks/useBiometric';
-import { signTransactionHashWithBiometric } from '@/lib/biometric/signer';
-import { getStoredBiometricCredential, getStoredPublicKey } from '@/lib/biometric/auth';
+import { generateVoteHash } from '@/lib/biometric/message-hash';
+import { signWithBiometric, getStoredBiometricCredential, getStoredPublicKey } from '@/lib/biometric/auth';
+import { parseWebAuthnSignature } from '@/lib/biometric/signature-parser';
+import { useNonce } from '@/hooks/useNonce';
+import { assertTrustedContract } from '@/lib/biometric/contract-validation';
 
 /**
  * Get Project Voting contract address
@@ -152,53 +157,78 @@ export function useCanVote(projectId: string | undefined) {
 }
 
 /**
- * Vote for a project
+ * Vote for a project via CDP smart wallet
  */
 export function useVote(projectId: string | undefined) {
-  const { chainId } = useAccount();
+  const { chainId, address } = useAccount();
   const contractAddress = getVotingAddress(chainId);
   const { refetch: refetchVotes } = useProjectVotes(projectId);
   const { refetch: refetchHasVoted } = useHasVoted(projectId);
   const { refetch: refetchBalance } = usePortfolioToken();
-
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const vote = async () => {
     if (!projectId) {
       throw new Error('Project ID is required');
     }
 
-    await writeContract({
-      address: contractAddress,
-      abi: PROJECT_VOTING_ABI,
-      functionName: 'vote',
-      args: [projectId],
-      chainId: chainId || base.id,
-    });
-  };
+    if (!address || !chainId) {
+      throw new Error('Wallet not connected');
+    }
 
-  // Auto-refetch on success
-  if (isSuccess && hash) {
-    refetchVotes();
-    refetchHasVoted();
-    refetchBalance(); // Balance changes due to token burn
-  }
+    if (!smartWalletAddress) {
+      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
+    }
+
+    try {
+      setIsConfirming(true);
+
+      const data = encodeFunctionData({
+        abi: PROJECT_VOTING_ABI,
+        functionName: 'vote',
+        args: [projectId],
+      });
+
+      // Send via CDP smart wallet (biometric signature)
+      const hash = await sendTransaction({
+        to: contractAddress,
+        data,
+        value: 0n,
+      });
+
+      setTxHash(hash);
+      setIsSuccess(true);
+
+      // Refetch data after transaction
+      setTimeout(() => {
+        refetchVotes();
+        refetchHasVoted();
+        refetchBalance(); // Balance changes due to token burn
+      }, 2000);
+    } catch (err) {
+      console.error('Vote failed:', err);
+      throw err;
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   return {
     vote,
-    isPending,
+    isPending: isSendingTransaction,
     isConfirming,
     isSuccess,
     error,
-    txHash: hash,
+    txHash,
   };
 }
 
 /**
  * Vote for a project with biometric signature (EIP-7951)
+ * @deprecated Use useVote instead - all transactions now use smart wallets
  */
 export function useVoteWithBiometric(projectId: string | undefined) {
   const { chainId, address } = useAccount();
@@ -207,11 +237,13 @@ export function useVoteWithBiometric(projectId: string | undefined) {
   const { refetch: refetchHasVoted } = useHasVoted(projectId);
   const { refetch: refetchBalance } = usePortfolioToken();
   const { isEnabled } = useBiometricAuth();
+  const { sendTransaction, isSendingTransaction, smartWalletAddress } = useSmartWallet();
 
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const [isPending, setIsPending] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
 
   const voteWithBiometric = async () => {
     if (!projectId) {
@@ -222,8 +254,8 @@ export function useVoteWithBiometric(projectId: string | undefined) {
       throw new Error('Biometric authentication not enabled');
     }
 
-    if (!address) {
-      throw new Error('Wallet not connected');
+    if (!smartWalletAddress) {
+      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
     }
 
     const credentialId = getStoredBiometricCredential();
@@ -232,43 +264,58 @@ export function useVoteWithBiometric(projectId: string | undefined) {
     }
 
     try {
-      // Sign transaction hash with biometric
-      const signature = await signTransactionHashWithBiometric({
-        chainId: chainId || base.id,
-        contractAddress,
-        userAddress: address,
+      setIsPending(true);
+      setIsConfirming(true);
+      setError(null);
+
+      console.log('🗳️ Voting via CDP Smart Wallet (gasless!)');
+      console.log('   Smart Wallet Address:', smartWalletAddress);
+      console.log('   Project ID:', projectId);
+
+      // Encode function call
+      const data = encodeFunctionData({
+        abi: PROJECT_VOTING_ABI,
         functionName: 'vote',
-        functionParams: [projectId],
+        args: [projectId],
       });
 
-      // Call contract with biometric signature
-      await writeContract({
-        address: contractAddress,
-        abi: PROJECT_VOTING_ABI,
-        functionName: 'voteWithBiometric',
-        args: [projectId, signature.r, signature.s, signature.publicKeyX, signature.publicKeyY],
-        chainId: chainId || base.id,
+      // Send via CDP Smart Wallet (GASLESS!)
+      const hash = await sendTransaction({
+        to: contractAddress,
+        data,
+        value: 0n,
       });
+
+      setTxHash(hash);
+      setIsSuccess(true);
+
+      console.log('✅ Vote cast via CDP!');
+      console.log('   Transaction Hash:', hash);
+      console.log('   🎉 Gas fees sponsored by CDP Paymaster!');
+
+      // Refetch data
+      await refetchVotes();
+      await refetchHasVoted();
+      await refetchBalance();
+
     } catch (err) {
-      console.error('Biometric vote error:', err);
-      throw err;
+      const error = err instanceof Error ? err : new Error('Failed to vote');
+      setError(error);
+      console.error('❌ Biometric vote error:', error);
+      throw error;
+    } finally {
+      setIsPending(false);
+      setIsConfirming(false);
     }
   };
 
-  // Auto-refetch on success
-  if (isSuccess && hash) {
-    refetchVotes();
-    refetchHasVoted();
-    refetchBalance();
-  }
-
   return {
     voteWithBiometric,
-    isPending,
+    isPending: isPending || isSendingTransaction,
     isConfirming,
     isSuccess,
     error,
-    txHash: hash,
+    txHash,
   };
 }
 
