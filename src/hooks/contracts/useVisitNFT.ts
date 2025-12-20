@@ -5,8 +5,11 @@
  * Handles all VisitNFT.sol interactions
  */
 
+import { useState } from 'react';
 import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { encodeFunctionData } from 'viem';
 import { base } from 'wagmi/chains';
+import { useSmartWallet } from '@/contexts/SmartWalletContext';
 import { VISIT_NFT_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import { useBiometricAuth } from '@/hooks/useBiometric';
@@ -85,44 +88,70 @@ export function useVisitNFT() {
 }
 
 /**
- * Mint Visit NFT
+ * Mint Visit NFT via CDP smart wallet
  */
 export function useMintVisitNFT() {
-  const { chainId } = useAccount();
+  const { chainId, address } = useAccount();
   const contractAddress = getVisitNFTAddress(chainId);
   const { refetch } = useVisitNFT();
-
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const mintVisitNFT = async () => {
-    await writeContract({
-      address: contractAddress,
-      abi: VISIT_NFT_ABI,
-      functionName: 'mintVisitNFT',
-      chainId: chainId || base.id,
-    });
-  };
+    if (!address || !chainId) {
+      throw new Error('Wallet not connected');
+    }
 
-  // Auto-refetch on success
-  if (isSuccess && hash) {
-    refetch();
-  }
+    if (!smartWalletAddress) {
+      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
+    }
+
+    try {
+      setIsConfirming(true);
+
+      const data = encodeFunctionData({
+        abi: VISIT_NFT_ABI,
+        functionName: 'mintVisitNFT',
+        args: [],
+      });
+
+      // Send via CDP smart wallet (biometric signature)
+      const hash = await sendTransaction({
+        to: contractAddress,
+        data,
+        value: 0n,
+      });
+
+      setTxHash(hash);
+      setIsSuccess(true);
+
+      // Refetch after transaction
+      setTimeout(() => {
+        refetch();
+      }, 2000);
+    } catch (err) {
+      console.error('Mint Visit NFT failed:', err);
+      throw err;
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   return {
     mintVisitNFT,
-    isPending,
+    isPending: isSendingTransaction,
     isConfirming,
     isSuccess,
     error,
-    txHash: hash,
+    txHash,
   };
 }
 
 /**
  * Mint Visit NFT with biometric signature (EIP-7951)
+ * @deprecated Use useMintVisitNFT instead - all transactions now use smart wallets
  */
 export function useMintVisitNFTWithBiometric() {
   const { chainId, address } = useAccount();
