@@ -7,14 +7,18 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePortfolioToken, useClaimFaucet } from '@/hooks/contracts/usePortfolioToken';
+import { useSmartWallet } from '@/contexts/SmartWalletContext';
 import { useAccount } from 'wagmi';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle, Fingerprint } from 'lucide-react';
+import Link from 'next/link';
 
 export function FaucetClaim() {
   const { isConnected } = useAccount();
   const { balance, canClaimFaucet, faucetAmount, isLoading: balanceLoading } = usePortfolioToken();
-  const { claimFaucet, isPending, isConfirming, isSuccess } = useClaimFaucet();
+  const { claimFaucet, isPending, isConfirming, isSuccess, error: claimError } = useClaimFaucet();
+  const { smartWalletAddress, isSmartWalletReady, isCreatingSmartWallet } = useSmartWallet();
 
   const handleClaim = async () => {
     try {
@@ -25,6 +29,8 @@ export function FaucetClaim() {
   };
 
   const isLoading = isPending || isConfirming || balanceLoading;
+  const isCheckingWallet = isCreatingSmartWallet;
+  const needsBiometricSetup = !isSmartWalletReady;
 
   return (
     <Card>
@@ -48,6 +54,34 @@ export function FaucetClaim() {
               Connect your wallet to claim tokens
             </p>
           </div>
+        ) : isCheckingWallet ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : needsBiometricSetup ? (
+          <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950/20">
+            <Fingerprint className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertTitle className="text-blue-800 dark:text-blue-200">Biometric Setup Required</AlertTitle>
+            <AlertDescription className="text-blue-700 dark:text-blue-300">
+              <p className="mb-3">
+                To claim tokens, you need to set up biometric authentication first. 
+                This will create a secure smart wallet for you.
+              </p>
+              <Link href="/biometric">
+                <Button size="sm" className="w-full">
+                  Set Up Biometric Authentication
+                </Button>
+              </Link>
+            </AlertDescription>
+          </Alert>
+        ) : claimError ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Claim Failed</AlertTitle>
+            <AlertDescription>
+              {claimError.message || 'Failed to claim tokens. Please try again.'}
+            </AlertDescription>
+          </Alert>
         ) : isSuccess ? (
           <div className="text-center py-8 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
             <p className="text-green-800 dark:text-green-200 font-medium mb-2">
