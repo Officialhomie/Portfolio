@@ -16,6 +16,8 @@ import { generateVisitorBookSignature, getVisitorBookDomain, visitorSignatureTyp
 import { useWalletClient } from 'wagmi';
 import { signTransactionHashWithBiometric } from '@/lib/biometric/signer';
 import { getStoredBiometricCredential, getStoredPublicKey } from '@/lib/biometric/auth';
+import { useSmartWallet } from '@/contexts/SmartWalletContext';
+import { encodeFunctionData } from 'viem';
 
 /**
  * Get Visitor Book contract address
@@ -168,23 +170,19 @@ export function useVisitCount() {
 }
 
 /**
- * Sign visitor book
+ * Sign visitor book via CDP smart wallet
  */
 export function useSignVisitorBook() {
   const { address, chainId } = useAccount();
   const contractAddress = getVisitorBookAddress(chainId);
   const { refetch: refetchVisitors } = useTotalVisitors();
   const { refetch: refetchHasVisited } = useHasVisited();
-  const { requestAuth, isEnabled } = useBiometricAuth();
-  const { data: walletClient } = useWalletClient();
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { signTypedData, data: signature, isPending: isSigning } = useSignTypedData();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  const signVisitorBook = async (message: string, useEIP712: boolean = true) => {
+  const signVisitorBook = async (message: string, useEIP712: boolean = false) => {
     if (!message || message.length < 1 || message.length > 500) {
       throw new Error('Message must be between 1 and 500 characters');
     }
@@ -193,67 +191,74 @@ export function useSignVisitorBook() {
       throw new Error('Wallet not connected');
     }
 
-    const currentChainId = chainId || base.id;
-    const timestamp = BigInt(Math.floor(Date.now() / 1000));
-
-    // Use EIP-712 signature if supported and requested
-    if (useEIP712 && walletClient) {
-      try {
-        // Generate EIP-712 signature
-        const eip712Signature = await generateVisitorBookSignature(
-          walletClient,
-          currentChainId,
-          contractAddress,
-          address,
-          message,
-          timestamp
-        );
-
-        // Call signVisitorBookWithSignature with timestamp parameter
-        // Contract now accepts timestamp to match the signed timestamp
-        await writeContract({
-          address: contractAddress,
-          abi: VISITOR_BOOK_ABI,
-          functionName: 'signVisitorBookWithSignature',
-          args: [message, eip712Signature, timestamp],
-          chainId: currentChainId,
-        });
-        return;
-      } catch (eip712Error) {
-        console.warn('EIP-712 signing failed, falling back to direct signing:', eip712Error);
-        // Fall through to direct signing
-      }
+    if (!smartWalletAddress) {
+      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
     }
 
-    // Fallback to direct signing
-    await writeContract({
-      address: contractAddress,
-      abi: VISITOR_BOOK_ABI,
-      functionName: 'signVisitorBook',
-      args: [message],
-      chainId: currentChainId,
-    });
-  };
+    try {
+      setIsConfirming(true);
+      const currentChainId = chainId || base.id;
+      const timestamp = BigInt(Math.floor(Date.now() / 1000));
 
-  // Auto-refetch on success
-  if (isSuccess && hash) {
-    refetchVisitors();
-    refetchHasVisited();
-  }
+      let data: `0x${string}`;
+
+      // Use EIP-712 signature if supported and requested
+      if (useEIP712) {
+        // For EIP-712, we'd need to sign the typed data first, then send via smart wallet
+        // For now, we'll use the simpler direct signing approach
+        // TODO: Implement EIP-712 signing with smart wallet if needed
+        console.warn('EIP-712 signing with smart wallet not yet implemented, using direct signing');
+        data = encodeFunctionData({
+          abi: VISITOR_BOOK_ABI,
+          functionName: 'signVisitorBook',
+          args: [message],
+        });
+      } else {
+        // Direct signing via smart wallet
+        data = encodeFunctionData({
+          abi: VISITOR_BOOK_ABI,
+          functionName: 'signVisitorBook',
+          args: [message],
+        });
+      }
+
+      // Send via CDP smart wallet (biometric signature)
+      const hash = await sendTransaction({
+        to: contractAddress,
+        data,
+        value: 0n,
+      });
+
+      setTxHash(hash);
+      setIsSuccess(true);
+
+      // Refetch data after transaction
+      setTimeout(() => {
+        refetchVisitors();
+        refetchHasVisited();
+      }, 2000);
+    } catch (err) {
+      console.error('Sign visitor book failed:', err);
+      throw err;
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   return {
     signVisitorBook,
-    isPending: isPending || isSigning,
+    isPending: isSendingTransaction,
     isConfirming,
     isSuccess,
     error,
-    txHash: hash,
-    signature, // EIP-712 signature if used
+    txHash,
+    signature: null, // EIP-712 signature not used with smart wallet
   };
 }
 
 /**
  * Sign visitor book with biometric signature (EIP-7951)
+ * @deprecated Use useSignVisitorBook instead - all transactions now use smart wallets
  */
 export function useSignVisitorBookWithBiometric() {
   const { address, chainId } = useAccount();
@@ -261,11 +266,13 @@ export function useSignVisitorBookWithBiometric() {
   const { refetch: refetchVisitors } = useTotalVisitors();
   const { refetch: refetchHasVisited } = useHasVisited();
   const { isEnabled } = useBiometricAuth();
+  const { sendTransaction, isSendingTransaction, smartWalletAddress } = useSmartWallet();
 
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const [isPending, setIsPending] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
 
   const signVisitorBookWithBiometric = async (message: string) => {
     if (!message || message.length < 1 || message.length > 500) {
@@ -276,8 +283,8 @@ export function useSignVisitorBookWithBiometric() {
       throw new Error('Biometric authentication not enabled');
     }
 
-    if (!address) {
-      throw new Error('Wallet not connected');
+    if (!smartWalletAddress) {
+      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
     }
 
     const credentialId = getStoredBiometricCredential();
@@ -286,45 +293,57 @@ export function useSignVisitorBookWithBiometric() {
     }
 
     try {
-      const currentChainId = chainId || base.id;
-      const timestamp = BigInt(Math.floor(Date.now() / 1000));
+      setIsPending(true);
+      setIsConfirming(true);
+      setError(null);
 
-      // Sign transaction hash with biometric
-      const signature = await signTransactionHashWithBiometric({
-        chainId: currentChainId,
-        contractAddress,
-        userAddress: address,
-        functionName: 'signVisitorBook',
-        functionParams: [message, timestamp],
-      });
+      console.log('🔐 Signing visitor book via CDP Smart Wallet (gasless!)');
+      console.log('   Smart Wallet Address:', smartWalletAddress);
+      console.log('   Message:', message);
 
-      // Call contract with biometric signature
-      await writeContract({
-        address: contractAddress,
+      // Encode function call
+      const data = encodeFunctionData({
         abi: VISITOR_BOOK_ABI,
-        functionName: 'signVisitorBookWithBiometric',
-        args: [message, signature.r, signature.s, signature.publicKeyX, signature.publicKeyY],
-        chainId: currentChainId,
+        functionName: 'signVisitorBook',
+        args: [message],
       });
+
+      // Send via CDP Smart Wallet (GASLESS!)
+      const hash = await sendTransaction({
+        to: contractAddress,
+        data,
+        value: 0n,
+      });
+
+      setTxHash(hash);
+      setIsSuccess(true);
+
+      console.log('✅ Visitor book signed via CDP!');
+      console.log('   Transaction Hash:', hash);
+      console.log('   🎉 Gas fees sponsored by CDP Paymaster!');
+
+      // Refetch data
+      await refetchVisitors();
+      await refetchHasVisited();
+
     } catch (err) {
-      console.error('Biometric sign visitor book error:', err);
-      throw err;
+      const error = err instanceof Error ? err : new Error('Failed to sign visitor book');
+      setError(error);
+      console.error('❌ Biometric sign visitor book error:', error);
+      throw error;
+    } finally {
+      setIsPending(false);
+      setIsConfirming(false);
     }
   };
 
-  // Auto-refetch on success
-  if (isSuccess && hash) {
-    refetchVisitors();
-    refetchHasVisited();
-  }
-
   return {
     signVisitorBookWithBiometric,
-    isPending,
+    isPending: isPending || isSendingTransaction,
     isConfirming,
     isSuccess,
     error,
-    txHash: hash,
+    txHash,
   };
 }
 
