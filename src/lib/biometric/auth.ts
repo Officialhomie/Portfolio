@@ -98,7 +98,11 @@ export async function generateSecp256r1Key(
     pubKeyCredParams: [
       {
         type: 'public-key',
-        alg: -7, // ES256 (secp256r1)
+        alg: -7, // ES256 (secp256r1) - preferred for biometric
+      },
+      {
+        type: 'public-key',
+        alg: -257, // RS256 - fallback for compatibility
       },
     ],
     authenticatorSelection: {

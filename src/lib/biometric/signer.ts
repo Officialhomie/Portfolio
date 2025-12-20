@@ -4,9 +4,9 @@
  */
 
 import type { WriteContractParameters } from 'wagmi/actions';
-import { keccak256, encodePacked } from 'viem';
 import { getStoredBiometricCredential, signWithBiometric, getStoredPublicKey } from './auth';
 import { parseWebAuthnSignature, createBiometricTransactionSignature } from './signature-parser';
+import { generateMessageHash, MessageHashBuilder } from './message-hash';
 import type { BiometricTransactionSignature } from './types';
 
 /**
@@ -44,7 +44,7 @@ export async function signTransactionHashWithBiometric(
 
   // Generate deterministic message hash
   // Format: keccak256(functionName, chainId, contractAddress, userAddress, ...functionParams)
-  const messageHash = generateMessageHash(options);
+  const messageHash = generateMessageHashLegacy(options);
 
   // Sign with secp256r1 (biometric prompt happens here)
   const derSignature = await signWithBiometric(
@@ -66,110 +66,35 @@ export async function signTransactionHashWithBiometric(
 
 /**
  * Generate deterministic message hash for contract function
+ * DEPRECATED: Use message-hash.ts functions instead
+ * Kept for backward compatibility
  */
-export function generateMessageHash(options: BiometricSignOptions): `0x${string}` {
+export function generateMessageHashLegacy(options: BiometricSignOptions): `0x${string}` {
   const { functionName, chainId, contractAddress, userAddress, functionParams = [] } = options;
 
-  // Build types and values arrays separately for encodePacked
-  const types: string[] = ['string', 'uint256', 'address', 'address'];
-  const values: unknown[] = [functionName, BigInt(chainId), contractAddress, userAddress];
-
-  // Add function parameters dynamically
-  for (const param of functionParams) {
-    // Handle different parameter types
+  // Convert params to typed format for new message hash library
+  const typedParams = functionParams.map((param) => {
     if (typeof param === 'string') {
-      types.push('string');
-      values.push(param);
+      return { type: 'string' as const, value: param };
     } else if (typeof param === 'bigint' || typeof param === 'number') {
-      types.push('uint256');
-      values.push(BigInt(param));
+      return { type: 'uint256' as const, value: BigInt(param) };
     } else if (typeof param === 'boolean') {
-      types.push('bool');
-      values.push(param);
+      return { type: 'bool' as const, value: param };
     } else {
-      // Default to bytes32 for unknown types
-      types.push('bytes32');
-      values.push(param);
+      return { type: 'bytes32' as const, value: param };
     }
-  }
-
-  // Encode and hash - encodePacked takes types and values as separate arguments
-  // Cast to satisfy TypeScript's type checking for encodePacked
-  return keccak256(encodePacked(types as readonly string[], values as readonly unknown[]));
-}
-
-/**
- * Generate message hash for specific function calls
- */
-export function generateClaimFaucetHash(
-  chainId: number,
-  contractAddress: `0x${string}`,
-  userAddress: `0x${string}`
-): `0x${string}` {
-  return generateMessageHash({
-    chainId,
-    contractAddress,
-    userAddress,
-    functionName: 'claimFaucet',
   });
+
+  return generateMessageHash(functionName, chainId, contractAddress, userAddress, typedParams);
 }
 
-export function generateVoteHash(
-  chainId: number,
-  contractAddress: `0x${string}`,
-  userAddress: `0x${string}`,
-  projectId: string
-): `0x${string}` {
-  return generateMessageHash({
-    chainId,
-    contractAddress,
-    userAddress,
-    functionName: 'vote',
-    functionParams: [projectId],
-  });
-}
-
-export function generateEndorseProjectHash(
-  chainId: number,
-  contractAddress: `0x${string}`,
-  userAddress: `0x${string}`,
-  tokenId: bigint
-): `0x${string}` {
-  return generateMessageHash({
-    chainId,
-    contractAddress,
-    userAddress,
-    functionName: 'endorseProject',
-    functionParams: [tokenId],
-  });
-}
-
-export function generateMintVisitNFTHash(
-  chainId: number,
-  contractAddress: `0x${string}`,
-  userAddress: `0x${string}`
-): `0x${string}` {
-  return generateMessageHash({
-    chainId,
-    contractAddress,
-    userAddress,
-    functionName: 'mintVisitNFT',
-  });
-}
-
-export function generateSignVisitorBookHash(
-  chainId: number,
-  contractAddress: `0x${string}`,
-  userAddress: `0x${string}`,
-  message: string,
-  timestamp: bigint
-): `0x${string}` {
-  return generateMessageHash({
-    chainId,
-    contractAddress,
-    userAddress,
-    functionName: 'signVisitorBook',
-    functionParams: [message, timestamp],
-  });
-}
+// Re-export hash generation functions from message-hash library
+export {
+  generateClaimFaucetHash,
+  generateVoteHash,
+  generateEndorseProjectHash,
+  generateMintVisitNFTHash,
+  generateSignVisitorBookHash,
+  MessageHashBuilder,
+} from './message-hash';
 
