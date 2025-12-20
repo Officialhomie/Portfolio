@@ -16,7 +16,13 @@ import {
   getStoredPublicKey,
 } from '@/lib/biometric/auth';
 import { checkBaseSupport } from '@/lib/biometric/compatibility';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import {
+  registerKeyOnAllContracts,
+  checkRegistrationStatus,
+  type RegistrationStatus,
+  type BatchRegistrationResult,
+} from '@/lib/biometric/registration';
+import { useWriteContract, useWaitForTransactionReceipt, useAccount, useConfig } from 'wagmi';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import { base } from 'wagmi/chains';
 import type {
@@ -214,6 +220,16 @@ export function useBaseCompatibility(chainId: number) {
   });
 
   useEffect(() => {
+    // Skip if chainId is invalid
+    if (!chainId || chainId === 0) {
+      setCompatibility({
+        supportsEIP7951: false,
+        signingMethod: 'fallback',
+        isLoading: false,
+      });
+      return;
+    }
+
     async function checkCompatibility() {
       try {
         const result = await checkBaseSupport(chainId);
@@ -249,6 +265,11 @@ export function useRegisterBiometricKey(contractAddress: `0x${string}`) {
   });
 
   const registerKey = useCallback(async () => {
+    // Prevent duplicate calls
+    if (isPending || isConfirming) {
+      throw new Error('Registration already in progress');
+    }
+
     const publicKey = getStoredPublicKey();
     if (!publicKey) {
       throw new Error('Public key not found. Please set up biometric authentication first.');
@@ -275,7 +296,7 @@ export function useRegisterBiometricKey(contractAddress: `0x${string}`) {
       functionName: 'registerSecp256r1Key',
       args: [publicKey.x as `0x${string}`, publicKey.y as `0x${string}`],
     });
-  }, [contractAddress, writeContract]);
+  }, [contractAddress, writeContract, isPending, isConfirming]);
 
   return {
     registerKey,
@@ -284,6 +305,121 @@ export function useRegisterBiometricKey(contractAddress: `0x${string}`) {
     isSuccess,
     error,
     txHash: hash,
+  };
+}
+
+/**
+ * Hook to register public key on all biometric-enabled contracts
+ */
+export function useRegisterAllBiometricKeys() {
+  const config = useConfig();
+  const { chainId } = useAccount();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registrationStatuses, setRegistrationStatuses] = useState<RegistrationStatus[]>([]);
+  const [registrationResult, setRegistrationResult] = useState<BatchRegistrationResult | null>(null);
+  const [registrationStatus, setRegistrationStatus] = useState<{
+    isFullyRegistered: boolean;
+    registeredContracts: string[];
+    unregisteredContracts: string[];
+  } | null>(null);
+
+  /**
+   * Check if public key is already registered on all contracts
+   */
+  const checkStatus = useCallback(async () => {
+    const publicKey = getStoredPublicKey();
+    if (!publicKey || !chainId) {
+      return;
+    }
+
+    try {
+      const status = await checkRegistrationStatus(config, publicKey, chainId);
+      setRegistrationStatus(status);
+      return status;
+    } catch (error) {
+      console.error('Error checking registration status:', error);
+      return null;
+    }
+  }, [config, chainId]);
+
+  /**
+   * Register public key on all contracts
+   */
+  const registerAll = useCallback(async (): Promise<BatchRegistrationResult> => {
+    // Prevent duplicate calls
+    if (isRegistering) {
+      throw new Error('Registration already in progress');
+    }
+
+    const publicKey = getStoredPublicKey();
+    if (!publicKey) {
+      throw new Error('Public key not found. Please set up biometric authentication first.');
+    }
+
+    if (!chainId) {
+      throw new Error('Chain ID not found. Please connect your wallet.');
+    }
+
+    setIsRegistering(true);
+    setRegistrationStatuses([]);
+    setRegistrationResult(null);
+
+    try {
+      const result = await registerKeyOnAllContracts(
+        config,
+        publicKey,
+        chainId,
+        (status) => {
+          // Update statuses as registration progresses
+          setRegistrationStatuses((prev) => {
+            const existing = prev.find(s => s.address === status.address);
+            if (existing) {
+              return prev.map(s => s.address === status.address ? status : s);
+            }
+            return [...prev, status];
+          });
+        }
+      );
+
+      setRegistrationResult(result);
+
+      // Update registration status after completion
+      await checkStatus();
+
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      const failedResult: BatchRegistrationResult = {
+        success: false,
+        statuses: registrationStatuses,
+        totalRegistered: 0,
+        totalFailed: registrationStatuses.length,
+        errors: [errorMessage],
+      };
+      setRegistrationResult(failedResult);
+      throw error;
+    } finally {
+      setIsRegistering(false);
+    }
+  }, [config, chainId, checkStatus, isRegistering]);
+
+  /**
+   * Check registration status on mount
+   */
+  useEffect(() => {
+    checkStatus();
+  }, [checkStatus]);
+
+  return {
+    registerAll,
+    checkStatus,
+    isRegistering,
+    registrationStatuses,
+    registrationResult,
+    registrationStatus,
+    isFullyRegistered: registrationStatus?.isFullyRegistered ?? false,
+    registeredContracts: registrationStatus?.registeredContracts ?? [],
+    unregisteredContracts: registrationStatus?.unregisteredContracts ?? [],
   };
 }
 
