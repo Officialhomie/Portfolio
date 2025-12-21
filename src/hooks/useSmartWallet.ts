@@ -41,8 +41,8 @@ export function useSmartWalletAddress() {
       }
 
       try {
-        const publicKey = getStoredPublicKey();
-        if (!publicKey) {
+        const publicKey = await getStoredPublicKey();
+        if (!publicKey || !publicKey.x || !publicKey.y) {
           if (!cancelled) setIsLoading(false);
           return;
         }
@@ -106,8 +106,8 @@ export function useDeployWallet() {
       throw new Error('Wallet not connected');
     }
 
-    const publicKey = getStoredPublicKey();
-    if (!publicKey) {
+    const publicKey = await getStoredPublicKey();
+    if (!publicKey || !publicKey.x || !publicKey.y) {
       throw new Error('Biometric key not registered');
     }
 
@@ -165,8 +165,8 @@ export function useExecuteFromWallet() {
       throw new Error('Wallet not connected');
     }
 
-    const publicKey = getStoredPublicKey();
-    if (!publicKey) {
+    const publicKey = await getStoredPublicKey();
+    if (!publicKey || !publicKey.x || !publicKey.y) {
       throw new Error('Biometric key not registered');
     }
 

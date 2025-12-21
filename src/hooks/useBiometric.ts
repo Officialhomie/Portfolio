@@ -77,18 +77,53 @@ export function useBiometricAuth() {
   });
   const [lastAuthResult, setLastAuthResult] = useState<BiometricAuthResult | null>(null);
 
+  /**
+   * Check and update biometric configuration status
+   */
+  const checkConfiguration = useCallback(async () => {
+    const configured = await isBiometricConfigured();
+    setAuthState((prev) => ({
+      ...prev,
+      isEnabled: configured,
+    }));
+    return configured;
+  }, []);
+
   // Check if biometric is configured on mount
   useEffect(() => {
-    async function checkConfiguration() {
-      const configured = await isBiometricConfigured();
-      setAuthState((prev) => ({
-        ...prev,
-        isEnabled: configured,
-      }));
-    }
-
     checkConfiguration();
-  }, []);
+  }, [checkConfiguration]);
+
+  // Also check when localStorage changes (in case credentials are added externally)
+  useEffect(() => {
+    // Listen for custom biometric setup event (same-tab)
+    const handleBiometricSetup = () => {
+      console.log('🔔 Biometric setup event received - refreshing state');
+      checkConfiguration();
+    };
+
+    // Listen for storage changes (cross-tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'biometric_credential_id' || e.key === 'biometric_public_key') {
+        console.log('🔄 Biometric storage changed (cross-tab), rechecking configuration...');
+        checkConfiguration();
+      }
+    };
+
+    window.addEventListener('biometric-setup-complete', handleBiometricSetup);
+    window.addEventListener('storage', handleStorageChange);
+
+    // Poll to catch same-tab changes
+    const interval = setInterval(() => {
+      checkConfiguration();
+    }, 2000); // Check every 2 seconds (reduced from 500ms to prevent spam)
+
+    return () => {
+      window.removeEventListener('biometric-setup-complete', handleBiometricSetup);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [checkConfiguration]);
 
   /**
    * Request biometric authentication
@@ -129,6 +164,7 @@ export function useBiometricAuth() {
     ...authState,
     requestAuth,
     lastAuthResult,
+    refresh: checkConfiguration, // Expose refresh function
   };
 }
 
@@ -165,14 +201,83 @@ export function useBiometricSetup() {
         setupError: undefined,
       }));
 
+      // CRITICAL FIX: Check if biometric is already configured
+      // If configured, we should NOT create a new credential as it will generate a different address
+      const { getStoredBiometricCredentialSecure, getStoredPublicKeySecure } = await import('@/lib/biometric/storage-adapter');
+      const existingCredentialId = await getStoredBiometricCredentialSecure();
+      const existingPublicKey = await getStoredPublicKeySecure();
+
+      if (existingCredentialId && existingPublicKey && existingPublicKey.x && existingPublicKey.y) {
+        console.log('⚠️  Biometric already configured - reusing existing credential');
+        console.log('   Credential ID:', existingCredentialId.substring(0, 20) + '...');
+        console.log('   Public Key X:', existingPublicKey.x.substring(0, 20) + '...');
+        console.log('   Public Key Y:', existingPublicKey.y.substring(0, 20) + '...');
+        console.log('   ℹ️  Not creating a new credential to preserve wallet address');
+
+        // Return the existing key pair without creating a new one
+        const existingKeyPair: Secp256r1KeyPair = {
+          publicKey: new Uint8Array(0),
+          publicKeyX: existingPublicKey.x as `0x${string}`,
+          publicKeyY: existingPublicKey.y as `0x${string}`,
+          credentialId: existingCredentialId,
+          keyHandle: '',
+        };
+
+        setSetupState({
+          isSettingUp: false,
+          isSetup: true,
+          keyPair: existingKeyPair,
+        });
+
+        // Still fire the event to notify other components
+        if (typeof window !== 'undefined') {
+          console.log('🎉 Firing biometric-setup-complete event (existing credential)');
+          window.dispatchEvent(new CustomEvent('biometric-setup-complete', {
+            detail: { credentialId: existingCredentialId, publicKey: existingPublicKey },
+          }));
+        }
+
+        return true;
+      }
+
+      // Only create new credential if none exists
+      console.log('🔐 Creating new biometric credential...');
       const keyPair = await generateSecp256r1Key(userId, userName);
+
+      // Store credential ID (this is done in generateSecp256r1Key via storePublicKey)
+      // But we also need to explicitly store the credential ID
       storeBiometricCredential(keyPair.credentialId);
+
+      // Verify storage was successful (now using secure async storage)
+      const storedCredentialId = await getStoredBiometricCredentialSecure();
+      const storedPublicKey = await getStoredPublicKeySecure();
+
+      if (!storedCredentialId || !storedPublicKey) {
+        console.error('❌ Failed to store biometric credentials');
+        console.error('   Credential ID stored:', !!storedCredentialId);
+        console.error('   Public key stored:', !!storedPublicKey);
+        throw new Error('Failed to store biometric credentials');
+      }
+
+      console.log('✅ Biometric credentials stored successfully');
+      console.log('   Credential ID:', storedCredentialId.substring(0, 20) + '...');
+      console.log('   Public Key X:', storedPublicKey.x.substring(0, 20) + '...');
+      console.log('   Public Key Y:', storedPublicKey.y.substring(0, 20) + '...');
 
       setSetupState({
         isSettingUp: false,
         isSetup: true,
         keyPair,
       });
+
+      // Trigger a refresh of biometric auth state
+      // Fire custom event for same-tab changes (storage event doesn't work same-tab)
+      if (typeof window !== 'undefined') {
+        console.log('🎉 Firing biometric-setup-complete event');
+        window.dispatchEvent(new CustomEvent('biometric-setup-complete', {
+          detail: { credentialId: storedCredentialId, publicKey: storedPublicKey },
+        }));
+      }
 
       return true;
     } catch (error) {
@@ -270,7 +375,8 @@ export function useRegisterBiometricKey(contractAddress: `0x${string}`) {
       throw new Error('Registration already in progress');
     }
 
-    const publicKey = getStoredPublicKey();
+    const { getStoredPublicKeySecure } = await import('@/lib/biometric/storage-adapter');
+    const publicKey = await getStoredPublicKeySecure();
     if (!publicKey) {
       throw new Error('Public key not found. Please set up biometric authentication first.');
     }
@@ -327,8 +433,8 @@ export function useRegisterAllBiometricKeys() {
    * Check if public key is already registered on all contracts
    */
   const checkStatus = useCallback(async () => {
-    const publicKey = getStoredPublicKey();
-    if (!publicKey || !chainId) {
+    const publicKey = await getStoredPublicKey();
+    if (!publicKey || !publicKey.x || !publicKey.y || !chainId) {
       return;
     }
 
@@ -351,10 +457,17 @@ export function useRegisterAllBiometricKeys() {
       throw new Error('Registration already in progress');
     }
 
-    const publicKey = getStoredPublicKey();
-    if (!publicKey) {
+    const { getStoredPublicKeySecure } = await import('@/lib/biometric/storage-adapter');
+    const storedKey = await getStoredPublicKeySecure();
+    if (!storedKey || !storedKey.x || !storedKey.y) {
       throw new Error('Public key not found. Please set up biometric authentication first.');
     }
+
+    // Convert to PublicKeyCoordinates format
+    const publicKey: { x: `0x${string}`; y: `0x${string}` } = {
+      x: storedKey.x.startsWith('0x') ? storedKey.x as `0x${string}` : `0x${storedKey.x}` as `0x${string}`,
+      y: storedKey.y.startsWith('0x') ? storedKey.y as `0x${string}` : `0x${storedKey.y}` as `0x${string}`,
+    };
 
     if (!chainId) {
       throw new Error('Chain ID not found. Please connect your wallet.');

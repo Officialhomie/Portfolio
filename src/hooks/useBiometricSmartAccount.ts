@@ -187,9 +187,22 @@ export function useBiometricSmartAccount(): UseBiometricSmartAccountReturn {
 /**
  * Hook to check if smart account is available
  */
-export function useIsBiometricSmartAccountAvailable(): boolean {
+export function useIsBiometricSmartAccountAvailable() {
   const { isEnabled } = useBiometricAuth();
   const isRegistered = isEnabled;
+  const [isAvailable, setIsAvailable] = useState(false);
 
-  return isEnabled && isRegistered && isCDPSmartAccountAvailable();
+  useEffect(() => {
+    async function checkAvailability() {
+      if (isEnabled && isRegistered) {
+        const available = await isCDPSmartAccountAvailable();
+        setIsAvailable(available);
+      } else {
+        setIsAvailable(false);
+      }
+    }
+    checkAvailability();
+  }, [isEnabled, isRegistered]);
+
+  return isEnabled && isRegistered && isAvailable;
 }
