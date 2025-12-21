@@ -7,12 +7,12 @@ import { base, baseSepolia } from 'wagmi/chains';
 export const CONTRACT_ADDRESSES = {
   [base.id]: {
     // Deployed December 2024 - Fusaka-enabled chain
-    PortfolioToken: '0x19573561A147fdb6105762C965a66db6Cb2510F6' as `0x${string}`,
-    ProjectNFT: '0xc0c257a95BbF359c8230b5A24Db96c422F24424C' as `0x${string}`,
-    ProjectVoting: '0x2304C17AD225bE17F968dE529CFd96A80D38f467' as `0x${string}`,
-    VisitNFT: '0xa9f173D7260788701C71427C9Ecc76d553d8ffA3' as `0x${string}`,
-    VisitorBook: '0xF61a59B7B383D46DEcD0Cc4ca7c239871A53686C' as `0x${string}`,
-    BiometricWalletFactory: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    PortfolioToken: '0x99C3714abA7d1C095d1F4f55DBc0CcE94d4513e1' as `0x${string}`,
+    ProjectNFT: '0xBE830eB177Cd33e08712FA03043f9F8Adf98DC89' as `0x${string}`,
+    ProjectVoting: '0x423aFC1a37315372921f194Da42F02bc8C1B117B' as `0x${string}`,
+    VisitNFT: '0x3031Cd6Ff22B595AfB6C93BeBAB1587e8d566eF3' as `0x${string}`,
+    VisitorBook: '0xA3a085364776a5DbB8ed34ef0B5e47BDf68F4285' as `0x${string}`,
+    BiometricWalletFactory: '0x005F6A92EEe566fb8B09a2B9024DEF8D170B2300' as `0x${string}`,
     DeploymentPaymaster: '0x0000000000000000000000000000000000000000' as `0x${string}`,
   },
   [baseSepolia.id]: {
