@@ -182,7 +182,7 @@ export function useMintProject() {
   const { chainId, address } = useAccount();
   const contractAddress = getProjectNFTAddress(chainId);
   const { refetch } = useProjectList();
-  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const { executor, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -205,14 +205,18 @@ export function useMintProject() {
         args: [address, projectId, projectName, ipfsMetadataURI],
       });
 
-      // Send via CDP smart wallet (biometric signature)
-      const hash = await sendTransaction({
+      // Execute via executor
+      if (!executor) {
+        throw new Error('Smart wallet executor not ready');
+      }
+
+      const result = await executor.execute({
         to: contractAddress,
         data,
         value: 0n,
       });
 
-      setTxHash(hash);
+      setTxHash(result.txHash);
       setIsSuccess(true);
 
       // Refetch after transaction
@@ -244,7 +248,7 @@ export function useEndorseProject(tokenId: bigint | undefined) {
   const { chainId, address } = useAccount();
   const contractAddress = getProjectNFTAddress(chainId);
   const { refetch } = useProject(tokenId);
-  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const { executor, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -271,14 +275,18 @@ export function useEndorseProject(tokenId: bigint | undefined) {
         args: [tokenId],
       });
 
-      // Send via CDP smart wallet (biometric signature)
-      const hash = await sendTransaction({
+      // Execute via executor
+      if (!executor) {
+        throw new Error('Smart wallet executor not ready');
+      }
+
+      const result = await executor.execute({
         to: contractAddress,
         data,
         value: 0n,
       });
 
-      setTxHash(hash);
+      setTxHash(result.txHash);
       setIsSuccess(true);
 
       // Refetch after transaction

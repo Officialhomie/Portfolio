@@ -165,7 +165,7 @@ export function useVote(projectId: string | undefined) {
   const { refetch: refetchVotes } = useProjectVotes(projectId);
   const { refetch: refetchHasVoted } = useHasVoted(projectId);
   const { refetch: refetchBalance } = usePortfolioToken();
-  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const { executor, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -192,14 +192,18 @@ export function useVote(projectId: string | undefined) {
         args: [projectId],
       });
 
-      // Send via CDP smart wallet (biometric signature)
-      const hash = await sendTransaction({
+      // Execute via executor
+      if (!executor) {
+        throw new Error('Smart wallet executor not ready');
+      }
+
+      const result = await executor.execute({
         to: contractAddress,
         data,
         value: 0n,
       });
 
-      setTxHash(hash);
+      setTxHash(result.txHash);
       setIsSuccess(true);
 
       // Refetch data after transaction
@@ -237,7 +241,7 @@ export function useVoteWithBiometric(projectId: string | undefined) {
   const { refetch: refetchHasVoted } = useHasVoted(projectId);
   const { refetch: refetchBalance } = usePortfolioToken();
   const { isEnabled } = useBiometricAuth();
-  const { sendTransaction, isSendingTransaction, smartWalletAddress } = useSmartWallet();
+  const { executor, isSendingTransaction, smartWalletAddress } = useSmartWallet();
 
   const [isPending, setIsPending] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -279,18 +283,22 @@ export function useVoteWithBiometric(projectId: string | undefined) {
         args: [projectId],
       });
 
-      // Send via CDP Smart Wallet (GASLESS!)
-      const hash = await sendTransaction({
+      // Execute via executor
+      if (!executor) {
+        throw new Error('Smart wallet executor not ready');
+      }
+
+      const result = await executor.execute({
         to: contractAddress,
         data,
         value: 0n,
       });
 
-      setTxHash(hash);
+      setTxHash(result.txHash);
       setIsSuccess(true);
 
       console.log('✅ Vote cast via CDP!');
-      console.log('   Transaction Hash:', hash);
+      console.log('   Transaction Hash:', result.txHash);
       console.log('   🎉 Gas fees sponsored by CDP Paymaster!');
 
       // Refetch data

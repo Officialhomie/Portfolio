@@ -73,6 +73,7 @@ export function usePortfolioToken() {
     query: {
       enabled: !!address,
       staleTime: 30_000, // 30 seconds
+      refetchInterval: 60_000, // Refetch every minute to update countdown
     },
   });
 
@@ -86,7 +87,12 @@ export function usePortfolioToken() {
   const totalSupplyRaw = (data?.[0]?.result as bigint) || 0n;
   const faucetAmountRaw = (data?.[1]?.result as bigint) || parseUnits('100', 18);
   const balanceRaw = (data?.[2]?.result as bigint) || 0n;
-  const canClaimFaucet = (data?.[3]?.result as boolean) ?? false;
+  
+  // canClaimFaucet returns (bool canClaim, uint256 timeUntilClaim)
+  const canClaimResult = data?.[3]?.result as [boolean, bigint] | undefined;
+  const canClaimFaucet = canClaimResult?.[0] ?? false;
+  const timeUntilClaimRaw = canClaimResult?.[1] ?? 0n;
+  const timeUntilClaim = Number(timeUntilClaimRaw);
 
   return {
     // Formatted values
@@ -101,6 +107,7 @@ export function usePortfolioToken() {
 
     // State
     canClaimFaucet,
+    timeUntilClaim, // Seconds until next claim available
     isLoading,
     refetch,
 
@@ -116,7 +123,7 @@ export function useClaimFaucet() {
   const { chainId, address } = useAccount();
   const { refetch } = usePortfolioToken();
   const contractAddress = getTokenAddress(chainId);
-  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const { executor, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -152,16 +159,23 @@ export function useClaimFaucet() {
       console.log('   Contract:', contractAddress);
       console.log('   Data length:', data.length);
 
-      // Send via CDP smart wallet (biometric signature)
-      const hash = await sendTransaction({
+      // Execute via executor (handles UserOp flow: Build → Sign → Submit)
+      if (!executor) {
+        throw new Error('Smart wallet executor not ready');
+      }
+
+      const result = await executor.execute({
         to: contractAddress,
         data,
         value: 0n,
       });
 
-      console.log('✅ Transaction hash received:', hash);
+      console.log('✅ Transaction complete!');
+      console.log('   UserOp Hash:', result.userOpHash);
+      console.log('   TX Hash:', result.txHash);
+      console.log('   Gas Used:', result.gasUsed.toString());
 
-      setTxHash(hash);
+      setTxHash(result.txHash);
       setIsSuccess(true);
       
       // Refetch balance after a short delay to allow transaction to be mined
@@ -215,8 +229,8 @@ export function useClaimFaucetWithBiometric() {
       throw new Error('Biometric authentication not configured');
     }
 
-    const publicKey = getStoredPublicKey();
-    if (!publicKey) {
+    const publicKey = await getStoredPublicKey();
+    if (!publicKey || !publicKey.x || !publicKey.y) {
       throw new Error('Public key not found');
     }
 
