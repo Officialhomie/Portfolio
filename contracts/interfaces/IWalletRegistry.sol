@@ -29,3 +29,4 @@ interface IWalletRegistry {
     function getUserForWallet(address walletAddress) external view returns (address);
 }
 
+
