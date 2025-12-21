@@ -127,12 +127,12 @@ export async function generateSecp256r1Key(
 
     // Extract public key from credential
     const publicKeyCoords = await extractPublicKeyFromCredential(credential);
-    
-    // Store public key for later use
-    storePublicKey(publicKeyCoords);
-    
+
     const credentialId = new Uint8Array(credential.rawId);
     const credentialIdBase64 = btoa(String.fromCharCode(...credentialId)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    // Store public key for later use (now with credential ID for IndexedDB)
+    await storePublicKey(publicKeyCoords, credentialIdBase64);
 
     return {
       publicKey: new Uint8Array(0), // Legacy field, use publicKeyX/Y instead
@@ -290,42 +290,94 @@ export async function signWithBiometric(
 
 /**
  * Get stored public key coordinates
+ * Now async because it uses IndexedDB
  */
-export function getStoredPublicKey(): { x: `0x${string}`; y: `0x${string}` } | null {
-  return getPublicKeyFromStoredCredential();
+export async function getStoredPublicKey(): Promise<{ x: `0x${string}`; y: `0x${string}` } | null> {
+  return await getPublicKeyFromStoredCredential();
 }
+
+// Track last logged state to prevent spam
+let lastConfiguredState: boolean | null = null;
 
 /**
  * Check if biometric authentication is available and configured
+ * Requires BOTH credential ID AND public key to be stored
  */
-export async function isBiometricConfigured(): Promise<boolean> {
+export async function isBiometricConfigured(verbose = false): Promise<boolean> {
   try {
     const capability = await checkBiometricSupport();
     if (!capability.isAvailable) {
+      if (verbose && lastConfiguredState !== false) {
+        console.log('❌ Biometric not available on this device');
+      }
+      lastConfiguredState = false;
       return false;
     }
 
-    // Check if we have stored credential ID
-    const storedCredentialId = localStorage.getItem('biometric_credential_id');
-    return !!storedCredentialId;
+    // Check if we have stored credentials (now using secure async storage)
+    const { getStoredBiometricCredentialSecure, getStoredPublicKeySecure } = await import('./storage-adapter');
+
+    const storedCredentialId = await getStoredBiometricCredentialSecure();
+    if (!storedCredentialId) {
+      if (verbose && lastConfiguredState !== false) {
+        console.log('❌ No credential ID found in storage');
+      }
+      lastConfiguredState = false;
+      return false;
+    }
+
+    // Check if we have stored public key (CRITICAL - both are needed!)
+    const storedPublicKey = await getStoredPublicKeySecure();
+    if (!storedPublicKey || !storedPublicKey.x || !storedPublicKey.y) {
+      if (verbose && lastConfiguredState !== false) {
+        console.log('❌ No public key found in storage');
+        console.log('   Credential ID exists but public key is missing!');
+      }
+      lastConfiguredState = false;
+      return false;
+    }
+
+    // Validate public key format
+    if (storedPublicKey.x.length !== 66 || storedPublicKey.y.length !== 66) {
+      if (verbose && lastConfiguredState !== false) {
+        console.log('❌ Invalid public key format');
+      }
+      lastConfiguredState = false;
+      return false;
+    }
+
+    // Only log if state changed from false to true OR if verbose mode
+    if (lastConfiguredState !== true || verbose) {
+      console.log('✅ Biometric fully configured');
+      console.log('   Credential ID:', storedCredentialId.substring(0, 20) + '...');
+      console.log('   Public Key X:', storedPublicKey.x.substring(0, 20) + '...');
+      console.log('   Public Key Y:', storedPublicKey.y.substring(0, 20) + '...');
+    }
+
+    lastConfiguredState = true;
+    return true;
   } catch (error) {
     console.error('Error checking biometric configuration:', error);
+    lastConfiguredState = false;
     return false;
   }
 }
 
 /**
  * Store biometric credential ID
+ * @deprecated Use storeBiometricCredentialSecure from storage-adapter instead
  */
 export function storeBiometricCredential(credentialId: string): void {
   if (typeof window === 'undefined') {
     return;
   }
+  // Keep for backward compatibility, but prefer IndexedDB
   localStorage.setItem('biometric_credential_id', credentialId);
 }
 
 /**
  * Get stored biometric credential ID
+ * @deprecated Use getStoredBiometricCredentialSecure from storage-adapter instead
  */
 export function getStoredBiometricCredential(): string | null {
   if (typeof window === 'undefined') {
@@ -336,12 +388,19 @@ export function getStoredBiometricCredential(): string | null {
 
 /**
  * Clear stored biometric credential
+ * @deprecated Use clearBiometricCredentialSecure from storage-adapter instead
  */
 export function clearBiometricCredential(): void {
   if (typeof window === 'undefined') {
     return;
   }
+  // Keep for backward compatibility, but prefer IndexedDB clear
   localStorage.removeItem('biometric_credential_id');
   localStorage.removeItem('biometric_public_key');
+
+  // Also clear IndexedDB (async, fire and forget)
+  import('./storage-adapter').then(({ clearBiometricCredentialSecure }) => {
+    clearBiometricCredentialSecure().catch(console.error);
+  });
 }
 

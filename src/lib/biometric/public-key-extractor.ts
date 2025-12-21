@@ -131,41 +131,52 @@ export async function parseCOSEKey(coseKeyBytes: Uint8Array): Promise<PublicKeyC
 
 /**
  * Get public key from stored credential
- * Since we can't easily extract from attestation object without CBOR library,
- * we'll store the public key during credential creation
+ * Uses IndexedDB via storage adapter
  */
-export function getPublicKeyFromStoredCredential(): PublicKeyCoordinates | null {
+export async function getPublicKeyFromStoredCredential(): Promise<PublicKeyCoordinates | null> {
   if (typeof window === 'undefined') {
     return null;
   }
-  
-  const stored = localStorage.getItem('biometric_public_key');
-  if (!stored) {
-    return null;
-  }
-  
-  try {
-    const parsed = JSON.parse(stored);
+
+  // Use IndexedDB storage adapter
+  const { getStoredPublicKeySecure } = await import('./storage-adapter');
+  const storedKey = await getStoredPublicKeySecure();
+
+  if (storedKey && storedKey.x && storedKey.y) {
     return {
-      x: parsed.x as `0x${string}`,
-      y: parsed.y as `0x${string}`,
+      x: storedKey.x as `0x${string}`,
+      y: storedKey.y as `0x${string}`,
     };
-  } catch {
-    return null;
   }
+
+  return null;
 }
 
 /**
  * Store public key coordinates
+ * Now returns a Promise since it uses IndexedDB
  */
-export function storePublicKey(coordinates: PublicKeyCoordinates): void {
+export async function storePublicKey(coordinates: PublicKeyCoordinates, credentialId?: string): Promise<void> {
   if (typeof window === 'undefined') {
     return;
   }
-  
+
+  // For backward compatibility, still write to localStorage
+  // But primarily use IndexedDB
   localStorage.setItem('biometric_public_key', JSON.stringify({
     x: coordinates.x,
     y: coordinates.y,
   }));
+
+  // Also store in IndexedDB if credential ID is provided
+  if (credentialId) {
+    const { storeBiometricCredentialSecure } = await import('./storage-adapter');
+    await storeBiometricCredentialSecure(
+      credentialId,
+      coordinates.x,
+      coordinates.y,
+      '' // Wallet address will be set later
+    );
+  }
 }
 

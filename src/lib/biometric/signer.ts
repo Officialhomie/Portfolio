@@ -37,8 +37,8 @@ export async function signTransactionHashWithBiometric(
     throw new Error('Biometric authentication not configured. Please set up biometric authentication first.');
   }
 
-  const publicKey = getStoredPublicKey();
-  if (!publicKey) {
+  const publicKey = await getStoredPublicKey();
+  if (!publicKey || !publicKey.x || !publicKey.y) {
     throw new Error('Public key not found. Please set up biometric authentication first.');
   }
 
