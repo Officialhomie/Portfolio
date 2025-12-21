@@ -10,7 +10,7 @@ This is a decentralized portfolio platform where developers can showcase their p
 
 The platform transforms a traditional developer portfolio into a Web3-native experience where:
 - **Projects are NFTs**: Each project is minted as an ERC-721 NFT with IPFS metadata
-- **Token-Gated Interactions**: Users need Portfolio Tokens (PPT) to vote on projects
+- **Token-Gated Interactions**: Users need $HOMIE tokens to vote on projects
 - **Visitor Engagement**: First-time visitors can mint a limited edition "Proof of Visit" NFT
 - **On-Chain Guestbook**: Visitors can leave messages permanently stored on-chain
 - **Community Voting**: Token holders can vote for their favorite projects (tokens are burned)
@@ -22,14 +22,14 @@ The platform transforms a traditional developer portfolio into a Web3-native exp
 
 **Key Features**:å
 - **Token Details**: 
-  - Name: "Portfolio Protocol Token"
-  - Symbol: "PPT"
+  - Name: "Homie Token"
+  - Symbol: "HOMIE"
   - Decimals: 18
-  - Initial Supply: 1,000,000 PPT (minted to deployer)
-  - Max Supply: 10,000,000 PPT (configurable)
+  - Initial Supply: 1,000,000 HOMIE (minted to deployer)
+  - Max Supply: 10,000,000 HOMIE (configurable)
 
 - **Faucet System**:
-  - Users can claim 100 PPT tokens from the faucet
+  - Users can claim 100 $HOMIE tokens from the faucet
   - One-time claim per address (with 24-hour cooldown for repeat claims)
   - Prevents max supply overflow
 
@@ -45,7 +45,7 @@ The platform transforms a traditional developer portfolio into a Web3-native exp
   - `FAUCET_ROLE`: Can manage faucet (currently same as admin)
 
 - **Key Functions**:
-  - `claimFaucet()`: Claim 100 PPT tokens (one-time per address, 24h cooldown)
+  - `claimFaucet()`: Claim 100 $HOMIE tokens (one-time per address, 24h cooldown)
   - `mint(address to, uint256 amount)`: Admin minting
   - `batchMint()`: Mint to multiple addresses at once
   - `burn()` / `burnFrom()`: Burn tokens (inherited from ERC20Burnable)
@@ -125,7 +125,7 @@ The platform transforms a traditional developer portfolio into a Web3-native exp
 
 **Key Features**:
 - **Voting Mechanism**:
-  - Cost: 10 PPT tokens per vote (configurable, min: 1 PPT, max: 1000 PPT)
+  - Cost: 10 $HOMIE tokens per vote (configurable, min: 1 HOMIE, max: 1000 HOMIE)
   - Tokens are **burned** when voting (deflationary)
   - One vote per address per project
   - Votes are permanent and on-chain
@@ -250,7 +250,7 @@ The platform transforms a traditional developer portfolio into a Web3-native exp
 ### Flow 1: First-Time Visitor Experience
 1. User visits portfolio website
 2. Connects wallet (Web3 wallet like MetaMask, Coinbase Wallet, etc.)
-3. **Optional**: Claim 100 PPT tokens from PortfolioToken faucet
+3. **Optional**: Claim 100 $HOMIE tokens from PortfolioToken faucet
 4. **Optional**: Mint free VisitNFT (if under 100 minted)
 5. **Optional**: Sign visitor book with a message
 6. Browse projects displayed as NFTs
@@ -258,9 +258,9 @@ The platform transforms a traditional developer portfolio into a Web3-native exp
 ### Flow 2: Project Voting Flow
 1. User browses projects (displayed as NFTs)
 2. User selects a project they like
-3. Check if user has enough PPT tokens (need 10 PPT minimum)
+3. Check if user has enough $HOMIE tokens (need 10 HOMIE minimum)
 4. If insufficient, claim from faucet
-5. User votes for project → 10 PPT tokens burned
+5. User votes for project → 10 $HOMIE tokens burned
 6. Vote count updated on-chain
 7. Project ranking updated
 
@@ -375,7 +375,7 @@ VisitorBook:        [TO BE DEPLOYED]
 - Total visitor count
 
 #### 5. **Token Faucet Page**
-- Display current PPT balance
+- Display current $HOMIE balance
 - Claim faucet button
 - Cooldown timer (if applicable)
 - Token usage explanation
@@ -483,12 +483,12 @@ All contracts include:
 
 ## 📊 Tokenomics
 
-### PortfolioToken (PPT)
-- **Initial Supply**: 1,000,000 PPT
-- **Max Supply**: 10,000,000 PPT
-- **Faucet Amount**: 100 PPT per claim
+### PortfolioToken ($HOMIE)
+- **Initial Supply**: 1,000,000 HOMIE
+- **Max Supply**: 10,000,000 HOMIE
+- **Faucet Amount**: 100 $HOMIE per claim
 - **Faucet Cooldown**: 24 hours
-- **Vote Cost**: 10 PPT (burned)
+- **Vote Cost**: 10 $HOMIE (burned)
 - **Deflationary**: Tokens burned on vote (reduces supply)
 
 ### Token Distribution
