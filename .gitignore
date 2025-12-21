@@ -53,3 +53,13 @@ app.backup.temp/
 /broadcast/
 /cache/
 !cache/.gitkeep
+
+# test scripts and debug pages (may contain sensitive data)
+test-paymaster*.js
+test-paymaster*.sh
+test-paymaster*.ts
+get-smart-wallet-address.js
+public/biometric-debug.html
+
+# deployment scripts (may contain API keys)
+deploy.sh
