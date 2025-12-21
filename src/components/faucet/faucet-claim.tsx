@@ -11,13 +11,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePortfolioToken, useClaimFaucet } from '@/hooks/contracts/usePortfolioToken';
 import { useSmartWallet } from '@/contexts/SmartWalletContext';
 import { useAccount } from 'wagmi';
-import { Loader2, AlertCircle, Fingerprint } from 'lucide-react';
+import { Loader2, AlertCircle, Fingerprint, CheckCircle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { TokenBalanceDisplay } from '@/components/wallet/token-balance-display';
 
 export function FaucetClaim() {
   const { isConnected } = useAccount();
-  const { balance, canClaimFaucet, faucetAmount, isLoading: balanceLoading } = usePortfolioToken();
-  const { claimFaucet, isPending, isConfirming, isSuccess, error: claimError } = useClaimFaucet();
+  const { balance, canClaimFaucet, timeUntilClaim, faucetAmount, isLoading: balanceLoading } = usePortfolioToken();
+  const { claimFaucet, isPending, isConfirming, isSuccess, error: claimError, txHash } = useClaimFaucet();
   const { smartWalletAddress, isSmartWalletReady, isCreatingSmartWallet } = useSmartWallet();
 
   const handleClaim = async () => {
@@ -31,6 +32,25 @@ export function FaucetClaim() {
   const isLoading = isPending || isConfirming || balanceLoading;
   const isCheckingWallet = isCreatingSmartWallet;
   const needsBiometricSetup = !isSmartWalletReady;
+  
+  // Format time until claim
+  const formatTimeUntilClaim = (seconds: number): string => {
+    if (seconds <= 0) return '';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`;
+    } else {
+      return `${secs}s`;
+    }
+  };
+  
+  const timeUntilClaimFormatted = formatTimeUntilClaim(timeUntilClaim);
 
   return (
     <Card>
@@ -83,13 +103,42 @@ export function FaucetClaim() {
             </AlertDescription>
           </Alert>
         ) : isSuccess ? (
-          <div className="text-center py-8 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-            <p className="text-green-800 dark:text-green-200 font-medium mb-2">
-              ✓ Successfully claimed {faucetAmount} $HOMIE!
-            </p>
-            <p className="text-sm text-green-700 dark:text-green-300">
-              New balance: {balance} $HOMIE
-            </p>
+          <div className="space-y-4">
+            <div className="text-center py-8 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <p className="text-green-800 dark:text-green-200 font-medium">
+                  Successfully claimed {faucetAmount} $HOMIE!
+                </p>
+              </div>
+              <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                Tokens have been added to your balance
+              </p>
+
+              {/* Transaction Hash */}
+              {txHash && (
+                <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-green-300 dark:border-green-700">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">
+                    Transaction Hash:
+                  </p>
+                  <a
+                    href={`https://basescan.org/tx/${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline break-all font-mono"
+                  >
+                    <span>{txHash.slice(0, 16)}...{txHash.slice(-14)}</span>
+                    <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                  </a>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Click to verify on BaseScan
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Updated Token Balance */}
+            <TokenBalanceDisplay />
           </div>
         ) : canClaimFaucet ? (
           <div className="space-y-4">
@@ -100,7 +149,7 @@ export function FaucetClaim() {
             </div>
             <Button
               onClick={handleClaim}
-              disabled={isLoading}
+              disabled={isLoading || !canClaimFaucet}
               className="w-full"
               size="lg"
             >
@@ -115,9 +164,23 @@ export function FaucetClaim() {
             <p className="text-yellow-800 dark:text-yellow-200 font-medium mb-2">
               Already Claimed
             </p>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300">
-              You've already claimed from the faucet. Come back in 24 hours.
-            </p>
+            {timeUntilClaim > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  You've already claimed from the faucet.
+                </p>
+                <p className="text-base font-semibold text-yellow-800 dark:text-yellow-200">
+                  Next claim available in: {timeUntilClaimFormatted}
+                </p>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                  (Cooldown: 24 hours)
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                You've already claimed from the faucet. Come back in 24 hours.
+              </p>
+            )}
           </div>
         )}
 

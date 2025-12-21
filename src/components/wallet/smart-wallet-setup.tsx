@@ -25,10 +25,26 @@ export function SmartWalletSetup() {
   const {
     isEnabled: isBiometricEnabled,
     requestAuth: enableBiometric,
+    refresh: refreshBiometricAuth,
   } = useBiometricAuth();
   
   const { setup: registerKey } = useBiometricSetup();
-  const isBiometricRegistered = isBiometricEnabled;
+  
+  // Check if biometric is actually configured (not just enabled state)
+  const [isBiometricActuallyConfigured, setIsBiometricActuallyConfigured] = useState(false);
+  
+  useEffect(() => {
+    async function checkActualConfig() {
+      const { isBiometricConfigured } = await import('@/lib/biometric/auth');
+      const configured = await isBiometricConfigured();
+      setIsBiometricActuallyConfigured(configured);
+    }
+    checkActualConfig();
+    const interval = setInterval(checkActualConfig, 2000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  const isBiometricRegistered = isBiometricEnabled && isBiometricActuallyConfigured;
 
   const {
     isSmartWalletReady,
@@ -72,13 +88,42 @@ export function SmartWalletSetup() {
     
     try {
       setIsEnablingBiometric(true);
-      // Setup biometric (creates key pair and registers)
+      console.log('🔐 Starting biometric setup...');
+      
+      // Setup biometric (creates key pair and stores credentials)
       const success = await registerKey(address, 'User');
       if (!success) {
         throw new Error('Failed to set up biometric authentication');
       }
+
+      console.log('✅ Biometric setup completed, verifying storage...');
+      
+      // Verify credentials were stored (now using secure async storage)
+      const { getStoredBiometricCredentialSecure, getStoredPublicKeySecure } = await import('@/lib/biometric/storage-adapter');
+      const credentialId = await getStoredBiometricCredentialSecure();
+      const publicKey = await getStoredPublicKeySecure();
+
+      if (!credentialId || !publicKey) {
+        console.error('❌ Credentials not found after setup!');
+        console.error('   Credential ID:', credentialId ? 'Found' : 'Missing');
+        console.error('   Public Key:', publicKey ? 'Found' : 'Missing');
+        throw new Error('Credentials were not stored properly. Please try again.');
+      }
+
+      console.log('✅ Credentials verified in storage');
+      console.log('   Credential ID:', credentialId.substring(0, 20) + '...');
+      console.log('   Public Key X:', publicKey.x.substring(0, 20) + '...');
+      
+      // Refresh biometric auth state to pick up new credentials
+      await refreshBiometricAuth();
+      
+      // Also trigger a manual check
+      setIsBiometricActuallyConfigured(true);
+      
+      console.log('✅ Biometric setup complete and verified!');
     } catch (err) {
       console.error('Failed to enable biometric:', err);
+      alert(`Failed to set up biometric: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsEnablingBiometric(false);
     }
@@ -156,7 +201,7 @@ export function SmartWalletSetup() {
                 <Badge variant="default" className="bg-green-500">Yes</Badge>
               </div>
 
-              {!isBiometricEnabled ? (
+              {!isBiometricEnabled || !isBiometricActuallyConfigured ? (
                 <button
                   onClick={handleEnableBiometric}
                   disabled={isEnablingBiometric}
@@ -164,16 +209,16 @@ export function SmartWalletSetup() {
                 >
                   {isEnablingBiometric ? 'Enabling...' : 'Enable Face ID / Touch ID'}
                 </button>
-              ) : !isBiometricRegistered ? (
-                <button
-                  onClick={() => address && registerKey(address, 'User')}
-                  className="w-full p-4 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors rounded-lg font-medium"
-                >
-                  Register Biometric Key
-                </button>
               ) : (
-                <div className="text-center text-sm text-green-500 py-2">
-                  ✓ Biometric authentication ready
+                <div className="space-y-2">
+                  <div className="text-center text-sm text-green-500 py-2">
+                    ✓ Biometric authentication ready
+                  </div>
+                  <Alert>
+                    <AlertDescription className="text-xs text-muted-foreground">
+                      Biometric credentials are already configured. Your smart wallet will be created automatically.
+                    </AlertDescription>
+                  </Alert>
                 </div>
               )}
             </div>

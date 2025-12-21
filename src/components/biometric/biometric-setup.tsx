@@ -47,8 +47,8 @@ export function BiometricSetup() {
       }
 
       // Step 2: Compute wallet address
-      const publicKey = getStoredPublicKey();
-      if (!publicKey) {
+      const publicKey = await getStoredPublicKey();
+      if (!publicKey || !publicKey.x || !publicKey.y) {
         setSetupStep('error');
         setErrorMessage('Failed to retrieve public key');
         return;
