@@ -41,8 +41,17 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
   const contractAddress = getVisitorBookAddress(chainId || base.id);
   
   // Check if public key is registered on-chain
-  const publicKey = getStoredPublicKey();
-  const publicKeyHash = publicKey 
+  const [publicKey, setPublicKey] = useState<{ x: `0x${string}`; y: `0x${string}` } | null>(null);
+  
+  useEffect(() => {
+    async function loadPublicKey() {
+      const key = await getStoredPublicKey();
+      setPublicKey(key);
+    }
+    loadPublicKey();
+  }, []);
+  
+  const publicKeyHash = publicKey && publicKey.x && publicKey.y
     ? keccak256(encodePacked(['bytes32', 'bytes32'], [publicKey.x, publicKey.y]))
     : undefined;
   
@@ -74,13 +83,15 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
     signVisitorBookWithBiometric,
     isPending: isBiometricPending,
     isConfirming: isBiometricConfirming,
-    isSuccess: isBiometricSuccess
+    isSuccess: isBiometricSuccess,
+    txHash
   } = useSignVisitorBookWithBiometric();
   
   // Determine if biometric is ready to use
-  const canUseBiometric = biometricAvailable && biometricEnabled && isBiometricRegistered && publicKey;
+  const hasValidPublicKey = publicKey && publicKey.x && publicKey.y;
+  const canUseBiometric = biometricAvailable && biometricEnabled && isBiometricRegistered && hasValidPublicKey;
   const needsBiometricSetup = !biometricEnabled;
-  const needsRegistration = biometricEnabled && !isBiometricRegistered && publicKey;
+  const needsRegistration = biometricEnabled && !isBiometricRegistered && hasValidPublicKey;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,12 +163,33 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
           </div>
         ) : isSuccess ? (
           <div className="text-center py-8 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-            <p className="text-green-800 dark:text-green-200 font-medium">
-              ✓ Thank you for signing the visitor book!
-            </p>
-            <p className="text-sm text-green-700 dark:text-green-300 mt-2">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <p className="text-green-800 dark:text-green-200 font-medium">
+                Thank you for signing the visitor book!
+              </p>
+            </div>
+            <p className="text-sm text-green-700 dark:text-green-300 mb-3">
               Your message has been permanently stored on-chain
             </p>
+            {txHash && (
+              <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg border border-green-300 dark:border-green-700">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">
+                  Transaction Hash:
+                </p>
+                <a
+                  href={`https://basescan.org/tx/${txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline break-all font-mono"
+                >
+                  {txHash.slice(0, 16)}...{txHash.slice(-14)}
+                </a>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Click to view on BaseScan
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
