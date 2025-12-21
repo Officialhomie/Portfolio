@@ -128,9 +128,9 @@ export class Secp256r1Signer {
   /**
    * Static factory method to create signer from stored credentials
    */
-  static fromStored(): Secp256r1Signer | null {
+  static async fromStored(): Promise<Secp256r1Signer | null> {
     const credentialId = getStoredBiometricCredential();
-    const publicKey = getStoredPublicKey();
+    const publicKey = await getStoredPublicKey();
 
     if (!credentialId || !publicKey) {
       console.warn('No stored biometric credentials found');
@@ -173,10 +173,10 @@ export class Secp256r1Signer {
   /**
    * Check if biometric signer is available
    */
-  static isAvailable(): boolean {
+  static async isAvailable(): Promise<boolean> {
     const credentialId = getStoredBiometricCredential();
-    const publicKey = getStoredPublicKey();
-    return Boolean(credentialId && publicKey);
+    const publicKey = await getStoredPublicKey();
+    return Boolean(credentialId && publicKey && publicKey.x && publicKey.y);
   }
 }
 
@@ -184,7 +184,7 @@ export class Secp256r1Signer {
  * Create a signer instance from stored biometric credentials
  * Includes comprehensive validation of stored credentials
  */
-export function createBiometricSigner(): Secp256r1Signer {
+export async function createBiometricSigner(): Promise<Secp256r1Signer> {
   // Check if WebAuthn is available
   if (typeof window === 'undefined' || !window.PublicKeyCredential) {
     throw new Error(
@@ -192,7 +192,7 @@ export function createBiometricSigner(): Secp256r1Signer {
     );
   }
 
-  const signer = Secp256r1Signer.fromStored();
+  const signer = await Secp256r1Signer.fromStored();
 
   if (!signer) {
     throw new Error(

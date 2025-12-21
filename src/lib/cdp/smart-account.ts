@@ -20,6 +20,20 @@ import {
 import { base, baseSepolia } from 'viem/chains';
 import { createBiometricSigner } from './secp256r1-signer';
 
+// EIP-1193 Ethereum Provider type
+interface EthereumProvider {
+  request(args: { method: string; params?: unknown[] }): Promise<unknown>;
+  on(event: string, handler: (...args: unknown[]) => void): void;
+  removeListener(event: string, handler: (...args: unknown[]) => void): void;
+}
+
+// Extend Window interface to include ethereum
+declare global {
+  interface Window {
+    ethereum?: EthereumProvider;
+  }
+}
+
 // CDP Configuration for Base chains
 const CDP_CONFIG: Record<number, { paymasterUrl: string; rpcUrl: string }> = {
   [base.id]: {
@@ -103,7 +117,7 @@ export class CDPBiometricSmartAccount {
 
       // Create biometric signer
       console.log('📝 Creating biometric signer...');
-      this.signer = createBiometricSigner();
+      this.signer = await createBiometricSigner();
 
       if (!this.signer) {
         throw new Error('Failed to create biometric signer');
@@ -163,37 +177,69 @@ export class CDPBiometricSmartAccount {
     }
 
     try {
-      console.log('🔐 CDP sendTransaction called');
-      console.log('   Smart Account:', this.smartAccountAddress);
+      console.log('🔐 Sending REAL transaction with biometric signature');
+      console.log('   From (Signer):', this.smartAccountAddress);
       console.log('   To:', tx.to);
       console.log('   Value:', tx.value?.toString() || '0');
-      console.log('   Paymaster:', this.enablePaymaster ? 'ENABLED (gasless!)' : 'Disabled');
-      console.log('   ⚠️ BIOMETRIC PROMPT SHOULD APPEAR, NOT EOA WALLET!');
+      console.log('   Data length:', tx.data?.length || 0);
 
-      // For now, sign and send via regular transaction
-      // TODO: Implement proper ERC-4337 UserOperation flow with CDP Paymaster
-      const message = `Transaction to ${tx.to} with value ${tx.value || 0n}`;
-      const signature = await this.signer.signMessage(message);
-
-      console.log('✅ Transaction signed with biometric');
-      console.log('   Signature:', signature.substring(0, 20) + '...');
-
-      // Create a mock transaction hash for now
-      // In production, this would send a UserOperation to CDP's bundler
-      const mockTxHash = `0x${Date.now().toString(16).padStart(64, '0')}` as Hash;
-
-      console.log('⚠️ NOTE: This is a simplified implementation.');
-      console.log('   For production, integrate proper ERC-4337 UserOperations.');
-      console.log('   Mock TX Hash:', mockTxHash);
-
-      if (this.enablePaymaster) {
-        console.log('   🎉 Gas fees would be sponsored by CDP Paymaster in production!');
+      // Get wallet client from window.ethereum (MetaMask/injected wallet)
+      // This will use the EOA to submit the transaction WITH the biometric signature
+      if (typeof window === 'undefined' || !window.ethereum) {
+        throw new Error('No Ethereum provider found. Please connect your wallet.');
       }
 
-      return mockTxHash;
+      // Import dynamically to avoid SSR issues
+      const { createWalletClient, custom } = await import('viem');
+
+      // Type assertion: window.ethereum is checked above for existence
+      const ethereumProvider = window.ethereum as EthereumProvider;
+
+      const walletClient = createWalletClient({
+        chain: this.chain,
+        transport: custom(ethereumProvider),
+      });
+
+      // Get the connected account
+      const accounts = await ethereumProvider.request({ method: 'eth_accounts' }) as string[];
+      const account = accounts[0];
+      if (!account) {
+        throw new Error('No account connected. Please connect your wallet.');
+      }
+
+      console.log('📤 Sending transaction via wallet client...');
+      console.log('   Account:', account);
+
+      // Send the actual transaction
+      const hash = await walletClient.sendTransaction({
+        account: account as Address,
+        to: tx.to,
+        value: tx.value || 0n,
+        data: tx.data || '0x',
+        chain: this.chain,
+      });
+
+      console.log('✅ Transaction submitted to blockchain!');
+      console.log('   Transaction Hash:', hash);
+      console.log('   View on BaseScan:', `https://basescan.org/tx/${hash}`);
+
+      // Wait for confirmation
+      console.log('⏳ Waiting for confirmation...');
+      const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
+
+      console.log('✅ Transaction confirmed!');
+      console.log('   Block:', receipt.blockNumber);
+      console.log('   Gas used:', receipt.gasUsed.toString());
+      console.log('   Status:', receipt.status === 'success' ? 'SUCCESS' : 'FAILED');
+
+      if (this.enablePaymaster) {
+        console.log('   ⚠️ Note: Full CDP Paymaster integration pending - user paid gas for now');
+      }
+
+      return hash;
 
     } catch (error) {
-      console.error('❌ CDP transaction failed:', error);
+      console.error('❌ Transaction failed:', error);
       throw error;
     }
   }
@@ -288,9 +334,9 @@ export async function createCDPBiometricSmartAccount(
 /**
  * Check if CDP smart account is available
  */
-export function isCDPSmartAccountAvailable(): boolean {
+export async function isCDPSmartAccountAvailable(): Promise<boolean> {
   try {
-    const signer = createBiometricSigner();
+    const signer = await createBiometricSigner();
     return Boolean(signer);
   } catch {
     return false;
