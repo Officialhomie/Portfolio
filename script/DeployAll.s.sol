@@ -139,8 +139,8 @@ contract DeployAll is Script {
 
         console.log("\n# ERC-4337 Infrastructure");
         console.log("NEXT_PUBLIC_ENTRYPOINT_ADDRESS=%s", ENTRYPOINT_ADDRESS);
-        console.log("NEXT_PUBLIC_BIOMETRIC_ACCOUNT_FACTORY_%s=%s", network, address(accountFactory));
-        console.log("NEXT_PUBLIC_BIOMETRIC_ACCOUNT_IMPLEMENTATION_%s=%s", network, accountImplementation);
+        console.log("NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_%s=%s", network, address(accountFactory));
+        console.log("NEXT_PUBLIC_PASSKEY_ACCOUNT_IMPLEMENTATION_%s=%s", network, accountImplementation);
 
         // ========================================================================
         // CDP PAYMASTER CONFIGURATION
