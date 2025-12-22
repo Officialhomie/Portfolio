@@ -142,14 +142,88 @@ export class EOASigner implements ISigner {
       // Ensure message is a hash (32 bytes)
       const messageHash = message.length === 66 ? message : hashMessage(message);
 
-      // Sign with the wallet
-      const signature = await this.walletClient.signMessage({
-        account: this.account,
-        message: { raw: messageHash },
-      });
+      console.log('📝 Requesting MetaMask signature...');
+      console.log('   Account:', this.account);
+      console.log('   Message hash:', messageHash.substring(0, 20) + '...');
+      console.log('   💡 Please approve the signature request in MetaMask');
 
-      // Parse the signature (viem returns hex string)
+      // CRITICAL FIX: Use window.ethereum.request directly for reliable MetaMask popup
+      // Viem's signMessage sometimes doesn't trigger MetaMask popup correctly when
+      // account is passed as a plain address string. Using window.ethereum.request
+      // directly ensures MetaMask shows the popup reliably.
+      if (typeof window === 'undefined' || !window.ethereum) {
+        throw new SignerError(
+          'MetaMask not found. Please install and connect MetaMask.',
+          ERROR_CODES.SIGNER_NOT_INITIALIZED
+        );
+      }
+
+      console.log('   🔄 Calling window.ethereum.request(personal_sign)...');
+      console.log('   This should trigger MetaMask popup');
+      
+      let signature: Hex;
+      try {
+        // Use personal_sign for signing the hash
+        // Note: For ERC-4337 UserOperation hashes, we need to sign the raw hash
+        // personal_sign will add the Ethereum message prefix, but MetaMask handles this correctly
+        // when signing a hex string that's already a hash
+        
+        signature = await (window.ethereum as any).request({
+          method: 'personal_sign',
+          params: [messageHash, this.account],
+        }) as Hex;
+        
+        console.log('✅ Signature received from MetaMask via personal_sign');
+      } catch (signError: any) {
+        console.error('❌ MetaMask signature error:', signError);
+        console.error('   Code:', signError?.code);
+        console.error('   Message:', signError?.message);
+        
+        if (signError?.code === 4001 || signError?.message?.includes('User rejected') || signError?.message?.includes('rejected')) {
+          throw new SignerError(
+            'Signature request was rejected. Please approve the signature in MetaMask to continue.',
+            ERROR_CODES.WEBAUTHN_CANCELED,
+            signError
+          );
+        }
+        
+        if (signError?.code === 4100 || signError?.message?.includes('not been authorized')) {
+          console.error('   ⚠️ MetaMask authorization error - troubleshooting:');
+          console.error('      1. Check MetaMask extension is unlocked');
+          console.error('      2. Verify correct account is selected:', this.account);
+          console.error('      3. Refresh the page');
+          console.error('      4. Check browser popup blocker settings');
+          console.error('      5. Try clicking MetaMask extension icon manually');
+          
+          throw new SignerError(
+            'MetaMask signature not authorized. Please:\n' +
+            '1. Make sure MetaMask is unlocked\n' +
+            '2. Check that the correct account is selected\n' +
+            '3. Refresh the page and try again\n' +
+            '4. If no popup appears, check MetaMask extension permissions\n' +
+            '5. Try clicking the MetaMask extension icon in your browser toolbar',
+            ERROR_CODES.INVALID_SIGNATURE,
+            signError
+          );
+        }
+        
+        throw new SignerError(
+          `Failed to sign message: ${signError?.message || 'Unknown error'}`,
+          ERROR_CODES.INVALID_SIGNATURE,
+          signError
+        );
+      }
+
+      // Parse the signature (MetaMask returns hex string)
       // EOA signatures are 65 bytes: r (32) + s (32) + v (1)
+      // personal_sign returns signature in format: 0x + r (64 chars) + s (64 chars) + v (2 chars) = 132 chars total
+      if (!signature || signature.length !== 132) {
+        throw new SignerError(
+          `Invalid signature format: expected 132 chars, got ${signature?.length || 0}`,
+          ERROR_CODES.INVALID_SIGNATURE
+        );
+      }
+      
       const r = BigInt(`0x${signature.slice(2, 66)}`);
       const s = BigInt(`0x${signature.slice(66, 130)}`);
       const v = parseInt(signature.slice(130, 132), 16);
