@@ -180,7 +180,7 @@ export class UserOperationBuilder implements IUserOperationBuilder {
    * This is required for ERC-4337 UserOperations and Paymaster simulation
    */
   encodeCallData(call: Call): Hex {
-    // For BiometricSmartAccount, we use the execute function
+    // For PasskeyAccount, we use the execute function
     // Format: execute(target, value, data)
     if (!('encodeExecuteCall' in this.account)) {
       throw new UserOperationError(
@@ -222,7 +222,7 @@ export class UserOperationBuilder implements IUserOperationBuilder {
    * Encode multiple calls to batch callData
    */
   encodeBatchCallData(calls: Call[]): Hex {
-    // For BiometricSmartAccount, we use the executeBatch function
+    // For PasskeyAccount, we use the executeBatch function
     // Format: executeBatch(targets[], values[], data[])
     if (!('encodeExecuteBatchCall' in this.account)) {
       throw new UserOperationError(
@@ -257,10 +257,18 @@ export class UserOperationBuilder implements IUserOperationBuilder {
    * Encodes the factory.createAccount call for counterfactual deployment
    */
   private async getInitCode(): Promise<Hex> {
-    // Access factory and ownerBytes from BiometricSmartAccount
+    // Access factory and ownerBytes from PasskeyAccount
     const account = this.account as any;
-    
+
+    console.log('🔧 getInitCode() called');
+    console.log('   account.factory exists:', !!account.factory);
+    console.log('   account.ownerBytes exists:', !!account.ownerBytes);
+    console.log('   account.ownerBytes value:', account.ownerBytes);
+
     if (!account.factory || !account.ownerBytes) {
+      console.error('❌ Factory or ownerBytes missing!');
+      console.error('   account.factory:', account.factory);
+      console.error('   account.ownerBytes:', account.ownerBytes);
       throw new UserOperationError(
         'Cannot generate initCode: factory or ownerBytes not available',
         ERROR_CODES.USEROP_REJECTED
@@ -276,7 +284,7 @@ export class UserOperationBuilder implements IUserOperationBuilder {
       console.error('❌ Invalid factory address:', factoryAddress);
       throw new UserOperationError(
         `Cannot generate initCode: invalid factory address (${factoryAddress}). ` +
-        `Please check NEXT_PUBLIC_BIOMETRIC_ACCOUNT_FACTORY_BASE in .env.local`,
+        `Please check NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_BASE in .env.local`,
         ERROR_CODES.USEROP_REJECTED
       );
     }
