@@ -2,8 +2,8 @@
 pragma solidity ^0.8.24;
 
 import {Script, console} from "forge-std/Script.sol";
-import {BiometricSmartAccountFactory} from "../contracts/BiometricSmartAccountFactory.sol";
-import {BiometricSmartAccount} from "../contracts/BiometricSmartAccount.sol";
+import {PasskeyAccountFactory} from "../contracts/BiometricSmartAccountFactory.sol";
+import {PasskeyAccount} from "../contracts/BiometricSmartAccount.sol";
 import {IEntryPoint} from "../contracts/interfaces/IEntryPoint.sol";
 
 /**
@@ -41,7 +41,7 @@ contract DeployBiometricSmartAccount is Script {
 
         // Deploy Factory (which auto-deploys implementation)
         console.log("Deploying BiometricSmartAccountFactory...");
-        BiometricSmartAccountFactory factory = new BiometricSmartAccountFactory(
+        PasskeyAccountFactory factory = new PasskeyAccountFactory(
             IEntryPoint(ENTRYPOINT_ADDRESS)
         );
         console.log("Factory deployed at:", address(factory));
@@ -100,12 +100,12 @@ contract DeployBiometricSmartAccount is Script {
         // Verification command
         console.log("To verify contracts:");
         console.log("forge verify-contract %s \\", address(factory));
-        console.log("  contracts/BiometricSmartAccountFactory.sol:BiometricSmartAccountFactory \\");
+        console.log("  contracts/BiometricSmartAccountFactory.sol:PasskeyAccountFactory \\");
         console.log("  --chain-id %s \\", block.chainid);
         console.log("  --constructor-args $(cast abi-encode 'constructor(address)' %s)\n", ENTRYPOINT_ADDRESS);
 
         console.log("forge verify-contract %s \\", implementation);
-        console.log("  contracts/BiometricSmartAccount.sol:BiometricSmartAccount \\");
+        console.log("  contracts/BiometricSmartAccount.sol:PasskeyAccount \\");
         console.log("  --chain-id %s \\", block.chainid);
         console.log("  --constructor-args $(cast abi-encode 'constructor(address)' %s)\n", ENTRYPOINT_ADDRESS);
 
