@@ -168,13 +168,82 @@ export class EOASigner implements ISigner {
       console.log('📝 Requesting MetaMask signature...');
       console.log('   Account:', this.account);
       console.log('   Message hash:', messageHash.substring(0, 20) + '...');
+      console.log('   WalletClient exists:', !!this.walletClient);
       console.log('   💡 Please approve the signature request in MetaMask');
 
-      // Sign with the wallet
-      const signature = await this.walletClient.signMessage({
-        account: this.account,
-        message: { raw: messageHash },
-      });
+      // Verify walletClient is properly initialized
+      if (!this.walletClient) {
+        throw new SignerError(
+          'Wallet client not initialized. MetaMask may not be connected properly.',
+          ERROR_CODES.SIGNER_NOT_INITIALIZED
+        );
+      }
+
+      // CRITICAL FIX: Use window.ethereum.request directly instead of viem walletClient
+      // This ensures MetaMask popup appears reliably
+      console.log('   🔄 Calling window.ethereum.request(personal_sign)...');
+      console.log('   This should trigger MetaMask popup');
+      
+      // Verify window.ethereum is available
+      if (typeof window === 'undefined' || !window.ethereum) {
+        throw new SignerError(
+          'MetaMask not found. Please install and connect MetaMask.',
+          ERROR_CODES.SIGNER_NOT_INITIALIZED
+        );
+      }
+
+      // Use personal_sign directly - this is more reliable for triggering MetaMask popups
+      let signature: Hex;
+      try {
+        // personal_sign expects: [message, account]
+        // Note: personal_sign signs the message as-is (not hashed), but we're passing a hash
+        // This is fine because we've already hashed it above
+        const result = await (window.ethereum as any).request({
+          method: 'personal_sign',
+          params: [messageHash, this.account],
+        });
+        
+        signature = result as Hex;
+        
+        console.log('   ✅ MetaMask returned signature');
+      } catch (signError: any) {
+        console.error('❌ personal_sign call failed:', signError);
+        console.error('   Error code:', signError?.code);
+        console.error('   Error message:', signError?.message);
+        
+        // Check if it's a MetaMask-specific error
+        if (signError?.code === 4001 || signError?.message?.includes('User rejected') || signError?.message?.includes('rejected')) {
+          throw new SignerError(
+            'Signature request was rejected. Please approve the signature in MetaMask to continue.',
+            ERROR_CODES.WEBAUTHN_CANCELED,
+            signError
+          );
+        }
+        if (signError?.code === 4100 || signError?.message?.includes('not been authorized')) {
+          // This means MetaMask didn't even show the popup
+          console.error('   ⚠️ MetaMask authorization error - popup may not have appeared');
+          console.error('   💡 Troubleshooting steps:');
+          console.error('      1. Check MetaMask extension is unlocked');
+          console.error('      2. Refresh the page');
+          console.error('      3. Disconnect and reconnect wallet');
+          console.error('      4. Check browser popup blocker settings');
+          console.error('      5. Try clicking MetaMask extension icon manually');
+          throw new SignerError(
+            'MetaMask signature not authorized. Please:\n' +
+            '1. Make sure MetaMask is unlocked\n' +
+            '2. Check that the correct account is selected\n' +
+            '3. Refresh the page and try again\n' +
+            '4. If no popup appears, check MetaMask extension permissions',
+            ERROR_CODES.INVALID_SIGNATURE,
+            signError
+          );
+        }
+        throw new SignerError(
+          `Failed to sign message: ${signError?.message || 'Unknown error'}`,
+          ERROR_CODES.INVALID_SIGNATURE,
+          signError
+        );
+      }
 
       console.log('✅ Signature received from MetaMask');
 
