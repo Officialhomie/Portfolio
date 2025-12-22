@@ -3,5 +3,5 @@
  */
 
 export type { IAccountFactory } from './IAccountFactory';
-export { BiometricAccountFactory } from './BiometricAccountFactory';
+export { PasskeyAccountFactory } from './BiometricAccountFactory';
 

@@ -27,7 +27,7 @@ export { BiometricSmartAccount } from './account';
 // Factory
 // ============================================================================
 export type { IAccountFactory } from './factory';
-export { BiometricAccountFactory } from './factory';
+export { PasskeyAccountFactory } from './factory';
 
 // ============================================================================
 // Operations
