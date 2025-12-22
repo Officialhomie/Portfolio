@@ -12,7 +12,7 @@ export const CONTRACT_ADDRESSES = {
     ProjectVoting: '0x423aFC1a37315372921f194Da42F02bc8C1B117B' as `0x${string}`,
     VisitNFT: '0x3031Cd6Ff22B595AfB6C93BeBAB1587e8d566eF3' as `0x${string}`,
     VisitorBook: '0xA3a085364776a5DbB8ed34ef0B5e47BDf68F4285' as `0x${string}`,
-    BiometricWalletFactory: '0x005F6A92EEe566fb8B09a2B9024DEF8D170B2300' as `0x${string}`,
+    PasskeyAccountFactory: '0x6DE5AF843d270E45A9541805aA42E14544E4AD5c' as `0x${string}`,
     DeploymentPaymaster: '0x0000000000000000000000000000000000000000' as `0x${string}`,
   },
   [baseSepolia.id]: {
@@ -21,7 +21,7 @@ export const CONTRACT_ADDRESSES = {
     ProjectVoting: '0x0000000000000000000000000000000000000000' as `0x${string}`,
     VisitNFT: '0x0000000000000000000000000000000000000000' as `0x${string}`,
     VisitorBook: '0x0000000000000000000000000000000000000000' as `0x${string}`,
-    BiometricWalletFactory: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    PasskeyAccountFactory: '0x0000000000000000000000000000000000000000' as `0x${string}`,
     DeploymentPaymaster: '0x0000000000000000000000000000000000000000' as `0x${string}`,
   },
 } as const;
