@@ -134,9 +134,9 @@ export function SmartWalletInfo() {
           {/* Deployment Status */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-muted-foreground">
-                Deployment Status
-              </label>
+            <label className="text-sm font-medium text-muted-foreground">
+              Deployment Status
+            </label>
               <button
                 onClick={verifyDeployment}
                 disabled={verifying}
@@ -146,7 +146,7 @@ export function SmartWalletInfo() {
               </button>
             </div>
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
                 <Badge 
                   variant={
                     (deploymentStatus?.deployed || isSmartWalletDeployed) 
@@ -162,12 +162,12 @@ export function SmartWalletInfo() {
                   {(deploymentStatus?.deployed || isSmartWalletDeployed) 
                     ? '✅ Deployed' 
                     : '⏳ Not Deployed'}
-                </Badge>
+              </Badge>
                 {deploymentStatus && (
-                  <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                     Code: {deploymentStatus.codeLength} bytes
-                  </span>
-                )}
+                </span>
+              )}
               </div>
               {deploymentStatus && (
                 <p className="text-xs text-muted-foreground">
