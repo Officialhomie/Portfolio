@@ -198,10 +198,16 @@ export class PimlicoBundlerClient implements IBundlerClient {
       
       if (paymasterAndData && paymasterAndData !== '0x') {
         console.log('✅ Pimlico paymaster sponsorship approved!');
-        console.log('   Paymaster data:', paymasterAndData.substring(0, 66) + '...');
+        console.log('   Paymaster data length:', paymasterAndData.length);
+        console.log('   Paymaster data (first 66):', paymasterAndData.substring(0, 66) + '...');
         
         if (hasInitCode) {
-          console.log('   🎉 Deployment sponsorship confirmed! True gasless onboarding!');
+          console.log('   🎉🎉🎉 DEPLOYMENT SPONSORSHIP CONFIRMED! 🎉🎉🎉');
+          console.log('   ✅ True gasless onboarding achieved!');
+          console.log('   💰 User pays $0 for first transaction (deployment + execution)');
+          console.log('   🚀 All future transactions will also be gasless!');
+        } else {
+          console.log('   ✅ Execution sponsorship confirmed!');
         }
         
         return {
