@@ -51,8 +51,8 @@ export class SmartAccountExecutor implements ITransactionExecutor {
       
       try {
         sponsoredUserOp = await this.bundler.sponsorUserOperation(userOp);
-        
-        if (sponsoredUserOp.paymasterAndData === '0x') {
+      
+      if (sponsoredUserOp.paymasterAndData === '0x') {
           if (!isDeployed) {
         console.warn('⚠️ Paymaster rejected deployment+execution combo');
         if (sponsorError instanceof Error && sponsorError.message.includes('Insufficient Pimlico balance')) {
@@ -66,11 +66,11 @@ export class SmartAccountExecutor implements ITransactionExecutor {
         }
           } else {
             console.warn('⚠️ Paymaster sponsorship failed');
-            console.warn('   UserOperation will proceed without sponsorship');
+        console.warn('   UserOperation will proceed without sponsorship');
           }
-        } else {
-          console.log('✅ Paymaster sponsorship received');
-          console.log('   Paymaster data:', sponsoredUserOp.paymasterAndData.substring(0, 20) + '...');
+      } else {
+        console.log('✅ Paymaster sponsorship received');
+        console.log('   Paymaster data:', sponsoredUserOp.paymasterAndData.substring(0, 20) + '...');
           if (!isDeployed) {
             console.log('   🎉 Deployment + execution sponsored! True gasless onboarding!');
           }
