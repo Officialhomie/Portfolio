@@ -192,27 +192,52 @@ export class EOASigner implements ISigner {
         );
       }
 
-      // Use personal_sign directly - this is more reliable for triggering MetaMask popups
+      // Use eth_sign for raw hash signing (ERC-4337 UserOperation hash)
+      // Note: eth_sign is deprecated but still works for signing raw hashes
+      // personal_sign would hash the message again, which we don't want
       let signature: Hex;
       try {
-        // personal_sign expects: [message, account]
-        // Note: personal_sign signs the message as-is (not hashed), but we're passing a hash
-        // This is fine because we've already hashed it above
+        // Try eth_sign first (for raw hash signing)
+        // Format: eth_sign(account, hash)
+        console.log('   🔄 Attempting eth_sign (raw hash signing)...');
         const result = await (window.ethereum as any).request({
-          method: 'personal_sign',
-          params: [messageHash, this.account],
+          method: 'eth_sign',
+          params: [this.account, messageHash],
         });
         
         signature = result as Hex;
         
-        console.log('   ✅ MetaMask returned signature');
+        console.log('   ✅ MetaMask returned signature via eth_sign');
       } catch (signError: any) {
-        console.error('❌ personal_sign call failed:', signError);
-        console.error('   Error code:', signError?.code);
-        console.error('   Error message:', signError?.message);
-        
-        // Check if it's a MetaMask-specific error
-        if (signError?.code === 4001 || signError?.message?.includes('User rejected') || signError?.message?.includes('rejected')) {
+        // If eth_sign fails (deprecated), fall back to personal_sign with proper formatting
+        if (signError?.code === -32601 || signError?.message?.includes('not supported') || signError?.message?.includes('deprecated')) {
+          console.warn('   ⚠️ eth_sign not supported, falling back to personal_sign...');
+          console.warn('   Note: personal_sign will hash the message again');
+          
+          try {
+            // For personal_sign, we need to pass the message as a string
+            // But we have a hash, so we'll convert it to a hex string
+            // personal_sign will hash it again, which is not ideal but works
+            const result = await (window.ethereum as any).request({
+              method: 'personal_sign',
+              params: [messageHash, this.account],
+            });
+            
+            signature = result as Hex;
+            console.log('   ✅ MetaMask returned signature via personal_sign (fallback)');
+          } catch (fallbackError: any) {
+            console.error('❌ Both eth_sign and personal_sign failed');
+            console.error('   eth_sign error:', signError?.message);
+            console.error('   personal_sign error:', fallbackError?.message);
+            throw fallbackError;
+          }
+        } else {
+          console.error('❌ eth_sign call failed:', signError);
+          console.error('   Error code:', signError?.code);
+          console.error('   Error message:', signError?.message);
+          
+          // Check if it's a MetaMask-specific error
+          if (signError?.code === 4001 || signError?.message?.includes('User rejected') || signError?.message?.includes('rejected')) {
           throw new SignerError(
             'Signature request was rejected. Please approve the signature in MetaMask to continue.',
             ERROR_CODES.WEBAUTHN_CANCELED,
