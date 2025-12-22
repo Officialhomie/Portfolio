@@ -54,10 +54,16 @@ export class SmartAccountExecutor implements ITransactionExecutor {
         
         if (sponsoredUserOp.paymasterAndData === '0x') {
           if (!isDeployed) {
-            console.warn('⚠️ Paymaster rejected deployment+execution combo');
-            console.warn('   💡 This is expected - CDP doesn\'t sponsor deployment');
-            console.warn('   🔄 Falling back to EOA payment for first transaction');
-            console.warn('   ✅ All future transactions will be gasless!');
+        console.warn('⚠️ Paymaster rejected deployment+execution combo');
+        if (sponsorError instanceof Error && sponsorError.message.includes('Insufficient Pimlico balance')) {
+          console.warn('   💡 Pimlico account needs funding!');
+          console.warn('   🔗 Top up at: https://pimlico.io/dashboard');
+          console.warn('   💰 Required: ~$0.004 USD for first transaction');
+        } else {
+          console.warn('   💡 Paymaster sponsorship failed');
+          console.warn('   🔄 Falling back to EOA payment for first transaction');
+          console.warn('   ✅ All future transactions will be gasless!');
+        }
           } else {
             console.warn('⚠️ Paymaster sponsorship failed');
             console.warn('   UserOperation will proceed without sponsorship');
