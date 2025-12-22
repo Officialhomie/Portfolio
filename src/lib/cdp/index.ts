@@ -21,7 +21,7 @@ export { EOASigner } from './signers';
 // Account
 // ============================================================================
 export type { ISmartAccount } from './account';
-export { BiometricSmartAccount } from './account';
+export { PasskeyAccount } from './account';
 
 // ============================================================================
 // Factory
@@ -70,9 +70,9 @@ import { createPublicClient, http } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { WebAuthnSigner } from './signers';
 import type { ISigner } from './signers';
-import { BiometricSmartAccount } from './account';
+import { PasskeyAccount } from './account';
 import type { ISmartAccount } from './account';
-import { BiometricAccountFactory } from './factory';
+import { PasskeyAccountFactory } from './factory';
 import { UserOperationBuilder } from './operations';
 import { CDPBundlerClient } from './bundler';
 import { SmartAccountExecutor } from './executor';
@@ -175,10 +175,10 @@ export async function createSmartWallet(config: SmartWalletConfig): Promise<{
   }
 
   // Create factory
-  const factory = new BiometricAccountFactory(chainConfig.factoryAddress, publicClient);
+  const factory = new PasskeyAccountFactory(chainConfig.factoryAddress, publicClient);
 
   // Create account
-  const account = new BiometricSmartAccount(factory, signer, publicClient, ownerBytes);
+  const account = new PasskeyAccount(factory, signer, publicClient, ownerBytes);
 
   // Create bundler first (needed for builder gas estimation)
   const bundlerUrl = config.bundler || chainConfig.bundlerUrl;
