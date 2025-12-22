@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/utils/Create2.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 /**
- * @title BiometricSmartAccountFactory
- * @notice Factory for deploying BiometricSmartAccount contracts with CREATE2
+ * @title PasskeyAccountFactory
+ * @notice Factory for deploying PasskeyAccount contracts with CREATE2
  * @dev Uses CREATE2 for deterministic addresses (counterfactual deployment)
  *
  * Key Features:
@@ -19,13 +19,13 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
  *
  * @author Web3 Portfolio Platform
  */
-contract BiometricSmartAccountFactory {
+contract PasskeyAccountFactory {
     /*//////////////////////////////////////////////////////////////
                                STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice The BiometricSmartAccount implementation contract
-    BiometricSmartAccount public immutable accountImplementation;
+    /// @notice The PasskeyAccount implementation contract
+    PasskeyAccount public immutable accountImplementation;
 
     /// @notice The ERC-4337 EntryPoint
     IEntryPoint public immutable entryPoint;
@@ -50,7 +50,7 @@ contract BiometricSmartAccountFactory {
      */
     constructor(IEntryPoint _entryPoint) {
         entryPoint = _entryPoint;
-        accountImplementation = new BiometricSmartAccount(_entryPoint);
+        accountImplementation = new PasskeyAccount(_entryPoint);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ contract BiometricSmartAccountFactory {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Create a new BiometricSmartAccount
+     * @notice Create a new PasskeyAccount
      * @dev Uses CREATE2 for deterministic addresses
      *
      * The account will be deployed as an ERC1967 proxy pointing to the implementation.
@@ -71,25 +71,25 @@ contract BiometricSmartAccountFactory {
     function createAccount(
         bytes calldata owner,
         uint256 salt
-    ) external returns (BiometricSmartAccount account) {
+    ) external returns (PasskeyAccount account) {
         address addr = getAddress(owner, salt);
 
         // Check if already deployed
         uint256 codeSize = addr.code.length;
         if (codeSize > 0) {
-            return BiometricSmartAccount(payable(addr));
+            return PasskeyAccount(payable(addr));
         }
 
         // Encode initialization call
         bytes memory initializeCall = abi.encodeWithSelector(
-            BiometricSmartAccount.initialize.selector,
+            PasskeyAccount.initialize.selector,
             owner
         );
 
         // Deploy proxy with CREATE2
         bytes32 salt2 = _getSalt(owner, salt);
 
-        account = BiometricSmartAccount(payable(
+        account = PasskeyAccount(payable(
             new ERC1967Proxy{salt: salt2}(
                 address(accountImplementation),
                 initializeCall
@@ -115,7 +115,7 @@ contract BiometricSmartAccountFactory {
         uint256 salt
     ) public view returns (address) {
         bytes memory initializeCall = abi.encodeWithSelector(
-            BiometricSmartAccount.initialize.selector,
+            PasskeyAccount.initialize.selector,
             owner
         );
 
