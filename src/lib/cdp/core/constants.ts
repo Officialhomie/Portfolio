@@ -21,21 +21,21 @@ export const ENTRYPOINT_ADDRESS: Address = '0x5FF137D4b0FDCD49DcA30c7CF57E578a02
 // ============================================================================
 
 /**
- * BiometricSmartAccountFactory addresses per chain
+ * PasskeyAccountFactory addresses per chain
  * Defaults to deployed addresses if env vars not set
  */
 export const FACTORY_ADDRESSES: Record<number, Address> = {
-  [base.id]: (process.env.NEXT_PUBLIC_BIOMETRIC_ACCOUNT_FACTORY_BASE as Address) || '0x005F6A92EEe566fb8B09a2B9024DEF8D170B2300',
-  [baseSepolia.id]: (process.env.NEXT_PUBLIC_BIOMETRIC_ACCOUNT_FACTORY_BASE_SEPOLIA as Address) || '0x',
+  [base.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_BASE as Address) || '0x6DE5AF843d270E45A9541805aA42E14544E4AD5c',
+  [baseSepolia.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_BASE_SEPOLIA as Address) || '0x',
 };
 
 /**
- * BiometricSmartAccount implementation addresses per chain
+ * PasskeyAccount implementation addresses per chain
  * Defaults to deployed addresses if env vars not set
  */
 export const IMPLEMENTATION_ADDRESSES: Record<number, Address> = {
-  [base.id]: (process.env.NEXT_PUBLIC_BIOMETRIC_ACCOUNT_IMPLEMENTATION_BASE as Address) || '0x5c87FE5f254e36BB6f024D8354Be9a77F1176428',
-  [baseSepolia.id]: (process.env.NEXT_PUBLIC_BIOMETRIC_ACCOUNT_IMPLEMENTATION_BASE_SEPOLIA as Address) || '0x',
+  [base.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_IMPLEMENTATION_BASE as Address) || '0x82953c1869aAAD1d61628dbD588E443BD83Be7Dc',
+  [baseSepolia.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_IMPLEMENTATION_BASE_SEPOLIA as Address) || '0x',
 };
 
 // ============================================================================
@@ -252,7 +252,7 @@ export function getChainConfig(chainId: number): CDPChainConfig {
     console.error('   Factory address:', config.factoryAddress);
     throw new Error(
       `Factory address not configured for chain ${chainId}. ` +
-      `Please set NEXT_PUBLIC_BIOMETRIC_ACCOUNT_FACTORY_BASE in .env.local or update constants.ts`
+      `Please set NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_BASE in .env.local or update constants.ts`
     );
   }
   
@@ -262,7 +262,7 @@ export function getChainConfig(chainId: number): CDPChainConfig {
     console.error('   Implementation address:', config.implementationAddress);
     throw new Error(
       `Implementation address not configured for chain ${chainId}. ` +
-      `Please set NEXT_PUBLIC_BIOMETRIC_ACCOUNT_IMPLEMENTATION_BASE in .env.local or update constants.ts`
+      `Please set NEXT_PUBLIC_PASSKEY_ACCOUNT_IMPLEMENTATION_BASE in .env.local or update constants.ts`
     );
   }
   
@@ -281,7 +281,7 @@ export function validateFactoryAddress(chainId: number): Address {
   if (!address || address === '0x') {
     throw new Error(
       `Factory address not configured for chain ${chainId}. ` +
-      `Please set NEXT_PUBLIC_BIOMETRIC_ACCOUNT_FACTORY_BASE or NEXT_PUBLIC_BIOMETRIC_ACCOUNT_FACTORY_BASE_SEPOLIA`
+      `Please set NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_BASE or NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_BASE_SEPOLIA`
     );
   }
   return address;
