@@ -37,8 +37,6 @@ ERC-4337 Infrastructure:
 
 ---
 docs/CONTRACT_FUNCTIONS_SPONSORSHIP_ANALYSIS.md.
-## 1. PortfolioToken (0x99C3714abA7d1C095d1F4f55DBc0CcE94d4513e1)
-
 ## 1. PortfolioToken (0x8e55563fAd437EED9E380748F22F484941d54a94)
 
 ### 🔥 User Onboarding - **SPONSOR ✅** (HIGH PRIORITY)
@@ -407,7 +405,7 @@ BiometricSmartAccountFactory.createAccount(bytes,uint256)
 
 When configuring the CDP Paymaster in the portal, add these contract addresses and function selectors:
 
-**Contract Addresses to Allowlist:**
+**Contract Addresses to Allowlist:** 
 ```
 0x8e55563fAd437EED9E380748F22F484941d54a94  (PortfolioToken)
 0x4D5294abD73b4a1781138AA70D124e94ba02Bc03  (VisitNFT)

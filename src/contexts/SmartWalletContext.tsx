@@ -353,17 +353,17 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       if (!isConnected || !chainId) {
         // If no EOA, check for biometric-only mode
         if (!eoaAddress) {
-          const { isBiometricConfigured } = await import('@/lib/biometric/auth');
-          const actuallyConfigured = await isBiometricConfigured();
-          
-          if (
-            !chainId ||
-            !isBiometricEnabled ||
+      const { isBiometricConfigured } = await import('@/lib/biometric/auth');
+      const actuallyConfigured = await isBiometricConfigured();
+      
+      if (
+        !chainId ||
+        !isBiometricEnabled ||
             !actuallyConfigured ||
-            executor ||
-            isCreatingSmartWallet ||
-            isInitializingRef.current
-          ) {
+        executor ||
+        isCreatingSmartWallet ||
+        isInitializingRef.current
+      ) {
             return;
           }
         } else {
@@ -421,27 +421,27 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
         } else {
           // Biometric-only mode - check biometric configuration
           const { isBiometricConfigured } = await import('@/lib/biometric/auth');
-          const finalCheck = await isBiometricConfigured();
-          if (
-            chainId &&
-            isBiometricEnabled &&
-            finalCheck &&
-            !executor &&
-            !isCreatingSmartWallet &&
+        const finalCheck = await isBiometricConfigured();
+        if (
+          chainId &&
+          isBiometricEnabled &&
+          finalCheck &&
+          !executor &&
+          !isCreatingSmartWallet &&
             !isInitializingRef.current &&
             errorCountRef.current <= 3 // Stop after 3 consecutive errors
-          ) {
-            try {
+        ) {
+          try {
               // Reset error count on new attempt
               errorCountRef.current = 0;
               lastErrorRef.current = null;
-              await createSmartWalletInstance();
+            await createSmartWalletInstance();
               // Reset error tracking on success
               errorCountRef.current = 0;
               lastErrorRef.current = null;
-            } catch (error) {
-              if (!cancelled) {
-                console.error('Smart wallet creation attempt failed:', error);
+          } catch (error) {
+            if (!cancelled) {
+              console.error('Smart wallet creation attempt failed:', error);
               }
             }
           }

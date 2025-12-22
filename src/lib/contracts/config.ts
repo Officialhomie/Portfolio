@@ -55,11 +55,11 @@ export const CONTRACTS = {
       [baseSepolia.id]: CONTRACT_ADDRESSES[baseSepolia.id].VisitorBook,
     },
   },
-  BiometricWalletFactory: {
+  PasskeyAccountFactory: {
     abi: BIOMETRIC_WALLET_FACTORY_ABI,
     addresses: {
-      [base.id]: CONTRACT_ADDRESSES[base.id].BiometricWalletFactory,
-      [baseSepolia.id]: CONTRACT_ADDRESSES[baseSepolia.id].BiometricWalletFactory,
+      [base.id]: CONTRACT_ADDRESSES[base.id].PasskeyAccountFactory,
+      [baseSepolia.id]: CONTRACT_ADDRESSES[baseSepolia.id].PasskeyAccountFactory,
     },
   },
   DeploymentPaymaster: {

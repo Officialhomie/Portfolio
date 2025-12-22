@@ -1,0 +1,32 @@
+
+> onetruehomie-portfolio@0.1.0 build
+> next build
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/mac/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/mac/web3-portfolio/package-lock.json
+
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+
+[2m[966.79ms][22m [@tailwindcss/postcss] src/app/globals.css
+[2m[  0.04ms][22m  [2m ↳ [22mQuick bail check
+[2m[100.67ms][22m  [2m ↳ [22mSetup compiler
+[2m[  1.01ms][22m    [2m ↳ [22mPostCSS AST -> Tailwind CSS AST
+[2m[ 99.63ms][22m    [2m ↳ [22mCreate compiler
+[2m[  1.51ms][22m  [2m ↳ [22mRegister full rebuild paths
+[2m[  8.15ms][22m  [2m ↳ [22mSetup scanner
+[2m[174.85ms][22m  [2m ↳ [22mScan for candidates
+[2m[ 67.58ms][22m  [2m ↳ [22mRegister dependency messages
+[2m[537.54ms][22m  [2m ↳ [22mBuild utilities
+[2m[ 66.68ms][22m  [2m ↳ [22mOptimization
+[2m[  1.86ms][22m    [2m ↳ [22mAST -> CSS
+[2m[ 19.85ms][22m    [2m ↳ [22mLightning CSS
+[2m[ 44.89ms][22m    [2m ↳ [22mCSS -> PostCSS AST
+[2m[  9.27ms][22m  [2m ↳ [22mUpdate PostCSS AST
+

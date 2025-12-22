@@ -50,10 +50,10 @@ export function ConnectButton() {
             <div className="wallet-status-dot animate-pulse bg-yellow-500"></div>
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-mono font-semibold text-foreground dark:text-white leading-tight">
-                Setting up your gas-free wallet...
+                Creating Wallet...
               </span>
               <span className="text-[10px] text-muted-foreground leading-tight">
-                ERC-4337 smart account
+                Setting up biometric
               </span>
             </div>
           </div>
@@ -96,10 +96,10 @@ export function ConnectButton() {
           <div className="wallet-status-dot bg-amber-500"></div>
           <div className="flex flex-col min-w-0">
             <span className="text-xs font-mono font-semibold text-foreground dark:text-white leading-tight">
-              Wallet Connected
+              Setup Required
             </span>
             <span className="text-[10px] text-muted-foreground leading-tight truncate">
-              Setting up gas-free features
+              Enable biometric auth
             </span>
           </div>
         </div>
