@@ -6,16 +6,16 @@ This document analyzes all contract functions and recommends which should be spo
 
 ```
 Core Application Contracts:
-- PortfolioToken: 0x99C3714abA7d1C095d1F4f55DBc0CcE94d4513e1
-- VisitorBook: 0xA3a085364776a5DbB8ed34ef0B5e47BDf68F4285
-- ProjectNFT: 0xBE830eB177Cd33e08712FA03043f9F8Adf98DC89
-- ProjectVoting: 0x423aFC1a37315372921f194Da42F02bc8C1B117B
-- VisitNFT: 0x3031Cd6Ff22B595AfB6C93BeBAB1587e8d566eF3
+- PortfolioToken: 0x8e55563fAd437EED9E380748F22F484941d54a94
+- VisitorBook: 0xd41624609e651F6D2cDE05B55A5b4e22B6C01366
+- ProjectNFT: 0x41bEE6005A3865778FEB7dFA7d5B12bfFA72488b
+- ProjectVoting: 0x09DE89dd04C6452d7bF2d7bA63101d1D01Ff85Ba
+- VisitNFT: 0x4D5294abD73b4a1781138AA70D124e94ba02Bc03
 
 ERC-4337 Infrastructure:
 - EntryPoint: 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
-- BiometricSmartAccountFactory: 0x005F6A92EEe566fb8B09a2B9024DEF8D170B2300
-- BiometricSmartAccount (Implementation): 0x5c87FE5f254e36BB6f024D8354Be9a77F1176428
+- PasskeyAccountFactory: 0x6DE5AF843d270E45A9541805aA42E14544E4AD5c
+- PasskeyAccount (Implementation): 0x82953c1869aAAD1d61628dbD588E443BD83Be7Dc
 ```
 
 ## Analysis Criteria
@@ -38,6 +38,8 @@ ERC-4337 Infrastructure:
 ---
 docs/CONTRACT_FUNCTIONS_SPONSORSHIP_ANALYSIS.md.
 ## 1. PortfolioToken (0x99C3714abA7d1C095d1F4f55DBc0CcE94d4513e1)
+
+## 1. PortfolioToken (0x8e55563fAd437EED9E380748F22F484941d54a94)
 
 ### 🔥 User Onboarding - **SPONSOR ✅** (HIGH PRIORITY)
 
@@ -78,7 +80,7 @@ docs/CONTRACT_FUNCTIONS_SPONSORSHIP_ANALYSIS.md.
 
 ---
 
-## 2. ProjectNFT (0xBE830eB177Cd33e08712FA03043f9F8Adf98DC89)
+## 2. ProjectNFT (0x41bEE6005A3865778FEB7dFA7d5B12bfFA72488b)
 
 ### 🎨 Content Creation - **SPONSOR ✅** (HIGH PRIORITY)
 
@@ -128,7 +130,7 @@ docs/CONTRACT_FUNCTIONS_SPONSORSHIP_ANALYSIS.md.
 
 ---
 
-## 3. ProjectVoting (0x423aFC1a37315372921f194Da42F02bc8C1B117B)
+## 3. ProjectVoting (0x09DE89dd04C6452d7bF2d7bA63101d1D01Ff85Ba)
 
 ### 🗳️ Democratic Participation - **SPONSOR ✅** (HIGH PRIORITY)
 
@@ -158,7 +160,7 @@ docs/CONTRACT_FUNCTIONS_SPONSORSHIP_ANALYSIS.md.
 
 ---
 
-## 4. VisitNFT (0x3031Cd6Ff22B595AfB6C93BeBAB1587e8d566eF3)
+## 4. VisitNFT (0x4D5294abD73b4a1781138AA70D124e94ba02Bc03)
 
 ### 🎁 Welcome Gifts - **SPONSOR ✅** (HIGHEST PRIORITY)
 
@@ -197,7 +199,7 @@ docs/CONTRACT_FUNCTIONS_SPONSORSHIP_ANALYSIS.md.
 
 ---
 
-## 5. VisitorBook (0xA3a085364776a5DbB8ed34ef0B5e47BDf68F4285)
+## 5. VisitorBook (0xd41624609e651F6D2cDE05B55A5b4e22B6C01366)
 
 ### 💬 Social Interaction - **SPONSOR ✅** (HIGH PRIORITY)
 
@@ -227,7 +229,7 @@ docs/CONTRACT_FUNCTIONS_SPONSORSHIP_ANALYSIS.md.
 
 ---
 
-## 6. BiometricSmartAccount (0x5c87FE5f254e36BB6f024D8354Be9a77F1176428)
+## 6. PasskeyAccount (0x82953c1869aAAD1d61628dbD588E443BD83Be7Dc)
 
 ### 🔑 Account Management - **NO SPONSOR ❌**
 
@@ -256,7 +258,7 @@ docs/CONTRACT_FUNCTIONS_SPONSORSHIP_ANALYSIS.md.
 
 ---
 
-## 7. BiometricSmartAccountFactory (0x005F6A92EEe566fb8B09a2B9024DEF8D170B2300)
+## 7. PasskeyAccountFactory (0x6DE5AF843d270E45A9541805aA42E14544E4AD5c)
 
 ### 🏭 Account Creation - **CONDITIONAL SPONSOR ⚠️**
 
@@ -356,21 +358,21 @@ docs/CONTRACT_FUNCTIONS_SPONSORSHIP_ANALYSIS.md.
 
 #### HIGH PRIORITY (Sponsor these):
 
-**PortfolioToken (0x99C3714abA7d1C095d1F4f55DBc0CcE94d4513e1):**
+**PortfolioToken (0x8e55563fAd437EED9E380748F22F484941d54a94):**
 ```
 claimFaucet()
 claimFaucetWithBiometric(bytes32,bytes32,bytes32,bytes32)
 registerSecp256r1Key(bytes32,bytes32)
 ```
 
-**VisitNFT (0x3031Cd6Ff22B595AfB6C93BeBAB1587e8d566eF3):**
+**VisitNFT (0x4D5294abD73b4a1781138AA70D124e94ba02Bc03):**
 ```
 mintVisitNFT()
 mintVisitNFTWithBiometric(bytes32,bytes32,bytes32,bytes32)
 registerSecp256r1Key(bytes32,bytes32)
 ```
 
-**VisitorBook (0xA3a085364776a5DbB8ed34ef0B5e47BDf68F4285):**
+**VisitorBook (0xd41624609e651F6D2cDE05B55A5b4e22B6C01366):**
 ```
 signVisitorBook(string)
 signVisitorBookWithBiometric(string,bytes32,bytes32,bytes32,bytes32)
@@ -378,7 +380,7 @@ signVisitorBookWithSignature(string,bytes,uint256)
 registerSecp256r1Key(bytes32,bytes32)
 ```
 
-**ProjectNFT (0xBE830eB177Cd33e08712FA03043f9F8Adf98DC89):**
+**ProjectNFT (0x41bEE6005A3865778FEB7dFA7d5B12bfFA72488b):**
 ```
 mintProject(address,string,string,string)
 endorseProject(uint256)
@@ -386,7 +388,7 @@ endorseProjectWithBiometric(uint256,bytes32,bytes32,bytes32,bytes32)
 registerSecp256r1Key(bytes32,bytes32)
 ```
 
-**ProjectVoting (0x423aFC1a37315372921f194Da42F02bc8C1B117B):**
+**ProjectVoting (0x09DE89dd04C6452d7bF2d7bA63101d1D01Ff85Ba):**
 ```
 vote(string)
 voteWithBiometric(string,bytes32,bytes32,bytes32,bytes32)
@@ -407,11 +409,11 @@ When configuring the CDP Paymaster in the portal, add these contract addresses a
 
 **Contract Addresses to Allowlist:**
 ```
-0x99C3714abA7d1C095d1F4f55DBc0CcE94d4513e1  (PortfolioToken)
-0x3031Cd6Ff22B595AfB6C93BeBAB1587e8d566eF3  (VisitNFT)
-0xA3a085364776a5DbB8ed34ef0B5e47BDf68F4285  (VisitorBook)
-0xBE830eB177Cd33e08712FA03043f9F8Adf98DC89  (ProjectNFT)
-0x423aFC1a37315372921f194Da42F02bc8C1B117B  (ProjectVoting)
+0x8e55563fAd437EED9E380748F22F484941d54a94  (PortfolioToken)
+0x4D5294abD73b4a1781138AA70D124e94ba02Bc03  (VisitNFT)
+0xd41624609e651F6D2cDE05B55A5b4e22B6C01366  (VisitorBook)
+0x41bEE6005A3865778FEB7dFA7d5B12bfFA72488b  (ProjectNFT)
+0x09DE89dd04C6452d7bF2d7bA63101d1D01Ff85Ba  (ProjectVoting)
 ```
 
 **Function Selectors to Allowlist (for each contract):**
