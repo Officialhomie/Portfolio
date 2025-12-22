@@ -85,11 +85,39 @@ export class SmartAccountExecutor implements ITransactionExecutor {
       }
 
       // 3. Sign UserOperation (with paymaster data included)
-      const signature = await this.signer.signUserOperation(sponsoredUserOp);
+      console.log('✍️ Signing UserOperation...');
+      console.log('   💡 MetaMask will prompt you to sign');
+      console.log('   ⚠️  IMPORTANT: Approve the signature to complete the transaction');
+      
+      let signature: Hex;
+      try {
+        signature = await this.signer.signUserOperation(sponsoredUserOp);
+        console.log('✅ UserOperation signed successfully');
+      } catch (signError) {
+        if (signError instanceof Error && (signError.message.includes('rejected') || signError.message.includes('not been authorized'))) {
+          throw new UserOperationError(
+            `Signature required: Please approve the MetaMask signature request to complete the transaction.\n\n` +
+            `Steps:\n` +
+            `1. Look for the MetaMask popup/notification\n` +
+            `2. Click "Sign" or "Approve"\n` +
+            `3. The transaction will then be submitted automatically\n\n` +
+            `If you don't see a popup, check:\n` +
+            `- MetaMask extension is unlocked\n` +
+            `- Correct account is selected\n` +
+            `- Browser popup blocker is disabled`,
+            ERROR_CODES.USEROP_REJECTED,
+            signError
+          );
+        }
+        throw signError;
+      }
+      
       const signedUserOp: UserOperation = { ...sponsoredUserOp, signature };
 
       // 4. Submit to bundler
+      console.log('📤 Submitting UserOperation to bundler...');
       const userOpHash = await this.bundler.sendUserOperation(signedUserOp);
+      console.log('✅ UserOperation submitted! Hash:', userOpHash);
 
       // 4. Wait for receipt
       const receipt = await this.bundler.waitForUserOperationReceipt(userOpHash);
