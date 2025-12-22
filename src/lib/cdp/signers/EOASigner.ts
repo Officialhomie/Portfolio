@@ -138,6 +138,29 @@ export class EOASigner implements ISigner {
       throw new SignerError('Signer not initialized', ERROR_CODES.SIGNER_NOT_INITIALIZED);
     }
 
+    // Verify account is still connected
+    try {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        const accounts = await (window.ethereum as any).request({ method: 'eth_accounts' });
+        if (!accounts || accounts.length === 0) {
+          throw new SignerError(
+            'No account connected. Please reconnect your wallet in MetaMask.',
+            ERROR_CODES.SIGNER_NOT_INITIALIZED
+          );
+        }
+        const currentAccount = accounts[0].toLowerCase();
+        if (currentAccount !== this.account.toLowerCase()) {
+          console.warn('⚠️ Account mismatch detected!');
+          console.warn('   Expected:', this.account);
+          console.warn('   Current:', currentAccount);
+          console.warn('   Updating to current account...');
+          this.account = accounts[0] as Address;
+        }
+      }
+    } catch (checkError) {
+      console.warn('Could not verify account connection:', checkError);
+    }
+
     try {
       // Ensure message is a hash (32 bytes)
       const messageHash = message.length === 66 ? message : hashMessage(message);
@@ -160,25 +183,25 @@ export class EOASigner implements ISigner {
 
       console.log('   🔄 Calling window.ethereum.request(personal_sign)...');
       console.log('   This should trigger MetaMask popup');
-      
+
       let signature: Hex;
       try {
         // Use personal_sign for signing the hash
         // Note: For ERC-4337 UserOperation hashes, we need to sign the raw hash
         // personal_sign will add the Ethereum message prefix, but MetaMask handles this correctly
         // when signing a hex string that's already a hash
-        
+
         signature = await (window.ethereum as any).request({
           method: 'personal_sign',
           params: [messageHash, this.account],
         }) as Hex;
-        
+
         console.log('✅ Signature received from MetaMask via personal_sign');
       } catch (signError: any) {
         console.error('❌ MetaMask signature error:', signError);
         console.error('   Code:', signError?.code);
         console.error('   Message:', signError?.message);
-        
+
         if (signError?.code === 4001 || signError?.message?.includes('User rejected') || signError?.message?.includes('rejected')) {
           throw new SignerError(
             'Signature request was rejected. Please approve the signature in MetaMask to continue.',
@@ -186,7 +209,7 @@ export class EOASigner implements ISigner {
             signError
           );
         }
-        
+
         if (signError?.code === 4100 || signError?.message?.includes('not been authorized')) {
           console.error('   ⚠️ MetaMask authorization error - troubleshooting:');
           console.error('      1. Check MetaMask extension is unlocked');
@@ -194,7 +217,7 @@ export class EOASigner implements ISigner {
           console.error('      3. Refresh the page');
           console.error('      4. Check browser popup blocker settings');
           console.error('      5. Try clicking MetaMask extension icon manually');
-          
+
           throw new SignerError(
             'MetaMask signature not authorized. Please:\n' +
             '1. Make sure MetaMask is unlocked\n' +
@@ -206,7 +229,7 @@ export class EOASigner implements ISigner {
             signError
           );
         }
-        
+
         throw new SignerError(
           `Failed to sign message: ${signError?.message || 'Unknown error'}`,
           ERROR_CODES.INVALID_SIGNATURE,
@@ -230,8 +253,25 @@ export class EOASigner implements ISigner {
 
       return { r, s, v };
     } catch (error) {
-      if (error instanceof Error && error.message.includes('rejected')) {
-        throw new SignerError('User rejected signature request', ERROR_CODES.WEBAUTHN_CANCELED);
+      if (error instanceof Error) {
+        if (error.message.includes('rejected') || error.message.includes('User rejected')) {
+          throw new SignerError(
+            'Signature request was rejected. Please approve the signature in MetaMask to continue.',
+            ERROR_CODES.WEBAUTHN_CANCELED,
+            error
+          );
+        }
+        if (error.message.includes('not been authorized') || error.message.includes('4100')) {
+          throw new SignerError(
+            'MetaMask signature not authorized. Please:\n' +
+            '1. Make sure MetaMask is unlocked\n' +
+            '2. Check that the correct account is selected\n' +
+            '3. Approve the signature request when it appears\n' +
+            '4. If no popup appears, check MetaMask extension permissions',
+            ERROR_CODES.INVALID_SIGNATURE,
+            error
+          );
+        }
       }
       throw new SignerError(
         `Failed to sign message: ${error instanceof Error ? error.message : 'Unknown error'}`,

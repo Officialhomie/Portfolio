@@ -40,15 +40,30 @@ export const IMPLEMENTATION_ADDRESSES: Record<number, Address> = {
 
 // ============================================================================
 // CDP (Coinbase Developer Platform) Configuration
+// @deprecated CDP is being phased out in favor of Pimlico for deployment sponsorship
 // ============================================================================
 
 /**
  * CDP Bundler + Paymaster RPC URLs
  * Combined endpoint for both bundler and paymaster functionality
+ * @deprecated Use PIMLICO_BUNDLER_URLS instead
  */
 export const CDP_BUNDLER_URLS: Record<number, string> = {
   [base.id]: process.env.NEXT_PUBLIC_CDP_PAYMASTER_RPC_URL_BASE || '',
   [baseSepolia.id]: process.env.NEXT_PUBLIC_CDP_PAYMASTER_RPC_URL_SEPOLIA || '',
+};
+
+// ============================================================================
+// Pimlico Configuration (New - Recommended)
+// ============================================================================
+
+/**
+ * Pimlico Bundler RPC URLs per chain
+ * Supports deployment sponsorship for true gasless onboarding
+ */
+export const PIMLICO_BUNDLER_URLS: Record<number, string> = {
+  [base.id]: process.env.NEXT_PUBLIC_PIMLICO_BUNDLER_RPC_URL_BASE || '',
+  [baseSepolia.id]: process.env.NEXT_PUBLIC_PIMLICO_BUNDLER_RPC_URL_SEPOLIA || '',
 };
 
 /**

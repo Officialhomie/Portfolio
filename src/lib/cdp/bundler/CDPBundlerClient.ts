@@ -1,6 +1,13 @@
 /**
  * CDP (Coinbase Developer Platform) Bundler Client Implementation
  * Handles UserOperation submission and paymaster sponsorship
+ * 
+ * @deprecated This implementation is being phased out in favor of PimlicoBundlerClient
+ * which supports deployment sponsorship for true gasless onboarding.
+ * CDP Paymaster does not support deployment sponsorship.
+ * 
+ * This file is preserved for backward compatibility and fallback scenarios.
+ * New implementations should use PimlicoBundlerClient.
  */
 
 import type { Address, Hex, Transport } from 'viem';

@@ -124,16 +124,18 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       console.log('   Chain ID:', chainId);
       console.log('   EOA Address:', eoaAddress);
       console.log('   Signer:', signerType, useEOASigner ? '(EOA-based)' : '(WebAuthn)');
-      console.log('   Paymaster: Enabled (CDP)');
+      console.log('   Paymaster: Enabled (Pimlico - supports deployment sponsorship)');
 
       // Create wallet using new composable architecture
       // CRITICAL FIX: Use EOA signer so each EOA gets unique smart wallet
       // Pass EOA address to avoid querying window.ethereum
+      // Using Pimlico bundler by default (supports deployment sponsorship for true gasless onboarding)
       const wallet = await createSmartWallet({
         chainId,
         signer: signerType,
         paymaster: true,
         eoaAddress: eoaAddress || undefined, // Pass EOA address when using EOA signer
+        bundlerType: 'pimlico', // Use Pimlico for deployment sponsorship (CDP doesn't support it)
       });
 
       console.log('✅ Wallet created successfully');
@@ -166,8 +168,8 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       console.log('   Smart Wallet Address:', address);
       console.log('   Deployed:', deployed);
       console.log('   Signer:', sign.type);
-      console.log('   Paymaster: Enabled');
-      console.log('   Expected gas cost: $0 (sponsored by CDP)');
+      console.log('   Paymaster: Enabled (Pimlico)');
+      console.log('   Expected gas cost: $0 (sponsored by Pimlico)');
       console.log('');
       console.log('📋 To use this address for testing:');
       console.log(`   const SENDER = '${address}';`);

@@ -6,13 +6,14 @@
  * Shows: address, balance, deployment status, gas savings, biometric info
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { type Address } from 'viem';
 import { useSmartWallet } from '@/contexts/SmartWalletContext';
 import { useFusakaDetection } from '@/hooks/useFusakaDetection';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatAddress } from '@/lib/utils';
+import { verifyAccountDeployment, getBaseScanUrl } from '@/lib/utils/verify-deployment';
 
 export function SmartWalletInfo() {
   const {
@@ -26,6 +27,32 @@ export function SmartWalletInfo() {
 
   const fusaka = useFusakaDetection();
   const [copied, setCopied] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [deploymentStatus, setDeploymentStatus] = useState<{
+    deployed: boolean;
+    codeLength: number;
+    details: string;
+  } | null>(null);
+
+  // Verify deployment status on mount and when address changes
+  useEffect(() => {
+    if (smartWalletAddress) {
+      verifyDeployment();
+    }
+  }, [smartWalletAddress]);
+
+  const verifyDeployment = async () => {
+    if (!smartWalletAddress) return;
+    setVerifying(true);
+    try {
+      const status = await verifyAccountDeployment(smartWalletAddress, 8453);
+      setDeploymentStatus(status);
+    } catch (error) {
+      console.error('Error verifying deployment:', error);
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   if (!smartWalletAddress) return null;
 
@@ -106,18 +133,66 @@ export function SmartWalletInfo() {
 
           {/* Deployment Status */}
           <div className="space-y-2">
+            <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-muted-foreground">
               Deployment Status
             </label>
+              <button
+                onClick={verifyDeployment}
+                disabled={verifying}
+                className="text-xs text-primary hover:underline disabled:opacity-50"
+              >
+                {verifying ? 'Checking...' : 'Refresh'}
+              </button>
+            </div>
+            <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Badge variant={isSmartWalletDeployed ? 'default' : 'secondary'}>
-                {isSmartWalletDeployed ? 'Deployed' : 'Not Deployed'}
+                <Badge 
+                  variant={
+                    (deploymentStatus?.deployed || isSmartWalletDeployed) 
+                      ? 'default' 
+                      : 'secondary'
+                  }
+                  className={
+                    (deploymentStatus?.deployed || isSmartWalletDeployed)
+                      ? 'bg-green-500 text-white'
+                      : ''
+                  }
+                >
+                  {(deploymentStatus?.deployed || isSmartWalletDeployed) 
+                    ? '✅ Deployed' 
+                    : '⏳ Not Deployed'}
               </Badge>
-              {!isSmartWalletDeployed && (
+                {deploymentStatus && (
                 <span className="text-xs text-muted-foreground">
-                  Will be deployed on first transaction
+                    Code: {deploymentStatus.codeLength} bytes
                 </span>
               )}
+              </div>
+              {deploymentStatus && (
+                <p className="text-xs text-muted-foreground">
+                  {deploymentStatus.details}
+                </p>
+              )}
+              {!isSmartWalletDeployed && !deploymentStatus?.deployed && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-xs text-blue-500 mb-1">
+                    💡 Account will be deployed automatically on first transaction
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    The first transaction (e.g., claiming from faucet) will deploy your smart account
+                    and execute the action in one step. Pimlico will sponsor the gas costs!
+                  </p>
+                </div>
+              )}
+              <a
+                href={getBaseScanUrl(smartWalletAddress, 8453)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+              >
+                View on BaseScan →
+              </a>
             </div>
           </div>
 

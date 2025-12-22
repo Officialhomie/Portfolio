@@ -51,20 +51,26 @@ export class SmartAccountExecutor implements ITransactionExecutor {
       
       try {
         sponsoredUserOp = await this.bundler.sponsorUserOperation(userOp);
-        
-        if (sponsoredUserOp.paymasterAndData === '0x') {
+      
+      if (sponsoredUserOp.paymasterAndData === '0x') {
           if (!isDeployed) {
-            console.warn('⚠️ Paymaster rejected deployment+execution combo');
-            console.warn('   💡 This is expected - CDP doesn\'t sponsor deployment');
-            console.warn('   🔄 Falling back to EOA payment for first transaction');
-            console.warn('   ✅ All future transactions will be gasless!');
+        console.warn('⚠️ Paymaster rejected deployment+execution combo');
+        if (sponsorError instanceof Error && sponsorError.message.includes('Insufficient Pimlico balance')) {
+          console.warn('   💡 Pimlico account needs funding!');
+          console.warn('   🔗 Top up at: https://pimlico.io/dashboard');
+          console.warn('   💰 Required: ~$0.004 USD for first transaction');
+        } else {
+          console.warn('   💡 Paymaster sponsorship failed');
+          console.warn('   🔄 Falling back to EOA payment for first transaction');
+          console.warn('   ✅ All future transactions will be gasless!');
+        }
           } else {
             console.warn('⚠️ Paymaster sponsorship failed');
-            console.warn('   UserOperation will proceed without sponsorship');
+        console.warn('   UserOperation will proceed without sponsorship');
           }
-        } else {
-          console.log('✅ Paymaster sponsorship received');
-          console.log('   Paymaster data:', sponsoredUserOp.paymasterAndData.substring(0, 20) + '...');
+      } else {
+        console.log('✅ Paymaster sponsorship received');
+        console.log('   Paymaster data:', sponsoredUserOp.paymasterAndData.substring(0, 20) + '...');
           if (!isDeployed) {
             console.log('   🎉 Deployment + execution sponsored! True gasless onboarding!');
           }
@@ -79,11 +85,39 @@ export class SmartAccountExecutor implements ITransactionExecutor {
       }
 
       // 3. Sign UserOperation (with paymaster data included)
-      const signature = await this.signer.signUserOperation(sponsoredUserOp);
+      console.log('✍️ Signing UserOperation...');
+      console.log('   💡 MetaMask will prompt you to sign');
+      console.log('   ⚠️  IMPORTANT: Approve the signature to complete the transaction');
+      
+      let signature: Hex;
+      try {
+        signature = await this.signer.signUserOperation(sponsoredUserOp);
+        console.log('✅ UserOperation signed successfully');
+      } catch (signError) {
+        if (signError instanceof Error && (signError.message.includes('rejected') || signError.message.includes('not been authorized'))) {
+          throw new UserOperationError(
+            `Signature required: Please approve the MetaMask signature request to complete the transaction.\n\n` +
+            `Steps:\n` +
+            `1. Look for the MetaMask popup/notification\n` +
+            `2. Click "Sign" or "Approve"\n` +
+            `3. The transaction will then be submitted automatically\n\n` +
+            `If you don't see a popup, check:\n` +
+            `- MetaMask extension is unlocked\n` +
+            `- Correct account is selected\n` +
+            `- Browser popup blocker is disabled`,
+            ERROR_CODES.USEROP_REJECTED,
+            signError
+          );
+        }
+        throw signError;
+      }
+      
       const signedUserOp: UserOperation = { ...sponsoredUserOp, signature };
 
       // 4. Submit to bundler
+      console.log('📤 Submitting UserOperation to bundler...');
       const userOpHash = await this.bundler.sendUserOperation(signedUserOp);
+      console.log('✅ UserOperation submitted! Hash:', userOpHash);
 
       // 4. Wait for receipt
       const receipt = await this.bundler.waitForUserOperationReceipt(userOpHash);
