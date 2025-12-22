@@ -129,11 +129,13 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       // Create wallet using new composable architecture
       // CRITICAL FIX: Use EOA signer so each EOA gets unique smart wallet
       // Pass EOA address to avoid querying window.ethereum
+      // Using Pimlico bundler by default (supports deployment sponsorship for true gasless onboarding)
       const wallet = await createSmartWallet({
         chainId,
         signer: signerType,
         paymaster: true,
         eoaAddress: eoaAddress || undefined, // Pass EOA address when using EOA signer
+        bundlerType: 'pimlico', // Use Pimlico for deployment sponsorship (CDP doesn't support it)
       });
 
       console.log('✅ Wallet created successfully');

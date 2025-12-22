@@ -74,12 +74,12 @@ import { PasskeyAccount } from './account';
 import type { ISmartAccount } from './account';
 import { PasskeyAccountFactory } from './factory';
 import { UserOperationBuilder } from './operations';
-import { CDPBundlerClient } from './bundler';
+import { CDPBundlerClient, PimlicoBundlerClient, type IBundlerClient } from './bundler';
 import { SmartAccountExecutor } from './executor';
 import type { ITransactionExecutor } from './executor';
 import { MiddlewareExecutor } from './middleware';
 import { LoggingMiddleware, GasTrackingMiddleware } from './middleware';
-import { getChainConfig, ENTRYPOINT_ADDRESS } from './core/constants';
+import { getChainConfig, ENTRYPOINT_ADDRESS, PIMLICO_BUNDLER_URLS, CDP_BUNDLER_URLS } from './core/constants';
 
 /**
  * Smart Wallet Configuration
@@ -90,6 +90,7 @@ export interface SmartWalletConfig {
   paymaster?: boolean;
   factory?: Address;
   bundler?: string;
+  bundlerType?: 'cdp' | 'pimlico'; // Bundler selection: 'pimlico' (default, recommended) or 'cdp' (deprecated)
   entryPoint?: Address;
   eoaAddress?: Address; // Optional: EOA address to use for EOA signer
 }
@@ -180,14 +181,41 @@ export async function createSmartWallet(config: SmartWalletConfig): Promise<{
   // Create account
   const account = new PasskeyAccount(factory, signer, publicClient, ownerBytes);
 
-  // Create bundler first (needed for builder gas estimation)
-  const bundlerUrl = config.bundler || chainConfig.bundlerUrl;
-  const bundler = new CDPBundlerClient(
-    bundlerUrl,
-    config.entryPoint || ENTRYPOINT_ADDRESS,
-    http(bundlerUrl),
-    config.chainId  // Pass chainId for paymaster calls
-  );
+  // Create bundler based on bundlerType (default to Pimlico for deployment sponsorship)
+  const bundlerType = config.bundlerType || 'pimlico';
+  let bundler: IBundlerClient;
+  
+  if (bundlerType === 'pimlico') {
+    const bundlerUrl = config.bundler || PIMLICO_BUNDLER_URLS[config.chainId];
+    if (!bundlerUrl || bundlerUrl === '') {
+      console.warn('⚠️ Pimlico bundler URL not configured, falling back to CDP');
+      // Fallback to CDP if Pimlico not configured
+      const cdpUrl = config.bundler || chainConfig.bundlerUrl;
+      bundler = new CDPBundlerClient(
+        cdpUrl,
+        config.entryPoint || ENTRYPOINT_ADDRESS,
+        http(cdpUrl),
+        config.chainId
+      );
+    } else {
+      bundler = new PimlicoBundlerClient({
+        rpcUrl: bundlerUrl,
+        entryPoint: config.entryPoint || ENTRYPOINT_ADDRESS,
+        chainId: config.chainId,
+      });
+      console.log('✅ Using Pimlico bundler (supports deployment sponsorship)');
+    }
+  } else {
+    // CDP bundler (deprecated)
+    const bundlerUrl = config.bundler || chainConfig.bundlerUrl;
+    bundler = new CDPBundlerClient(
+      bundlerUrl,
+      config.entryPoint || ENTRYPOINT_ADDRESS,
+      http(bundlerUrl),
+      config.chainId
+    );
+    console.warn('⚠️ Using CDP bundler (deprecated - does not support deployment sponsorship)');
+  }
 
   // Create builder with bundler for gas estimation
   const builder = new UserOperationBuilder(
