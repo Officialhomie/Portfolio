@@ -207,13 +207,13 @@ export async function createSmartWallet(config: SmartWalletConfig): Promise<{
     }
   } else {
     // CDP bundler (deprecated)
-    const bundlerUrl = config.bundler || chainConfig.bundlerUrl;
+  const bundlerUrl = config.bundler || chainConfig.bundlerUrl;
     bundler = new CDPBundlerClient(
-      bundlerUrl,
-      config.entryPoint || ENTRYPOINT_ADDRESS,
-      http(bundlerUrl),
+    bundlerUrl,
+    config.entryPoint || ENTRYPOINT_ADDRESS,
+    http(bundlerUrl),
       config.chainId
-    );
+  );
     console.warn('⚠️ Using CDP bundler (deprecated - does not support deployment sponsorship)');
   }
 
