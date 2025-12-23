@@ -53,7 +53,7 @@ export function ConnectButton() {
                 Creating Wallet...
               </span>
               <span className="text-[10px] text-muted-foreground leading-tight">
-                Setting up biometric
+                Initializing wallet
               </span>
             </div>
           </div>
@@ -99,7 +99,7 @@ export function ConnectButton() {
               Setup Required
             </span>
             <span className="text-[10px] text-muted-foreground leading-tight truncate">
-              Enable biometric auth
+              Wallet setup required
             </span>
           </div>
         </div>
