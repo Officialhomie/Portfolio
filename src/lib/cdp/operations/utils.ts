@@ -10,9 +10,13 @@ import { ENTRYPOINT_ADDRESS } from '../core/constants';
 /**
  * Get the hash of a UserOperation (ERC-4337 v0.6)
  * @see https://eips.ethereum.org/EIPS/eip-4337
+ * 
+ * CRITICAL: Must match EntryPoint's getUserOpHash computation exactly
+ * Format: keccak256(keccak256(packed) || entryPoint || chainId)
  */
-export function getUserOperationHash(userOp: UserOperation): Hex {
+export function getUserOperationHash(userOp: UserOperation, chainId: number = 8453): Hex {
   // Pack UserOperation fields (without signature)
+  // Order must match EntryPoint v0.6 specification exactly
   const packed = encodePacked(
     [
       'address', // sender
@@ -44,11 +48,10 @@ export function getUserOperationHash(userOp: UserOperation): Hex {
   const userOpHash = keccak256(packed);
 
   // Encode with entry point address and chain ID
-  // Note: In production, you should get chain ID from the chain config
-  const chainId = 8453n; // Base mainnet - should be dynamic
+  // CRITICAL: This must match EntryPoint's getUserOpHash format exactly
   const encoded = encodePacked(
     ['bytes32', 'address', 'uint256'],
-    [userOpHash, ENTRYPOINT_ADDRESS, chainId]
+    [userOpHash, ENTRYPOINT_ADDRESS, BigInt(chainId)]
   );
 
   return keccak256(encoded);
