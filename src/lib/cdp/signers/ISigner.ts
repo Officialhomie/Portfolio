@@ -53,7 +53,7 @@ export interface ISigner {
    * @param userOp - The UserOperation to sign
    * @returns Signature formatted for the smart account
    */
-  signUserOperation(userOp: UserOperation): Awaitable<Hex>;
+  signUserOperation(userOp: UserOperation, ownerIndex?: number, chainId?: number): Awaitable<Hex>;
 
   // ============================================================================
   // Metadata Methods
