@@ -11,11 +11,8 @@ import { base } from 'wagmi/chains';
 import { VISITOR_BOOK_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import type { Visitor, VisitorTuple } from '@/lib/types/contracts';
-import { useBiometricAuth } from '@/hooks/useBiometric';
 import { generateVisitorBookSignature, getVisitorBookDomain, visitorSignatureTypes } from '@/lib/eip712/visitor-book';
 import { useWalletClient } from 'wagmi';
-import { signTransactionHashWithBiometric } from '@/lib/biometric/signer';
-import { getStoredBiometricCredential, getStoredPublicKey } from '@/lib/biometric/auth';
 import { useSmartWallet } from '@/contexts/SmartWalletContext';
 import { encodeFunctionData } from 'viem';
 
@@ -192,7 +189,7 @@ export function useSignVisitorBook() {
     }
 
     if (!smartWalletAddress) {
-      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
+      throw new Error('Smart wallet not ready. Please wait for wallet initialization.');
     }
 
     try {
@@ -260,100 +257,6 @@ export function useSignVisitorBook() {
   };
 }
 
-/**
- * Sign visitor book with biometric signature (EIP-7951)
- * @deprecated Use useSignVisitorBook instead - all transactions now use smart wallets
- */
-export function useSignVisitorBookWithBiometric() {
-  const { address, chainId } = useAccount();
-  const contractAddress = getVisitorBookAddress(chainId);
-  const { refetch: refetchVisitors } = useTotalVisitors();
-  const { refetch: refetchHasVisited } = useHasVisited();
-  const { isEnabled } = useBiometricAuth();
-  const { executor, isSendingTransaction, smartWalletAddress } = useSmartWallet();
-
-  const [isPending, setIsPending] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
-
-  const signVisitorBookWithBiometric = async (message: string) => {
-    if (!message || message.length < 1 || message.length > 500) {
-      throw new Error('Message must be between 1 and 500 characters');
-    }
-
-    if (!isEnabled) {
-      throw new Error('Biometric authentication not enabled');
-    }
-
-    if (!smartWalletAddress) {
-      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
-    }
-
-    const credentialId = getStoredBiometricCredential();
-    if (!credentialId) {
-      throw new Error('Biometric authentication not configured');
-    }
-
-    try {
-      setIsPending(true);
-      setIsConfirming(true);
-      setError(null);
-
-      console.log('🔐 Signing visitor book via CDP Smart Wallet (gasless!)');
-      console.log('   Smart Wallet Address:', smartWalletAddress);
-      console.log('   Message:', message);
-
-      // Encode function call
-      const data = encodeFunctionData({
-        abi: VISITOR_BOOK_ABI,
-        functionName: 'signVisitorBook',
-        args: [message],
-      });
-
-      // Execute via executor
-      if (!executor) {
-        throw new Error('Smart wallet executor not ready');
-      }
-
-      const result = await executor.execute({
-        to: contractAddress,
-        data,
-        value: 0n,
-      });
-
-      setTxHash(result.txHash);
-      setIsSuccess(true);
-
-      console.log('✅ Visitor book signed via CDP!');
-      console.log('   Transaction Hash:', result.txHash);
-      console.log('   🎉 Gas fees sponsored by CDP Paymaster!');
-
-      // Refetch data
-      await refetchVisitors();
-      await refetchHasVisited();
-
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to sign visitor book');
-      setError(error);
-      console.error('❌ Biometric sign visitor book error:', error);
-      throw error;
-    } finally {
-      setIsPending(false);
-      setIsConfirming(false);
-    }
-  };
-
-  return {
-    signVisitorBookWithBiometric,
-    isPending: isPending || isSendingTransaction,
-    isConfirming,
-    isSuccess,
-    error,
-    txHash,
-  };
-}
 
 /**
  * Get recent visitors (last N)
