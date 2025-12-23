@@ -13,9 +13,6 @@ import { useSmartWallet } from '@/contexts/SmartWalletContext';
 import { PROJECT_NFT_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import type { Project, ProjectTuple } from '@/lib/types/contracts';
-import { useBiometricAuth } from '@/hooks/useBiometric';
-import { signTransactionHashWithBiometric } from '@/lib/biometric/signer';
-import { getStoredBiometricCredential, getStoredPublicKey } from '@/lib/biometric/auth';
 
 /**
  * Get Project NFT contract address
@@ -311,77 +308,6 @@ export function useEndorseProject(tokenId: bigint | undefined) {
   };
 }
 
-/**
- * Endorse a project with biometric signature (EIP-7951)
- * @deprecated Use useEndorseProject instead - all transactions now use smart wallets
- */
-export function useEndorseProjectWithBiometric(tokenId: bigint | undefined) {
-  const { chainId, address } = useAccount();
-  const contractAddress = getProjectNFTAddress(chainId);
-  const { refetch } = useProject(tokenId);
-  const { isEnabled } = useBiometricAuth();
-
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  const endorseProjectWithBiometric = async () => {
-    if (tokenId === undefined) {
-      throw new Error('Token ID is required');
-    }
-
-    if (!isEnabled) {
-      throw new Error('Biometric authentication not enabled');
-    }
-
-    if (!address) {
-      throw new Error('Wallet not connected');
-    }
-
-    const credentialId = getStoredBiometricCredential();
-    if (!credentialId) {
-      throw new Error('Biometric authentication not configured');
-    }
-
-    try {
-      // Sign transaction hash with biometric
-      const signature = await signTransactionHashWithBiometric({
-        chainId: chainId || base.id,
-        contractAddress,
-        userAddress: address,
-        functionName: 'endorseProject',
-        functionParams: [tokenId],
-      });
-
-      // Call contract with biometric signature
-      await writeContract({
-        address: contractAddress,
-        abi: PROJECT_NFT_ABI,
-        functionName: 'endorseProjectWithBiometric',
-        args: [tokenId, signature.r, signature.s, signature.publicKeyX, signature.publicKeyY],
-        chainId: chainId || base.id,
-      });
-    } catch (err) {
-      console.error('Biometric endorse error:', err);
-      throw err;
-    }
-  };
-
-  // Auto-refetch on success
-  if (isSuccess && hash) {
-    refetch();
-  }
-
-  return {
-    endorseProjectWithBiometric,
-    isPending,
-    isConfirming,
-    isSuccess,
-    error,
-    txHash: hash,
-  };
-}
 
 /**
  * Get token URI (IPFS metadata)
