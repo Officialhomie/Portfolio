@@ -12,9 +12,6 @@ import { base } from 'wagmi/chains';
 import { useSmartWallet } from '@/contexts/SmartWalletContext';
 import { VISIT_NFT_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
-import { useBiometricAuth } from '@/hooks/useBiometric';
-import { signTransactionHashWithBiometric } from '@/lib/biometric/signer';
-import { getStoredBiometricCredential, getStoredPublicKey } from '@/lib/biometric/auth';
 
 /**
  * Get Visit NFT contract address
@@ -153,72 +150,6 @@ export function useMintVisitNFT() {
   };
 }
 
-/**
- * Mint Visit NFT with biometric signature (EIP-7951)
- * @deprecated Use useMintVisitNFT instead - all transactions now use smart wallets
- */
-export function useMintVisitNFTWithBiometric() {
-  const { chainId, address } = useAccount();
-  const contractAddress = getVisitNFTAddress(chainId);
-  const { refetch } = useVisitNFT();
-  const { isEnabled } = useBiometricAuth();
-
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  const mintVisitNFTWithBiometric = async () => {
-    if (!isEnabled) {
-      throw new Error('Biometric authentication not enabled');
-    }
-
-    if (!address) {
-      throw new Error('Wallet not connected');
-    }
-
-    const credentialId = getStoredBiometricCredential();
-    if (!credentialId) {
-      throw new Error('Biometric authentication not configured');
-    }
-
-    try {
-      // Sign transaction hash with biometric
-      const signature = await signTransactionHashWithBiometric({
-        chainId: chainId || base.id,
-        contractAddress,
-        userAddress: address,
-        functionName: 'mintVisitNFT',
-      });
-
-      // Call contract with biometric signature
-      await writeContract({
-        address: contractAddress,
-        abi: VISIT_NFT_ABI,
-        functionName: 'mintVisitNFTWithBiometric',
-        args: [signature.r, signature.s, signature.publicKeyX, signature.publicKeyY],
-        chainId: chainId || base.id,
-      });
-    } catch (err) {
-      console.error('Biometric mint Visit NFT error:', err);
-      throw err;
-    }
-  };
-
-  // Auto-refetch on success
-  if (isSuccess && hash) {
-    refetch();
-  }
-
-  return {
-    mintVisitNFTWithBiometric,
-    isPending,
-    isConfirming,
-    isSuccess,
-    error,
-    txHash: hash,
-  };
-}
 
 /**
  * Get mint timestamp for a token
