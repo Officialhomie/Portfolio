@@ -2,7 +2,7 @@
 
 /**
  * Visitor Book Form Component
- * Form for signing the visitor book with support for biometric and EIP-712 signing
+ * Form for signing the visitor book using smart wallet
  */
 
 import { useState, useEffect } from 'react';
@@ -11,87 +11,32 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { 
   useSignVisitorBook, 
-  useSignVisitorBookWithBiometric,
   useMessageValidation 
 } from '@/hooks/contracts/useVisitorBook';
-import { useAccount, useReadContract } from 'wagmi';
-import { useBiometricCapability, useBiometricAuth, useRegisterBiometricKey } from '@/hooks/useBiometric';
-import { getVisitorBookAddress } from '@/lib/contracts/addresses';
-import { getStoredPublicKey } from '@/lib/biometric/auth';
-import { Loader2, Fingerprint, Shield, CheckCircle } from 'lucide-react';
-import { base } from 'wagmi/chains';
-import { keccak256, encodePacked } from 'viem';
+import { useAccount } from 'wagmi';
+import { Loader2, CheckCircle } from 'lucide-react';
+import { useSmartWallet } from '@/contexts/SmartWalletContext';
 
 interface VisitorBookFormProps {
   onSuccess?: () => void;
 }
 
 export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
-  const { isConnected, address, chainId } = useAccount();
+  const { isConnected, address } = useAccount();
+  const { executor, smartWalletAddress, isSendingTransaction } = useSmartWallet();
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const validation = useMessageValidation(message);
 
-  // Biometric capability check
-  const { isAvailable: biometricAvailable, capability, isLoading: checkingBiometric } = useBiometricCapability();
-  const { isEnabled: biometricEnabled } = useBiometricAuth();
-  
-  // Get contract address
-  const contractAddress = getVisitorBookAddress(chainId || base.id);
-  
-  // Check if public key is registered on-chain
-  const [publicKey, setPublicKey] = useState<{ x: `0x${string}`; y: `0x${string}` } | null>(null);
-  
-  useEffect(() => {
-    async function loadPublicKey() {
-      const key = await getStoredPublicKey();
-      setPublicKey(key);
-    }
-    loadPublicKey();
-  }, []);
-  
-  const publicKeyHash = publicKey && publicKey.x && publicKey.y
-    ? keccak256(encodePacked(['bytes32', 'bytes32'], [publicKey.x, publicKey.y]))
-    : undefined;
-  
-  const { data: registeredAddress } = useReadContract({
-    address: contractAddress,
-    abi: [
-      {
-        inputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }],
-        name: 'secp256r1ToAddress',
-        outputs: [{ internalType: 'address', name: '', type: 'address' }],
-        stateMutability: 'view',
-        type: 'function',
-      },
-    ],
-    functionName: 'secp256r1ToAddress',
-    args: publicKeyHash ? [publicKeyHash] : undefined,
-    query: {
-      enabled: !!publicKeyHash && !!contractAddress,
-    },
-  });
-  
-  const isBiometricRegistered = registeredAddress && registeredAddress.toLowerCase() === address?.toLowerCase();
-  
-  // Registration hook
-  const { registerKey, isPending: isRegistering, isSuccess: registrationSuccess } = useRegisterBiometricKey(contractAddress);
-  
-  // Signing hooks (biometric only)
+  // Signing hook using smart wallet
   const {
-    signVisitorBookWithBiometric,
-    isPending: isBiometricPending,
-    isConfirming: isBiometricConfirming,
-    isSuccess: isBiometricSuccess,
+    signVisitorBook,
+    isPending,
+    isConfirming,
+    isSuccess,
     txHash
-  } = useSignVisitorBookWithBiometric();
-  
-  // Determine if biometric is ready to use
-  const hasValidPublicKey = publicKey && publicKey.x && publicKey.y;
-  const canUseBiometric = biometricAvailable && biometricEnabled && isBiometricRegistered && hasValidPublicKey;
-  const needsBiometricSetup = !biometricEnabled;
-  const needsRegistration = biometricEnabled && !isBiometricRegistered && hasValidPublicKey;
+  } = useSignVisitorBook();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,39 +44,23 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
 
     if (!validation.isValid) return;
 
-    // ENFORCE BIOMETRIC-ONLY SIGNING
-    if (!canUseBiometric) {
-      setError('Biometric authentication is required. Please set up biometric authentication first.');
+    if (!smartWalletAddress || !executor) {
+      setError('Smart wallet not ready. Please wait for wallet initialization.');
       return;
     }
 
     try {
-      // Always use biometric signing (no fallback to EIP-712)
-      await signVisitorBookWithBiometric(message);
+      await signVisitorBook(message);
       setMessage(''); // Clear form on success
       onSuccess?.();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to sign visitor book with biometric authentication';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign visitor book';
       setError(errorMessage);
-      console.error('Biometric signing failed:', error);
+      console.error('Sign visitor book failed:', error);
     }
   };
 
-  const handleRegisterBiometric = async () => {
-    if (isRegistering) return; // Prevent duplicate calls
-    
-    try {
-      setError(null);
-      await registerKey();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to register biometric key';
-      setError(errorMessage);
-      console.error('Failed to register biometric key:', err);
-    }
-  };
-
-  const isLoading = isBiometricPending || isBiometricConfirming || isRegistering;
-  const isSuccess = isBiometricSuccess;
+  const isLoading = isPending || isConfirming || isSendingTransaction;
 
   // Success state
   useEffect(() => {
@@ -160,6 +89,13 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
             <p className="text-muted-foreground mb-4">
               Connect your wallet to sign the visitor book
             </p>
+          </div>
+        ) : !smartWalletAddress ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">
+              Initializing smart wallet...
+            </p>
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
           </div>
         ) : isSuccess ? (
           <div className="text-center py-8 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
@@ -234,97 +170,15 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
               </div>
             )}
 
-            {/* Biometric setup required */}
-            {needsBiometricSetup && (
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
-                      Biometric Authentication Required
-                    </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
-                      This application requires biometric authentication (Face ID/Touch ID) to sign the visitor book.
-                      Please go to Settings to enable biometric authentication.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.location.href = '/biometric'}
-                      className="w-full"
-                    >
-                      <Fingerprint className="h-4 w-4 mr-2" />
-                      Go to Biometric Settings
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Registration required */}
-            {needsRegistration && !isRegistering && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
-                      Register Your Biometric Key
-                    </p>
-                    <p className="text-xs text-blue-700 dark:text-blue-300 mb-3">
-                      One-time setup: Register your biometric key on-chain to sign with Face ID/Touch ID.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRegisterBiometric}
-                      disabled={isRegistering}
-                      className="w-full"
-                    >
-                      {isRegistering ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Registering...
-                        </>
-                      ) : (
-                        <>
-                          <Fingerprint className="h-4 w-4 mr-2" />
-                          Register Biometric Key
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Biometric ready - show status */}
-            {canUseBiometric && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-200">
-                  <CheckCircle className="h-4 w-4" />
-                  <span className="font-medium">
-                    Ready to sign with {capability?.methods.includes('face') ? 'Face ID' : capability?.methods.includes('fingerprint') ? 'Touch ID' : 'Biometric'}
-                  </span>
-                </div>
-              </div>
-            )}
-
             <Button
               type="submit"
               className="w-full"
-              disabled={!validation.isValid || isLoading || !canUseBiometric}
+              disabled={!validation.isValid || isLoading || !smartWalletAddress}
             >
               {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {!isLoading && canUseBiometric && <Fingerprint className="h-4 w-4 mr-2" />}
-              {isRegistering && 'Registering Biometric Key...'}
-              {isBiometricPending && 'Authenticating with Biometric...'}
-              {isBiometricConfirming && 'Confirming Transaction...'}
-              {!isLoading && canUseBiometric && (
-                `Sign with ${capability?.methods.includes('face') ? 'Face ID' : capability?.methods.includes('fingerprint') ? 'Touch ID' : 'Biometric'}`
-              )}
-              {!isLoading && !canUseBiometric && 'Biometric Required'}
+              {isConfirming && 'Confirming Transaction...'}
+              {isPending && 'Preparing Transaction...'}
+              {!isLoading && 'Sign Visitor Book'}
             </Button>
           </form>
         )}
