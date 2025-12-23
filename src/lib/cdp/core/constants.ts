@@ -25,7 +25,7 @@ export const ENTRYPOINT_ADDRESS: Address = '0x5FF137D4b0FDCD49DcA30c7CF57E578a02
  * Defaults to deployed addresses if env vars not set
  */
 export const FACTORY_ADDRESSES: Record<number, Address> = {
-  [base.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_BASE as Address) || '0x6DE5AF843d270E45A9541805aA42E14544E4AD5c',
+  [base.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_BASE as Address) || '0x1941D12269B7288f5a90E7195c2AA3b37de94Ef2',
   [baseSepolia.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_FACTORY_BASE_SEPOLIA as Address) || '0x',
 };
 
@@ -34,7 +34,7 @@ export const FACTORY_ADDRESSES: Record<number, Address> = {
  * Defaults to deployed addresses if env vars not set
  */
 export const IMPLEMENTATION_ADDRESSES: Record<number, Address> = {
-  [base.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_IMPLEMENTATION_BASE as Address) || '0x82953c1869aAAD1d61628dbD588E443BD83Be7Dc',
+  [base.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_IMPLEMENTATION_BASE as Address) || '0x8dcBc5D4466B732C849562dA0Ac02fB187DBED9B',
   [baseSepolia.id]: (process.env.NEXT_PUBLIC_PASSKEY_ACCOUNT_IMPLEMENTATION_BASE_SEPOLIA as Address) || '0x',
 };
 
@@ -108,6 +108,10 @@ export const DEFAULT_GAS_LIMITS = {
   callGasLimit: 150_000n,
   verificationGasLimit: 150_000n,
   preVerificationGas: 21_000n,
+  // Higher limits for deployment (initCode + callData)
+  // CRITICAL: Proxy deployment + initialization + execution needs significant gas
+  deploymentVerificationGasLimit: 500_000n, // Higher for factory call + proxy deployment + initialization
+  deploymentCallGasLimit: 300_000n, // Higher for deployment + execution
 } as const;
 
 /**
