@@ -74,13 +74,19 @@ export class UserOperationBuilder implements IUserOperationBuilder {
     const feeData = await this.getFeeData();
 
     // Build initial UserOperation with default gas (will be refined by bundler)
+    // CRITICAL: Use higher gas limits for deployment (initCode present)
+    const isDeployment = initCode !== '0x' && initCode.length > 42;
     const initialUserOp: UserOperation = {
       sender,
       nonce,
       initCode,
       callData,
-      callGasLimit: DEFAULT_GAS_LIMITS.callGasLimit,
-      verificationGasLimit: DEFAULT_GAS_LIMITS.verificationGasLimit,
+      callGasLimit: isDeployment 
+        ? DEFAULT_GAS_LIMITS.deploymentCallGasLimit 
+        : DEFAULT_GAS_LIMITS.callGasLimit,
+      verificationGasLimit: isDeployment
+        ? DEFAULT_GAS_LIMITS.deploymentVerificationGasLimit
+        : DEFAULT_GAS_LIMITS.verificationGasLimit,
       preVerificationGas: DEFAULT_GAS_LIMITS.preVerificationGas,
       maxFeePerGas: feeData.maxFeePerGas,
       maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
@@ -308,11 +314,44 @@ export class UserOperationBuilder implements IUserOperationBuilder {
       );
     }
 
+    // CRITICAL FIX #3: Validate ownerBytes format before encoding
+    const ownerBytesHex = ownerBytes.slice(2); // Remove 0x
+    const ownerBytesLength = ownerBytesHex.length / 2; // Convert hex to bytes
+    
+    if (ownerBytesLength !== 32) {
+      throw new UserOperationError(
+        `Invalid ownerBytes length: ${ownerBytesLength} bytes, expected 32 bytes. ` +
+        `Owner bytes: ${ownerBytes}. ` +
+        `This will cause contract to reject initialization with "Invalid owner length" error.`,
+        ERROR_CODES.USEROP_REJECTED
+      );
+    }
+    
+    // Verify format: should be 12 bytes zeros + 20 bytes address
+    const padding = ownerBytesHex.substring(0, 24); // First 12 bytes (24 hex chars)
+    const addressPart = ownerBytesHex.substring(24); // Last 20 bytes (40 hex chars)
+    
+    if (padding !== '0'.repeat(24)) {
+      console.warn('⚠️ Owner bytes padding is not all zeros:', padding);
+      console.warn('   Expected: 24 zeros');
+      console.warn('   Got:', padding);
+    }
+    
+    if (addressPart.length !== 40) {
+      throw new UserOperationError(
+        `Invalid ownerBytes address part: expected 40 hex chars, got ${addressPart.length}. ` +
+        `Address part: ${addressPart}`,
+        ERROR_CODES.USEROP_REJECTED
+      );
+    }
+    
     console.log('🔧 Generating initCode for account deployment...');
     console.log('   Factory address:', factoryAddress);
     console.log('   Computed account address:', computedAddress);
-    console.log('   Owner bytes length:', ownerBytes.length);
-    console.log('   Owner bytes (first 50):', ownerBytes.substring(0, 50) + '...');
+    console.log('   ✅ Owner bytes format verified:');
+    console.log('      Total length:', ownerBytesLength, 'bytes (correct)');
+    console.log('      Padding (first 12 bytes):', padding === '0'.repeat(24) ? '✓ all zeros' : `⚠ ${padding}`);
+    console.log('      Address (last 20 bytes):', addressPart);
     console.log('   Salt:', salt.toString());
 
     // Encode factory.createAccount(owner, salt) call
@@ -403,15 +442,36 @@ export class UserOperationBuilder implements IUserOperationBuilder {
         // Fall back to defaults if bundler estimation fails
         console.warn('⚠️ Bundler gas estimation failed, using defaults:', error);
         console.warn('   Error:', error instanceof Error ? error.message : 'Unknown error');
+        
+        // If this is a deployment (has initCode), use higher defaults
+        const isDeployment = userOp.initCode !== '0x' && userOp.initCode.length > 42;
+        if (isDeployment) {
+          console.warn('   💡 Using deployment gas limits (initCode detected)');
+          return {
+            callGasLimit: DEFAULT_GAS_LIMITS.deploymentCallGasLimit,
+            verificationGasLimit: DEFAULT_GAS_LIMITS.deploymentVerificationGasLimit,
+            preVerificationGas: DEFAULT_GAS_LIMITS.preVerificationGas,
+          };
+        }
       }
     }
 
     // Fallback to defaults with safety margins
+    // Check if this is a deployment UserOp (has initCode)
+    const isDeployment = userOp.initCode !== '0x' && userOp.initCode.length > 42;
     const baseLimits = {
-      callGasLimit: DEFAULT_GAS_LIMITS.callGasLimit,
-      verificationGasLimit: DEFAULT_GAS_LIMITS.verificationGasLimit,
+      callGasLimit: isDeployment 
+        ? DEFAULT_GAS_LIMITS.deploymentCallGasLimit 
+        : DEFAULT_GAS_LIMITS.callGasLimit,
+      verificationGasLimit: isDeployment
+        ? DEFAULT_GAS_LIMITS.deploymentVerificationGasLimit
+        : DEFAULT_GAS_LIMITS.verificationGasLimit,
       preVerificationGas: DEFAULT_GAS_LIMITS.preVerificationGas,
     };
+    
+    if (isDeployment) {
+      console.log('   💡 Using deployment gas limits for fallback (initCode detected)');
+    }
 
     // Apply safety margins (higher for preVerificationGas as bundler is strict)
     return {
