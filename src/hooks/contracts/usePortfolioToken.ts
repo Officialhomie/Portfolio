@@ -11,9 +11,6 @@ import { formatUnits, parseUnits, encodeFunctionData } from 'viem';
 import { base, baseSepolia } from 'wagmi/chains';
 import { PORTFOLIO_TOKEN_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
-import { useBiometricAuth } from '@/hooks/useBiometric';
-import { signTransactionHashWithBiometric } from '@/lib/biometric/signer';
-import { getStoredBiometricCredential, getStoredPublicKey } from '@/lib/biometric/auth';
 import { useSmartWallet } from '@/contexts/SmartWalletContext';
 
 /**
@@ -140,7 +137,7 @@ export function useClaimFaucet() {
 
     if (!smartWalletAddress) {
       console.error('❌ Smart wallet not ready!');
-      throw new Error('Smart wallet not ready. Please complete biometric setup first.');
+      throw new Error('Smart wallet not ready. Please wait for wallet initialization.');
     }
 
     try {
@@ -200,77 +197,6 @@ export function useClaimFaucet() {
   };
 }
 
-/**
- * Claim faucet tokens with biometric signature (EIP-7951)
- * @deprecated Use useClaimFaucet instead - all transactions now use smart wallets
- */
-export function useClaimFaucetWithBiometric() {
-  const { chainId, address } = useAccount();
-  const { refetch } = usePortfolioToken();
-  const contractAddress = getTokenAddress(chainId);
-  const { isEnabled } = useBiometricAuth();
-
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  const claimFaucetWithBiometric = async () => {
-    if (!isEnabled) {
-      throw new Error('Biometric authentication not enabled');
-    }
-
-    if (!address) {
-      throw new Error('Wallet not connected');
-    }
-
-    const credentialId = getStoredBiometricCredential();
-    if (!credentialId) {
-      throw new Error('Biometric authentication not configured');
-    }
-
-    const publicKey = await getStoredPublicKey();
-    if (!publicKey || !publicKey.x || !publicKey.y) {
-      throw new Error('Public key not found');
-    }
-
-    try {
-      // Sign transaction hash with biometric
-      const signature = await signTransactionHashWithBiometric({
-        chainId: chainId || base.id,
-        contractAddress,
-        userAddress: address,
-        functionName: 'claimFaucet',
-      });
-
-      // Call contract with biometric signature
-      await writeContract({
-        address: contractAddress,
-        abi: PORTFOLIO_TOKEN_ABI,
-        functionName: 'claimFaucetWithBiometric',
-        args: [signature.r, signature.s, signature.publicKeyX, signature.publicKeyY],
-        chainId: chainId || base.id,
-      });
-    } catch (err) {
-      console.error('Biometric faucet claim error:', err);
-      throw err;
-    }
-  };
-
-  // Auto-refetch balance on success
-  if (isSuccess && hash) {
-    refetch();
-  }
-
-  return {
-    claimFaucetWithBiometric,
-    isPending,
-    isConfirming,
-    isSuccess,
-    error,
-    txHash: hash,
-  };
-}
 
 /**
  * Check if user has enough tokens for voting
