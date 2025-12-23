@@ -138,16 +138,41 @@ export class EOASigner implements ISigner {
       throw new SignerError('Signer not initialized', ERROR_CODES.SIGNER_NOT_INITIALIZED);
     }
 
-    // Verify account is still connected
+    // CRITICAL FIX: Verify account is still connected and request connection if needed
     try {
       if (typeof window !== 'undefined' && window.ethereum) {
-        const accounts = await (window.ethereum as any).request({ method: 'eth_accounts' });
+        // First check if already connected
+        let accounts = await (window.ethereum as any).request({ method: 'eth_accounts' });
+
+        // If no accounts connected, request connection (triggers MetaMask popup)
+        if (!accounts || accounts.length === 0) {
+          console.log('🔐 No MetaMask accounts connected - requesting connection...');
+          try {
+            accounts = await (window.ethereum as any).request({ method: 'eth_requestAccounts' });
+            console.log('✅ MetaMask connection successful');
+          } catch (connectError: any) {
+            if (connectError?.code === 4001) {
+              throw new SignerError(
+                'MetaMask connection was rejected. Please approve the connection to continue.',
+                ERROR_CODES.WEBAUTHN_CANCELED,
+                connectError
+              );
+            }
+            throw new SignerError(
+              `Failed to connect MetaMask: ${connectError?.message || 'Unknown error'}`,
+              ERROR_CODES.SIGNER_NOT_INITIALIZED,
+              connectError
+            );
+          }
+        }
+
         if (!accounts || accounts.length === 0) {
           throw new SignerError(
             'No account connected. Please reconnect your wallet in MetaMask.',
             ERROR_CODES.SIGNER_NOT_INITIALIZED
           );
         }
+
         const currentAccount = accounts[0].toLowerCase();
         if (currentAccount !== this.account.toLowerCase()) {
           console.warn('⚠️ Account mismatch detected!');
@@ -158,6 +183,10 @@ export class EOASigner implements ISigner {
         }
       }
     } catch (checkError) {
+      // Re-throw SignerErrors
+      if (checkError instanceof SignerError) {
+        throw checkError;
+      }
       console.warn('Could not verify account connection:', checkError);
     }
 
@@ -216,10 +245,12 @@ export class EOASigner implements ISigner {
 
   /**
    * Sign a UserOperation hash for ERC-4337
+   * CRITICAL: Contract expects SignatureWrapper struct, not raw signature
    */
-  async signUserOperation(userOp: UserOperation): Promise<Hex> {
+  async signUserOperation(userOp: UserOperation, ownerIndex: number = 0, chainId: number = 8453): Promise<Hex> {
     // Get the UserOperation hash
-    const userOpHash = getUserOperationHash(userOp);
+    // CRITICAL: Must use correct chainId for hash computation
+    const userOpHash = getUserOperationHash(userOp, chainId);
 
     // Sign the hash
     const signature = await this.signMessage(userOpHash);
@@ -228,7 +259,23 @@ export class EOASigner implements ISigner {
     const rHex = `0x${signature.r.toString(16).padStart(64, '0')}`;
     const sHex = `0x${signature.s.toString(16).padStart(64, '0')}`;
     const vHex = signature.v !== undefined ? signature.v.toString(16).padStart(2, '0') : '1b';
-    const encodedSignature = `${rHex}${sHex.slice(2)}${vHex}` as Hex;
+    const signatureData = `${rHex}${sHex.slice(2)}${vHex}` as Hex;
+
+    // CRITICAL FIX: Encode as SignatureWrapper struct (ABI-encoded)
+    // Contract expects: struct SignatureWrapper { uint256 ownerIndex; bytes signatureData; }
+    const { encodeAbiParameters } = await import('viem');
+    const encodedSignature = encodeAbiParameters(
+      [
+        { name: 'ownerIndex', type: 'uint256' },
+        { name: 'signatureData', type: 'bytes' },
+      ],
+      [BigInt(ownerIndex), signatureData]
+    ) as Hex;
+
+    console.log('📝 Encoded signature as SignatureWrapper:');
+    console.log('   Owner index:', ownerIndex);
+    console.log('   Signature data length:', signatureData.length);
+    console.log('   Encoded signature length:', encodedSignature.length);
 
     return encodedSignature;
   }
