@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/P256.sol";
 import "./libraries/Secp256r1Verifier.sol";
+import "./UserInteractionTracker.sol";
 
 /**
  * @title ProjectVoting
@@ -43,6 +44,9 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     
     // Smart wallet registry: wallet address => user address
     mapping(address => address) public walletToUser;
+    
+    // User interaction tracker for hierarchy system
+    UserInteractionTracker public interactionTracker;
 
     event VoteCast(
         address indexed voter,
@@ -55,10 +59,25 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
     event BiometricVoteCast(address indexed user, string indexed projectId, uint256 gasUsed, bool usedPrecompile);
 
-    constructor(address _portfolioToken) {
+    constructor(address _portfolioToken, address _interactionTracker) {
         portfolioToken = PortfolioToken(_portfolioToken);
+        if (_interactionTracker != address(0)) {
+            interactionTracker = UserInteractionTracker(_interactionTracker);
+        }
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
+    }
+    
+    /**
+     * @notice Set interaction tracker address (admin only)
+     * @param _interactionTracker Address of the UserInteractionTracker contract
+     */
+    function setInteractionTracker(address _interactionTracker) 
+        external 
+        onlyRole(DEFAULT_ADMIN_ROLE) 
+    {
+        require(_interactionTracker != address(0), "Invalid tracker address");
+        interactionTracker = UserInteractionTracker(_interactionTracker);
     }
 
     /**
@@ -142,6 +161,15 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
             timestamp: block.timestamp,
             tokensBurned: voteCost
         }));
+        
+        // Record interaction in tracker (vote cost already burned above)
+        if (address(interactionTracker) != address(0)) {
+            interactionTracker.recordInteraction(
+                user,
+                UserInteractionTracker.InteractionType.PROJECT_VOTE,
+                voteCost
+            );
+        }
         
         emit VoteCast(user, projectId, block.timestamp, voteCost);
     }
@@ -312,6 +340,15 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
             timestamp: block.timestamp,
             tokensBurned: voteCost
         }));
+        
+        // Record interaction in tracker (vote cost already burned above)
+        if (address(interactionTracker) != address(0)) {
+            interactionTracker.recordInteraction(
+                user,
+                UserInteractionTracker.InteractionType.PROJECT_VOTE,
+                voteCost
+            );
+        }
 
         // Emit events
         emit VoteCast(user, projectId, block.timestamp, voteCost);
@@ -345,5 +382,108 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
      */
     function isEIP7951Available() external view returns (bool available) {
         return Secp256r1Verifier.isPrecompileAvailable();
+    }
+    
+    /**
+     * @notice Get all votes cast by a user
+     * @param voter Address of the voter
+     * @return Array of Vote structs
+     */
+    function getUserVotes(address voter) external view returns (Vote[] memory) {
+        uint256 userVoteCount = totalVotesByAddress[voter];
+        if (userVoteCount == 0) {
+            return new Vote[](0);
+        }
+        
+        Vote[] memory userVotes = new Vote[](userVoteCount);
+        uint256 index = 0;
+        
+        for (uint256 i = 0; i < votes.length; i++) {
+            if (votes[i].voter == voter) {
+                userVotes[index] = votes[i];
+                index++;
+            }
+        }
+        
+        return userVotes;
+    }
+    
+    /**
+     * @notice Get all projects a user has voted for
+     * @param voter Address of the voter
+     * @return Array of project IDs
+     */
+    function getUserVotedProjects(address voter) external view returns (string[] memory) {
+        // First pass: count projects voted for
+        uint256 count = 0;
+        for (uint256 i = 0; i < votes.length; i++) {
+            if (votes[i].voter == voter) {
+                count++;
+            }
+        }
+        
+        if (count == 0) {
+            return new string[](0);
+        }
+        
+        // Second pass: collect project IDs
+        string[] memory projectIds = new string[](count);
+        uint256 index = 0;
+        
+        for (uint256 i = 0; i < votes.length; i++) {
+            if (votes[i].voter == voter) {
+                projectIds[index] = votes[i].projectId;
+                index++;
+            }
+        }
+        
+        return projectIds;
+    }
+    
+    /**
+     * @notice Get user's voting statistics
+     * @param voter Address of the voter
+     * @return totalVotes Total votes cast
+     * @return totalTokensBurned Total tokens burned
+     * @return uniqueProjects Number of unique projects voted for
+     */
+    function getUserVotingStats(address voter) 
+        external 
+        view 
+        returns (
+            uint256 totalVotes,
+            uint256 totalTokensBurned,
+            uint256 uniqueProjects
+        ) 
+    {
+        totalVotes = totalVotesByAddress[voter];
+        totalTokensBurned = 0;
+        uniqueProjects = 0;
+        
+        // Use a simple approach: iterate and count unique projects
+        // Note: This is O(n) but works without storage mappings
+        string[] memory seenProjects = new string[](totalVotes);
+        uint256 seenCount = 0;
+        
+        for (uint256 i = 0; i < votes.length; i++) {
+            if (votes[i].voter == voter) {
+                totalTokensBurned += votes[i].tokensBurned;
+                
+                // Check if project ID already seen
+                bool seen = false;
+                for (uint256 j = 0; j < seenCount; j++) {
+                    if (keccak256(bytes(seenProjects[j])) == keccak256(bytes(votes[i].projectId))) {
+                        seen = true;
+                        break;
+                    }
+                }
+                
+                if (!seen) {
+                    seenProjects[seenCount] = votes[i].projectId;
+                    seenCount++;
+                    uniqueProjects++;
+                }
+            }
+        }
     }
 }
