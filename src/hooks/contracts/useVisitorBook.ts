@@ -5,7 +5,7 @@
  * Handles all VisitorBook.sol interactions
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt, useSignTypedData } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { VISITOR_BOOK_ABI } from '@/lib/contracts/abis';
@@ -13,7 +13,7 @@ import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import type { Visitor, VisitorTuple } from '@/lib/types/contracts';
 import { generateVisitorBookSignature, getVisitorBookDomain, visitorSignatureTypes } from '@/lib/eip712/visitor-book';
 import { useWalletClient } from 'wagmi';
-import { useSmartWallet } from '@/contexts/SmartWalletContext';
+import { usePrivyWallet } from '@/hooks/usePrivyWallet';
 import { encodeFunctionData } from 'viem';
 
 /**
@@ -167,17 +167,23 @@ export function useVisitCount() {
 }
 
 /**
- * Sign visitor book via CDP smart wallet
+ * Sign visitor book via Privy smart wallet or EOA wallet
  */
 export function useSignVisitorBook() {
   const { address, chainId } = useAccount();
   const contractAddress = getVisitorBookAddress(chainId);
   const { refetch: refetchVisitors } = useTotalVisitors();
   const { refetch: refetchHasVisited } = useHasVisited();
-  const { executor, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const { sendTransaction, isSendingTransaction, error: privyError, smartWalletAddress } = usePrivyWallet();
+  const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  
+  // Wait for EOA transaction receipt
+  const { isLoading: isWaitingTx, isSuccess: isTxSuccess, data: receipt } = useWaitForTransactionReceipt({
+    hash: txHash || undefined,
+  });
 
   const signVisitorBook = async (message: string, useEIP712: boolean = false) => {
     if (!message || message.length < 1 || message.length > 500) {
@@ -188,70 +194,114 @@ export function useSignVisitorBook() {
       throw new Error('Wallet not connected');
     }
 
-    if (!smartWalletAddress) {
-      throw new Error('Smart wallet not ready. Please wait for wallet initialization.');
+    // If smart wallet is available, use it (preferred method)
+    if (smartWalletAddress) {
+      console.log('✅ Using smart wallet for visitor book signing');
+
+      try {
+        setIsConfirming(true);
+        const currentChainId = chainId || base.id;
+        const timestamp = BigInt(Math.floor(Date.now() / 1000));
+
+        let data: `0x${string}`;
+
+        // Use EIP-712 signature if supported and requested
+        if (useEIP712) {
+          // For EIP-712, we'd need to sign the typed data first, then send via smart wallet
+          // For now, we'll use the simpler direct signing approach
+          // TODO: Implement EIP-712 signing with smart wallet if needed
+          console.warn('EIP-712 signing with smart wallet not yet implemented, using direct signing');
+          data = encodeFunctionData({
+            abi: VISITOR_BOOK_ABI,
+            functionName: 'signVisitorBook',
+            args: [message],
+          });
+        } else {
+          // Direct signing via smart wallet
+          data = encodeFunctionData({
+            abi: VISITOR_BOOK_ABI,
+            functionName: 'signVisitorBook',
+            args: [message],
+          });
+        }
+
+        // Execute via Privy transaction
+        const result = await sendTransaction({
+          to: contractAddress,
+          data,
+          value: 0n,
+        });
+
+        setTxHash(result.txHash);
+        setIsSuccess(true);
+
+        // Refetch data after transaction
+        setTimeout(() => {
+          refetchVisitors();
+          refetchHasVisited();
+        }, 2000);
+      } catch (err) {
+        console.error('Sign visitor book failed:', err);
+        throw err;
+      } finally {
+        setIsConfirming(false);
+      }
+    } else {
+      // Fallback: Sign directly from EOA wallet using wagmi
+      console.log('⚠️ Smart wallet not available, using EOA wallet directly');
+      console.log('   This will sign the visitor book directly from your EOA address');
+      
+      try {
+        setIsConfirming(true);
+        
+        console.log('📦 Calling signVisitorBook directly from EOA...');
+        console.log('   Contract:', contractAddress);
+        console.log('   EOA Address:', address);
+        console.log('   Message:', message);
+        
+        // Use wagmi's writeContract to call signVisitorBook directly
+        // The contract will use msg.sender as the visitor address
+        const hash = await writeContract({
+          address: contractAddress,
+          abi: VISITOR_BOOK_ABI,
+          functionName: 'signVisitorBook',
+          args: [message],
+        });
+        
+        console.log('✅ Transaction submitted!');
+        console.log('   TX Hash:', hash);
+        
+        setTxHash(hash);
+        
+      } catch (err) {
+        console.error('Sign visitor book failed:', err);
+        setIsConfirming(false);
+        throw err;
+      }
     }
+  };
 
-    try {
-      setIsConfirming(true);
-      const currentChainId = chainId || base.id;
-      const timestamp = BigInt(Math.floor(Date.now() / 1000));
-
-      let data: `0x${string}`;
-
-      // Use EIP-712 signature if supported and requested
-      if (useEIP712) {
-        // For EIP-712, we'd need to sign the typed data first, then send via smart wallet
-        // For now, we'll use the simpler direct signing approach
-        // TODO: Implement EIP-712 signing with smart wallet if needed
-        console.warn('EIP-712 signing with smart wallet not yet implemented, using direct signing');
-        data = encodeFunctionData({
-          abi: VISITOR_BOOK_ABI,
-          functionName: 'signVisitorBook',
-          args: [message],
-        });
-      } else {
-        // Direct signing via smart wallet
-        data = encodeFunctionData({
-          abi: VISITOR_BOOK_ABI,
-          functionName: 'signVisitorBook',
-          args: [message],
-        });
-      }
-
-      // Execute via executor
-      if (!executor) {
-        throw new Error('Smart wallet executor not ready');
-      }
-
-      const result = await executor.execute({
-        to: contractAddress,
-        data,
-        value: 0n,
-      });
-
-      setTxHash(result.txHash);
+  // Handle EOA transaction success
+  useEffect(() => {
+    if (isTxSuccess && receipt && !isSuccess) {
+      console.log('✅ EOA transaction confirmed!');
       setIsSuccess(true);
-
+      setIsConfirming(false);
+      
       // Refetch data after transaction
       setTimeout(() => {
         refetchVisitors();
         refetchHasVisited();
       }, 2000);
-    } catch (err) {
-      console.error('Sign visitor book failed:', err);
-      throw err;
-    } finally {
-      setIsConfirming(false);
     }
-  };
+  }, [isTxSuccess, receipt, isSuccess, refetchVisitors, refetchHasVisited]);
 
   return {
     signVisitorBook,
-    isPending: isSendingTransaction,
+    isPending: isSendingTransaction || isWritePending || isWaitingTx,
     isConfirming,
     isSuccess,
-    error,
+    error: privyError || writeError || null,
     txHash,
     signature: null, // EIP-712 signature not used with smart wallet
   };
@@ -294,6 +344,70 @@ export function useRecentVisitors(count: number = 5) {
 
   return {
     visitors,
+    isLoading,
+    refetch,
+  };
+}
+
+/**
+ * Get all messages for the connected user
+ * Note: Users can sign multiple times, so this returns all their messages
+ */
+export function useUserMessages() {
+  const { address, chainId } = useAccount();
+  const contractAddress = getVisitorBookAddress(chainId);
+  const { totalVisitors } = useTotalVisitors();
+
+  // Get all visitors (we'll filter client-side)
+  // For efficiency, we could add a contract function to get user-specific messages
+  const { data, isLoading, refetch } = useReadContract({
+    address: contractAddress,
+    abi: VISITOR_BOOK_ABI,
+    functionName: 'getVisitors',
+    args: [0n, BigInt(totalVisitors)], // Get all visitors
+    chainId: chainId || base.id,
+    query: {
+      enabled: !!address && totalVisitors > 0,
+      staleTime: 30_000,
+    },
+  });
+
+  // Filter visitors to only those from the connected user
+  const userMessages: Visitor[] = data && address
+    ? (data as readonly VisitorTuple[])
+        .filter((v) => v[0].toLowerCase() === address.toLowerCase())
+        .map((v) => ({
+          visitor: v[0],
+          message: v[1],
+          timestamp: v[2],
+        }))
+        .reverse() // Most recent first
+    : [];
+
+  // Get most recent message
+  const latestMessage = userMessages.length > 0 ? userMessages[0] : null;
+
+  return {
+    messages: userMessages,
+    latestMessage,
+    messageCount: userMessages.length,
+    isLoading,
+    refetch,
+  };
+}
+
+/**
+ * Get the most recent message for the connected user
+ * Convenience hook that returns just the latest message
+ */
+export function useUserLatestMessage() {
+  const { latestMessage, isLoading, refetch } = useUserMessages();
+  
+  return {
+    message: latestMessage?.message || null,
+    visitor: latestMessage?.visitor || null,
+    timestamp: latestMessage?.timestamp || null,
+    hasMessage: !!latestMessage,
     isLoading,
     refetch,
   };
