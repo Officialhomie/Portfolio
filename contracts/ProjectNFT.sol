@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/P256.sol";
+import "./UserInteractionTracker.sol";
 
 /**
  * @title ProjectNFT
@@ -49,6 +50,9 @@ contract ProjectNFT is
     // Smart wallet registry: wallet address => user address
     mapping(address => address) public walletToUser;
     
+    // User interaction tracker for hierarchy system
+    UserInteractionTracker public interactionTracker;
+    
     event ProjectMinted(
         uint256 indexed tokenId,
         string indexed projectId,
@@ -69,11 +73,26 @@ contract ProjectNFT is
     
     event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
 
-    constructor() 
+    constructor(address _interactionTracker) 
         ERC721("ProjectNFT", "PRJ") 
     {
+        if (_interactionTracker != address(0)) {
+            interactionTracker = UserInteractionTracker(_interactionTracker);
+        }
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
+    }
+    
+    /**
+     * @notice Set interaction tracker address (admin only)
+     * @param _interactionTracker Address of the UserInteractionTracker contract
+     */
+    function setInteractionTracker(address _interactionTracker) 
+        external 
+        onlyRole(DEFAULT_ADMIN_ROLE) 
+    {
+        require(_interactionTracker != address(0), "Invalid tracker address");
+        interactionTracker = UserInteractionTracker(_interactionTracker);
     }
 
     // Required overrides for multiple inheritance
@@ -187,6 +206,24 @@ contract ProjectNFT is
         endorsements[tokenId][user] = true;
         projects[tokenId].endorsementCount++;
         
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.projectEndorseCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.PROJECT_ENDORSE,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.PROJECT_ENDORSE,
+                    0
+                );
+            }
+        }
+        
         emit ProjectEndorsed(tokenId, user, projects[tokenId].endorsementCount);
     }
     
@@ -224,6 +261,24 @@ contract ProjectNFT is
         
         endorsements[tokenId][user] = true;
         projects[tokenId].endorsementCount++;
+        
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.projectEndorseCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.PROJECT_ENDORSE,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.PROJECT_ENDORSE,
+                    0
+                );
+            }
+        }
         
         emit ProjectEndorsed(tokenId, user, projects[tokenId].endorsementCount);
     }
@@ -365,7 +420,103 @@ contract ProjectNFT is
         endorsements[tokenId][user] = true;
         projects[tokenId].endorsementCount++;
         
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.projectEndorseCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.PROJECT_ENDORSE,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.PROJECT_ENDORSE,
+                    0
+                );
+            }
+        }
+        
         emit ProjectEndorsed(tokenId, user, projects[tokenId].endorsementCount);
+    }
+    
+    /**
+     * @notice Get all projects endorsed by a user
+     * @param endorser Address of the endorser
+     * @return Array of token IDs
+     */
+    function getUserEndorsedProjects(address endorser) external view returns (uint256[] memory) {
+        uint256 totalProjects = totalSupply();
+        uint256[] memory temp = new uint256[](totalProjects);
+        uint256 count = 0;
+        
+        for (uint256 i = 1; i <= totalProjects; i++) {
+            if (endorsements[i][endorser]) {
+                temp[count] = i;
+                count++;
+            }
+        }
+        
+        // Create properly sized array
+        uint256[] memory result = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = temp[i];
+        }
+        
+        return result;
+    }
+    
+    /**
+     * @notice Get user's endorsement statistics
+     * @param endorser Address of the endorser
+     * @return totalEndorsements Total number of endorsements
+     * @return uniqueProjects Number of unique projects endorsed
+     */
+    function getUserEndorsementStats(address endorser) 
+        external 
+        view 
+        returns (
+            uint256 totalEndorsements,
+            uint256 uniqueProjects
+        ) 
+    {
+        uint256 totalProjects = totalSupply();
+        uniqueProjects = 0;
+        
+        for (uint256 i = 1; i <= totalProjects; i++) {
+            if (endorsements[i][endorser]) {
+                uniqueProjects++;
+            }
+        }
+        
+        totalEndorsements = uniqueProjects; // One endorsement per project
+    }
+    
+    /**
+     * @notice Get all projects created by a user
+     * @param creator Address of the creator
+     * @return Array of Project structs
+     */
+    function getUserCreatedProjects(address creator) external view returns (Project[] memory) {
+        uint256 totalProjects = totalSupply();
+        Project[] memory temp = new Project[](totalProjects);
+        uint256 count = 0;
+        
+        for (uint256 i = 1; i <= totalProjects; i++) {
+            if (projects[i].creator == creator) {
+                temp[count] = projects[i];
+                count++;
+            }
+        }
+        
+        // Create properly sized array
+        Project[] memory result = new Project[](count);
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = temp[i];
+        }
+        
+        return result;
     }
 }
 
