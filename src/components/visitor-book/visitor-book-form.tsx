@@ -15,7 +15,6 @@ import {
 } from '@/hooks/contracts/useVisitorBook';
 import { useAccount } from 'wagmi';
 import { Loader2, CheckCircle } from 'lucide-react';
-import { useSmartWallet } from '@/contexts/SmartWalletContext';
 
 interface VisitorBookFormProps {
   onSuccess?: () => void;
@@ -23,7 +22,6 @@ interface VisitorBookFormProps {
 
 export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
   const { isConnected, address } = useAccount();
-  const { executor, smartWalletAddress, isSendingTransaction } = useSmartWallet();
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -44,11 +42,6 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
 
     if (!validation.isValid) return;
 
-    if (!smartWalletAddress || !executor) {
-      setError('Smart wallet not ready. Please wait for wallet initialization.');
-      return;
-    }
-
     try {
       await signVisitorBook(message);
       setMessage(''); // Clear form on success
@@ -60,7 +53,7 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
     }
   };
 
-  const isLoading = isPending || isConfirming || isSendingTransaction;
+  const isLoading = isPending || isConfirming;
 
   // Success state
   useEffect(() => {
@@ -89,13 +82,6 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
             <p className="text-muted-foreground mb-4">
               Connect your wallet to sign the visitor book
             </p>
-          </div>
-        ) : !smartWalletAddress ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">
-              Initializing smart wallet...
-            </p>
-            <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
           </div>
         ) : isSuccess ? (
           <div className="text-center py-8 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
@@ -173,7 +159,7 @@ export function VisitorBookForm({ onSuccess }: VisitorBookFormProps) {
             <Button
               type="submit"
               className="w-full"
-              disabled={!validation.isValid || isLoading || !smartWalletAddress}
+              disabled={!validation.isValid || isLoading}
             >
               {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {isConfirming && 'Confirming Transaction...'}
