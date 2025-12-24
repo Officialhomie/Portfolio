@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/P256.sol";
+import "./UserInteractionTracker.sol";
 
 /**
  * @title VisitNFT
@@ -38,6 +39,9 @@ contract VisitNFT is
     // Smart wallet registry: wallet address => user address
     mapping(address => address) public walletToUser;
     
+    // User interaction tracker for hierarchy system
+    UserInteractionTracker public interactionTracker;
+    
     event VisitNFTMinted(
         uint256 indexed tokenId,
         address indexed recipient,
@@ -47,9 +51,24 @@ contract VisitNFT is
     event BaseURIUpdated(string newBaseURI);
     event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
 
-    constructor() ERC721("Portfolio Visit NFT", "VISIT") {
+    constructor(address _interactionTracker) ERC721("Portfolio Visit NFT", "VISIT") {
+        if (_interactionTracker != address(0)) {
+            interactionTracker = UserInteractionTracker(_interactionTracker);
+        }
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
+    }
+    
+    /**
+     * @notice Set interaction tracker address (admin only)
+     * @param _interactionTracker Address of the UserInteractionTracker contract
+     */
+    function setInteractionTracker(address _interactionTracker) 
+        external 
+        onlyRole(DEFAULT_ADMIN_ROLE) 
+    {
+        require(_interactionTracker != address(0), "Invalid tracker address");
+        interactionTracker = UserInteractionTracker(_interactionTracker);
     }
 
     // Required overrides for multiple inheritance
@@ -112,6 +131,24 @@ contract VisitNFT is
         _setTokenURI(newTokenId, string(abi.encodePacked(baseURI, _toString(newTokenId))));
         mintTimestamps[newTokenId] = block.timestamp;
         
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.visitNFTMintCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISIT_NFT_MINT,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISIT_NFT_MINT,
+                    0
+                );
+            }
+        }
+        
         emit VisitNFTMinted(newTokenId, user, block.timestamp);
     }
     
@@ -146,6 +183,24 @@ contract VisitNFT is
         _safeMint(user, newTokenId);
         _setTokenURI(newTokenId, string(abi.encodePacked(baseURI, _toString(newTokenId))));
         mintTimestamps[newTokenId] = block.timestamp;
+        
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.visitNFTMintCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISIT_NFT_MINT,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISIT_NFT_MINT,
+                    0
+                );
+            }
+        }
         
         emit VisitNFTMinted(newTokenId, user, block.timestamp);
     }
@@ -307,7 +362,45 @@ contract VisitNFT is
         _setTokenURI(newTokenId, string(abi.encodePacked(baseURI, _toString(newTokenId))));
         mintTimestamps[newTokenId] = block.timestamp;
         
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.visitNFTMintCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISIT_NFT_MINT,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISIT_NFT_MINT,
+                    0
+                );
+            }
+        }
+        
         emit VisitNFTMinted(newTokenId, user, block.timestamp);
+    }
+    
+    /**
+     * @notice Check if user has minted a Visit NFT
+     * @param user Address of the user
+     * @return hasMinted Whether user has minted
+     * @return tokenId Token ID if minted, 0 otherwise
+     */
+    function getUserVisitNFT(address user) external view returns (bool hasMinted, uint256 tokenId) {
+        hasMinted = hasMinted[user];
+        if (hasMinted) {
+            // Find the token ID for this user
+            uint256 total = totalSupply();
+            for (uint256 i = 1; i <= total; i++) {
+                if (_ownerOf(i) == user) {
+                    tokenId = i;
+                    break;
+                }
+            }
+        }
     }
 }
 
