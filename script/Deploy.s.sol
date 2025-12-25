@@ -22,19 +22,19 @@ contract DeployScript is Script {
         console.log("PortfolioToken deployed at:", address(portfolioToken));
 
         // 2. Deploy Visitor Book
-        VisitorBook visitorBook = new VisitorBook();
+        VisitorBook visitorBook = new VisitorBook(address(0)); // No tracker initially
         console.log("VisitorBook deployed at:", address(visitorBook));
 
         // 3. Deploy Project NFT
-        ProjectNFT projectNFT = new ProjectNFT();
+        ProjectNFT projectNFT = new ProjectNFT(address(0)); // No tracker initially
         console.log("ProjectNFT deployed at:", address(projectNFT));
 
         // 4. Deploy Project Voting (requires PortfolioToken address)
-        ProjectVoting projectVoting = new ProjectVoting(address(portfolioToken));
+        ProjectVoting projectVoting = new ProjectVoting(address(portfolioToken), address(0)); // No tracker initially
         console.log("ProjectVoting deployed at:", address(projectVoting));
 
         // 5. Deploy Visit NFT
-        VisitNFT visitNFT = new VisitNFT();
+        VisitNFT visitNFT = new VisitNFT(address(0)); // No tracker initially
         console.log("VisitNFT deployed at:", address(visitNFT));
 
         // 6. Deploy Smart Account Factory (ERC-4337 EntryPoint required)

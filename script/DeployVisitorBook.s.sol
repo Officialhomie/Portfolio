@@ -22,7 +22,7 @@ contract DeployVisitorBookScript is Script {
         console.log("- secp256r1 curve verification");
 
         // Deploy Visitor Book
-        VisitorBook visitorBook = new VisitorBook();
+        VisitorBook visitorBook = new VisitorBook(address(0));
         console.log("VisitorBook deployed at:", address(visitorBook));
 
         vm.stopBroadcast();

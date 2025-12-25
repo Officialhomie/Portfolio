@@ -56,22 +56,22 @@ contract DeployAll is Script {
 
         // 2. Visitor Book
         console.log("Deploying VisitorBook...");
-        VisitorBook visitorBook = new VisitorBook();
+        VisitorBook visitorBook = new VisitorBook(address(0));
         console.log("  VisitorBook:", address(visitorBook));
 
         // 3. Project NFT
         console.log("Deploying ProjectNFT...");
-        ProjectNFT projectNFT = new ProjectNFT();
+        ProjectNFT projectNFT = new ProjectNFT(address(0));
         console.log("  ProjectNFT:", address(projectNFT));
 
         // 4. Project Voting (requires PortfolioToken)
         console.log("Deploying ProjectVoting...");
-        ProjectVoting projectVoting = new ProjectVoting(address(portfolioToken));
+        ProjectVoting projectVoting = new ProjectVoting(address(portfolioToken), address(0));
         console.log("  ProjectVoting:", address(projectVoting));
 
         // 5. Visit NFT
         console.log("Deploying VisitNFT...");
-        VisitNFT visitNFT = new VisitNFT();
+        VisitNFT visitNFT = new VisitNFT(address(0));
         console.log("  VisitNFT:", address(visitNFT));
 
         console.log("");
