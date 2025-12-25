@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits, encodeFunctionData } from 'viem';
 import { base } from 'wagmi/chains';
-import { useSmartWallet } from '@/contexts/SmartWalletContext';
+import { usePrivyWallet } from '@/hooks/usePrivyWallet';
 import { PROJECT_VOTING_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import { usePortfolioToken } from './usePortfolioToken';
@@ -160,7 +160,7 @@ export function useVote(projectId: string | undefined) {
   const { refetch: refetchVotes } = useProjectVotes(projectId);
   const { refetch: refetchHasVoted } = useHasVoted(projectId);
   const { refetch: refetchBalance } = usePortfolioToken();
-  const { executor, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = usePrivyWallet();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -187,15 +187,12 @@ export function useVote(projectId: string | undefined) {
         args: [projectId],
       });
 
-      // Execute via executor
-      if (!executor) {
-        throw new Error('Smart wallet executor not ready');
-      }
+      // Execute via sendTransaction
 
-      const result = await executor.execute({
+      const result = await sendTransaction({
         to: contractAddress,
         data,
-        value: 0n,
+        value: BigInt(0),
       });
 
       setTxHash(result.txHash);

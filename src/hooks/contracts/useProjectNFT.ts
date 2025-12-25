@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { encodeFunctionData } from 'viem';
 import { base } from 'wagmi/chains';
-import { useSmartWallet } from '@/contexts/SmartWalletContext';
+import { usePrivyWallet } from '@/hooks/usePrivyWallet';
 import { PROJECT_NFT_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import type { Project, ProjectTuple } from '@/lib/types/contracts';
@@ -179,7 +179,7 @@ export function useMintProject() {
   const { chainId, address } = useAccount();
   const contractAddress = getProjectNFTAddress(chainId);
   const { refetch } = useProjectList();
-  const { executor, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = usePrivyWallet();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -202,15 +202,12 @@ export function useMintProject() {
         args: [address, projectId, projectName, ipfsMetadataURI],
       });
 
-      // Execute via executor
-      if (!executor) {
-        throw new Error('Smart wallet executor not ready');
-      }
+      // Execute via sendTransaction
 
-      const result = await executor.execute({
+      const result = await sendTransaction({
         to: contractAddress,
         data,
-        value: 0n,
+        value: BigInt(0),
       });
 
       setTxHash(result.txHash);
@@ -245,7 +242,7 @@ export function useEndorseProject(tokenId: bigint | undefined) {
   const { chainId, address } = useAccount();
   const contractAddress = getProjectNFTAddress(chainId);
   const { refetch } = useProject(tokenId);
-  const { executor, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = usePrivyWallet();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -272,15 +269,12 @@ export function useEndorseProject(tokenId: bigint | undefined) {
         args: [tokenId],
       });
 
-      // Execute via executor
-      if (!executor) {
-        throw new Error('Smart wallet executor not ready');
-      }
+      // Execute via sendTransaction
 
-      const result = await executor.execute({
+      const result = await sendTransaction({
         to: contractAddress,
         data,
-        value: 0n,
+        value: BigInt(0),
       });
 
       setTxHash(result.txHash);

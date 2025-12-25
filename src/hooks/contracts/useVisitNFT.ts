@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { encodeFunctionData } from 'viem';
 import { base } from 'wagmi/chains';
-import { useSmartWallet } from '@/contexts/SmartWalletContext';
+import { usePrivyWallet } from '@/hooks/usePrivyWallet';
 import { VISIT_NFT_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 
@@ -91,7 +91,7 @@ export function useMintVisitNFT() {
   const { chainId, address } = useAccount();
   const contractAddress = getVisitNFTAddress(chainId);
   const { refetch } = useVisitNFT();
-  const { executor, isSendingTransaction, error, smartWalletAddress } = useSmartWallet();
+  const { sendTransaction, isSendingTransaction, error, smartWalletAddress } = usePrivyWallet();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -114,15 +114,12 @@ export function useMintVisitNFT() {
         args: [],
       });
 
-      // Execute via executor
-      if (!executor) {
-        throw new Error('Smart wallet executor not ready');
-      }
+      // Execute via sendTransaction
 
-      const result = await executor.execute({
+      const result = await sendTransaction({
         to: contractAddress,
         data,
-        value: 0n,
+        value: BigInt(0),
       });
 
       setTxHash(result.txHash);
