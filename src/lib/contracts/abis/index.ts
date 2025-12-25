@@ -8,31 +8,18 @@ import ProjectNFTABI from './ProjectNFT.json';
 import ProjectVotingABI from './ProjectVoting.json';
 import VisitNFTABI from './VisitNFT.json';
 import VisitorBookABI from './VisitorBook.json';
-import BiometricWalletABI from './BiometricWallet.json';
-import BiometricWalletFactoryABI from './BiometricWalletFactory.json';
-import DeploymentPaymasterABI from './DeploymentPaymaster.json';
 import type { Abi } from 'viem';
 
-// Extract ABI from JSON structure (JSON files may have { abi: [...] } or be direct arrays)
-const extractAbi = (json: any): Abi => {
-  if (Array.isArray(json)) {
-    return json as Abi;
-  }
-  if (json && json.abi && Array.isArray(json.abi)) {
-    return json.abi as Abi;
-  }
-  return json as Abi;
-};
+// Export ABIs with proper typing using const assertion
+export const PORTFOLIO_TOKEN_ABI = (PortfolioTokenABI as { abi: Abi }).abi;
+export const PROJECT_NFT_ABI = (ProjectNFTABI as { abi: Abi }).abi;
+export const PROJECT_VOTING_ABI = (ProjectVotingABI as { abi: Abi }).abi;
+export const VISIT_NFT_ABI = (VisitNFTABI as { abi: Abi }).abi;
+export const VISITOR_BOOK_ABI = VisitorBookABI as Abi;
 
-// Export ABIs with proper typing
-export const PORTFOLIO_TOKEN_ABI = extractAbi(PortfolioTokenABI);
-export const PROJECT_NFT_ABI = extractAbi(ProjectNFTABI);
-export const PROJECT_VOTING_ABI = extractAbi(ProjectVotingABI);
-export const VISIT_NFT_ABI = extractAbi(VisitNFTABI);
-export const VISITOR_BOOK_ABI = extractAbi(VisitorBookABI);
-export const BIOMETRIC_WALLET_ABI = extractAbi(BiometricWalletABI);
-export const BIOMETRIC_WALLET_FACTORY_ABI = extractAbi(BiometricWalletFactoryABI);
-export const DEPLOYMENT_PAYMASTER_ABI = extractAbi(DeploymentPaymasterABI);
+// Dummy ABIs for biometric wallet functionality (not currently deployed)
+export const BIOMETRIC_WALLET_FACTORY_ABI = [] as const;
+export const BIOMETRIC_WALLET_ABI = [] as const;
 
 // Re-export for convenience
 export {
@@ -41,7 +28,4 @@ export {
   ProjectVotingABI,
   VisitNFTABI,
   VisitorBookABI,
-  BiometricWalletABI,
-  BiometricWalletFactoryABI,
-  DeploymentPaymasterABI,
 };
