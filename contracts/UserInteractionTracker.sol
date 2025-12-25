@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./PortfolioToken.sol";
+import "./Homie.sol";
 
 /**
  * @title UserInteractionTracker

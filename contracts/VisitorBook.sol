@@ -6,8 +6,6 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/P256.sol";
-import "./libraries/Secp256r1Verifier.sol";
 import "./UserInteractionTracker.sol";
 
 /**
@@ -23,7 +21,7 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
     
     // EIP-712 type hash for structured signing
-    bytes32 private constant VISITOR_SIGNATURE_TYPEHASH = 
+    bytes32 public constant VISITOR_SIGNATURE_TYPEHASH =
         keccak256("VisitorSignature(address visitor,string message,uint256 timestamp)");
     struct Visitor {
         address visitor;
@@ -38,10 +36,7 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
     
     uint256 public maxMessageLength = 500;
     uint256 public minMessageLength = 1;
-    
-    // Biometric authentication support (EIP-7951)
-    mapping(bytes32 => address) public secp256r1ToAddress;
-    
+
     // Smart wallet registry: wallet address => user address
     mapping(address => address) public walletToUser;
     
@@ -57,8 +52,6 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
 
     event MessageLengthUpdated(uint256 oldLength, uint256 newLength);
     event VisitorRemoved(address indexed visitor, uint256 index);
-    event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
-    event BiometricTransactionExecuted(address indexed user, string operation, uint256 gasUsed, bool usedPrecompile);
 
     constructor(address _interactionTracker) EIP712("VisitorBook", "1") {
         if (_interactionTracker != address(0)) {
@@ -208,7 +201,8 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
 
         // Validate timestamp is within reasonable window (5 minutes) to prevent replay attacks
         require(
-            timestamp >= block.timestamp - 300 && timestamp <= block.timestamp + 60,
+            (block.timestamp >= 300 ? timestamp >= block.timestamp - 300 : timestamp >= 0) &&
+            timestamp <= block.timestamp + 60,
             "Timestamp out of window"
         );
 
@@ -359,128 +353,6 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
         }
         
         return result;
-    }
-
-    /**
-     * @notice Register secp256r1 public key for biometric authentication
-     * @param publicKeyX X coordinate of public key
-     * @param publicKeyY Y coordinate of public key
-     */
-    function registerSecp256r1Key(bytes32 publicKeyX, bytes32 publicKeyY) external {
-        require(P256.isValidPublicKey(publicKeyX, publicKeyY), "Invalid public key");
-        
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        require(secp256r1ToAddress[publicKeyHash] == address(0), "Public key already registered");
-        
-        secp256r1ToAddress[publicKeyHash] = msg.sender;
-        emit BiometricKeyRegistered(msg.sender, publicKeyX, publicKeyY);
-    }
-
-    /**
-     * @notice Sign visitor book using biometric signature (EIP-7951)
-     * @dev DEPRECATED: Use smart wallet executeFor instead
-     * @param message The message left by the visitor
-     * @param r Signature r component
-     * @param s Signature s component
-     * @param publicKeyX Public key X coordinate
-     * @param publicKeyY Public key Y coordinate
-     */
-    function signVisitorBookWithBiometric(
-        string memory message,
-        bytes32 r,
-        bytes32 s,
-        bytes32 publicKeyX,
-        bytes32 publicKeyY
-    ) external whenNotPaused nonReentrant {
-        uint256 messageLength = bytes(message).length;
-        require(
-            messageLength >= minMessageLength && messageLength <= maxMessageLength,
-            "Message length invalid"
-        );
-        
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        address user = secp256r1ToAddress[publicKeyHash];
-        require(user != address(0), "Public key not registered");
-        
-        uint256 timestamp = block.timestamp;
-        
-        // Generate message hash
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            "signVisitorBook",
-            block.chainid,
-            address(this),
-            user,
-            keccak256(bytes(message)),
-            timestamp
-        ));
-
-        // Verify secp256r1 signature using hybrid verifier
-        // Automatically uses EIP-7951 precompile (6.9k gas) if available, falls back to P256.sol (100k gas)
-        uint256 gasBefore = gasleft();
-        require(
-            Secp256r1Verifier.verify(messageHash, r, s, publicKeyX, publicKeyY),
-            "Invalid signature"
-        );
-        uint256 gasUsed = gasBefore - gasleft();
-        
-        visitors.push(Visitor({
-            visitor: user,
-            message: message,
-            timestamp: timestamp
-        }));
-        
-        hasVisited[user] = true;
-        visitCount[user]++;
-        
-        // Record interaction and burn tokens if tracker is set
-        if (address(interactionTracker) != address(0)) {
-            uint256 burnAmount = interactionTracker.visitorBookSignCost();
-            if (burnAmount > 0) {
-                interactionTracker.recordInteraction(
-                    user,
-                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
-                    burnAmount
-                );
-            } else {
-                interactionTracker.recordInteraction(
-                    user,
-                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
-                    0
-                );
-            }
-        }
-
-        emit VisitorSigned(user, message, timestamp, visitCount[user]);
-        emit BiometricTransactionExecuted(user, "signVisitorBook", gasUsed, Secp256r1Verifier.isPrecompileAvailable());
-    }
-
-    /**
-     * @notice Get current verification method and estimated gas cost
-     * @dev Useful for frontend to display gas estimates to users
-     * @return method "precompile" if EIP-7951 is available, "p256-library" otherwise
-     * @return estimatedGas Approximate gas cost for biometric verification
-     * @return gasSavings Percentage of gas saved with precompile (e.g., 93 = 93%)
-     */
-    function getBiometricVerificationInfo()
-        external
-        view
-        returns (
-            string memory method,
-            uint256 estimatedGas,
-            uint256 gasSavings
-        )
-    {
-        (method, estimatedGas) = Secp256r1Verifier.getVerificationMethod();
-        gasSavings = Secp256r1Verifier.getGasSavingsPercentage();
-    }
-
-    /**
-     * @notice Check if EIP-7951 precompile is available on this chain
-     * @dev Returns true on Fusaka-enabled chains (Base after Dec 3, 2024)
-     * @return available True if precompile exists and works correctly
-     */
-    function isEIP7951Available() external view returns (bool available) {
-        return Secp256r1Verifier.isPrecompileAvailable();
     }
 
     /**

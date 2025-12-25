@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/cryptography/P256.sol";
 import "./UserInteractionTracker.sol";
 
 /**
@@ -32,10 +31,7 @@ contract VisitNFT is
     uint256 private _tokenIds;
     mapping(address => bool) public hasMinted;
     mapping(uint256 => uint256) public mintTimestamps; // Track mint timestamps
-    
-    // Biometric authentication support (EIP-7951)
-    mapping(bytes32 => address) public secp256r1ToAddress;
-    
+
     // Smart wallet registry: wallet address => user address
     mapping(address => address) public walletToUser;
     
@@ -47,9 +43,8 @@ contract VisitNFT is
         address indexed recipient,
         uint256 timestamp
     );
-    
+
     event BaseURIUpdated(string newBaseURI);
-    event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
 
     constructor(address _interactionTracker) ERC721("Portfolio Visit NFT", "VISIT") {
         if (_interactionTracker != address(0)) {
@@ -308,90 +303,14 @@ contract VisitNFT is
     }
 
     /**
-     * @notice Register secp256r1 public key for biometric authentication
-     * @param publicKeyX X coordinate of public key
-     * @param publicKeyY Y coordinate of public key
-     */
-    function registerSecp256r1Key(bytes32 publicKeyX, bytes32 publicKeyY) external {
-        require(P256.isValidPublicKey(publicKeyX, publicKeyY), "Invalid public key");
-        
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        require(secp256r1ToAddress[publicKeyHash] == address(0), "Public key already registered");
-        
-        secp256r1ToAddress[publicKeyHash] = msg.sender;
-        emit BiometricKeyRegistered(msg.sender, publicKeyX, publicKeyY);
-    }
-
-    /**
-     * @notice Mint a free Visit NFT using biometric signature (EIP-7951)
-     * @dev DEPRECATED: Use smart wallet executeFor instead
-     * @param r Signature r component
-     * @param s Signature s component
-     * @param publicKeyX Public key X coordinate
-     * @param publicKeyY Public key Y coordinate
-     */
-    function mintVisitNFTWithBiometric(
-        bytes32 r,
-        bytes32 s,
-        bytes32 publicKeyX,
-        bytes32 publicKeyY
-    ) external whenNotPaused nonReentrant {
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        address user = secp256r1ToAddress[publicKeyHash];
-        require(user != address(0), "Public key not registered");
-        
-        // Generate message hash
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            "mintVisitNFT",
-            block.chainid,
-            address(this),
-            user
-        ));
-        
-        // Verify secp256r1 signature
-        require(P256.verify(messageHash, r, s, publicKeyX, publicKeyY), "Invalid signature");
-        
-        require(!hasMinted[user], "Already minted");
-        require(_tokenIds < MAX_SUPPLY, "Max supply reached");
-        
-        hasMinted[user] = true;
-        _tokenIds++;
-        uint256 newTokenId = _tokenIds;
-        
-        _safeMint(user, newTokenId);
-        _setTokenURI(newTokenId, string(abi.encodePacked(baseURI, _toString(newTokenId))));
-        mintTimestamps[newTokenId] = block.timestamp;
-        
-        // Record interaction and burn tokens if tracker is set
-        if (address(interactionTracker) != address(0)) {
-            uint256 burnAmount = interactionTracker.visitNFTMintCost();
-            if (burnAmount > 0) {
-                interactionTracker.recordInteraction(
-                    user,
-                    UserInteractionTracker.InteractionType.VISIT_NFT_MINT,
-                    burnAmount
-                );
-            } else {
-                interactionTracker.recordInteraction(
-                    user,
-                    UserInteractionTracker.InteractionType.VISIT_NFT_MINT,
-                    0
-                );
-            }
-        }
-        
-        emit VisitNFTMinted(newTokenId, user, block.timestamp);
-    }
-    
-    /**
      * @notice Check if user has minted a Visit NFT
      * @param user Address of the user
-     * @return hasMinted Whether user has minted
+     * @return hasMintedStatus Whether user has minted
      * @return tokenId Token ID if minted, 0 otherwise
      */
-    function getUserVisitNFT(address user) external view returns (bool hasMinted, uint256 tokenId) {
-        hasMinted = hasMinted[user];
-        if (hasMinted) {
+    function getUserVisitNFT(address user) external view returns (bool hasMintedStatus, uint256 tokenId) {
+        hasMintedStatus = hasMinted[user];
+        if (hasMintedStatus) {
             // Find the token ID for this user
             uint256 total = totalSupply();
             for (uint256 i = 1; i <= total; i++) {

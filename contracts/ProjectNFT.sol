@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/cryptography/P256.sol";
 import "./UserInteractionTracker.sol";
 
 /**
@@ -41,12 +40,9 @@ contract ProjectNFT is
     mapping(uint256 => Project) public projects;
     mapping(string => uint256) public projectIdToTokenId;
     mapping(uint256 => mapping(address => bool)) public endorsements; // Track who endorsed
-    
+
     uint256 public maxEndorsementsPerProject = 1000;
-    
-    // Biometric authentication support (EIP-7951)
-    mapping(bytes32 => address) public secp256r1ToAddress;
-    
+
     // Smart wallet registry: wallet address => user address
     mapping(address => address) public walletToUser;
     
@@ -70,8 +66,6 @@ contract ProjectNFT is
         uint256 indexed tokenId,
         string newMetadataURI
     );
-    
-    event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
 
     constructor(address _interactionTracker) 
         ERC721("ProjectNFT", "PRJ") 
@@ -360,87 +354,6 @@ contract ProjectNFT is
         return _tokenIds;
     }
 
-    /**
-     * @notice Register secp256r1 public key for biometric authentication
-     * @param publicKeyX X coordinate of public key
-     * @param publicKeyY Y coordinate of public key
-     */
-    function registerSecp256r1Key(bytes32 publicKeyX, bytes32 publicKeyY) external {
-        require(P256.isValidPublicKey(publicKeyX, publicKeyY), "Invalid public key");
-        
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        require(secp256r1ToAddress[publicKeyHash] == address(0), "Public key already registered");
-        
-        secp256r1ToAddress[publicKeyHash] = msg.sender;
-        emit BiometricKeyRegistered(msg.sender, publicKeyX, publicKeyY);
-    }
-
-    /**
-     * @notice Endorse a project using biometric signature (EIP-7951)
-     * @param tokenId The token ID of the project to endorse
-     * @param r Signature r component
-     * @param s Signature s component
-     * @param publicKeyX Public key X coordinate
-     * @param publicKeyY Public key Y coordinate
-     */
-    function endorseProjectWithBiometric(
-        uint256 tokenId,
-        bytes32 r,
-        bytes32 s,
-        bytes32 publicKeyX,
-        bytes32 publicKeyY
-    ) external whenNotPaused nonReentrant {
-        require(_ownerOf(tokenId) != address(0), "Token does not exist");
-        
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        address user = secp256r1ToAddress[publicKeyHash];
-        require(user != address(0), "Public key not registered");
-        
-        // Generate message hash
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            "endorseProject",
-            block.chainid,
-            address(this),
-            user,
-            tokenId
-        ));
-        
-        // Verify secp256r1 signature
-        require(P256.verify(messageHash, r, s, publicKeyX, publicKeyY), "Invalid signature");
-        
-        require(
-            !endorsements[tokenId][user],
-            "Already endorsed this project"
-        );
-        require(
-            projects[tokenId].endorsementCount < maxEndorsementsPerProject,
-            "Max endorsements reached"
-        );
-        
-        endorsements[tokenId][user] = true;
-        projects[tokenId].endorsementCount++;
-        
-        // Record interaction and burn tokens if tracker is set
-        if (address(interactionTracker) != address(0)) {
-            uint256 burnAmount = interactionTracker.projectEndorseCost();
-            if (burnAmount > 0) {
-                interactionTracker.recordInteraction(
-                    user,
-                    UserInteractionTracker.InteractionType.PROJECT_ENDORSE,
-                    burnAmount
-                );
-            } else {
-                interactionTracker.recordInteraction(
-                    user,
-                    UserInteractionTracker.InteractionType.PROJECT_ENDORSE,
-                    0
-                );
-            }
-        }
-        
-        emit ProjectEndorsed(tokenId, user, projects[tokenId].endorsementCount);
-    }
-    
     /**
      * @notice Get all projects endorsed by a user
      * @param endorser Address of the endorser

@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/cryptography/P256.sol";
 
 /**
  * @title PortfolioToken
@@ -36,14 +35,13 @@ contract PortfolioToken is
     uint256 public constant FAUCET_COOLDOWN = 1 days;
     
     uint256 public maxSupply = 10_000_000 * 10**18; // 10M max supply
-    
-    // Biometric authentication support (EIP-7951)
-    mapping(bytes32 => address) public secp256r1ToAddress;
-    
+
+    // Smart wallet registry: wallet address => user address
+    mapping(address => address) public walletToUser;
+
     event FaucetClaimed(address indexed recipient, uint256 amount);
     event TokensMinted(address indexed to, uint256 amount);
     event MaxSupplyUpdated(uint256 oldMax, uint256 newMax);
-    event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
 
     constructor() 
         ERC20("Homie Token", "HOMIE") 
@@ -60,28 +58,73 @@ contract PortfolioToken is
     /**
      * @notice Claim tokens from faucet (one-time per address)
      * @dev Can claim once per address, with optional cooldown for repeat claims
+     *      Supports both direct calls and smart wallet calls
      */
-    function claimFaucet() 
-        external 
-        whenNotPaused 
-        nonReentrant 
+    function claimFaucet()
+        external
+        whenNotPaused
+        nonReentrant
     {
+        address user = walletToUser[msg.sender];
+        if (user == address(0)) {
+            user = msg.sender; // Direct call from user
+        }
+
         require(
-            !hasClaimedFaucet[msg.sender] || 
-            block.timestamp >= lastFaucetClaim[msg.sender] + FAUCET_COOLDOWN,
+            !hasClaimedFaucet[user] ||
+            block.timestamp >= lastFaucetClaim[user] + FAUCET_COOLDOWN,
             "Faucet cooldown active"
         );
         require(
             totalSupply() + FAUCET_AMOUNT <= maxSupply,
             "Max supply exceeded"
         );
-        
-        hasClaimedFaucet[msg.sender] = true;
-        lastFaucetClaim[msg.sender] = block.timestamp;
-        
-        _mint(msg.sender, FAUCET_AMOUNT);
-        
-        emit FaucetClaimed(msg.sender, FAUCET_AMOUNT);
+
+        hasClaimedFaucet[user] = true;
+        lastFaucetClaim[user] = block.timestamp;
+
+        _mint(user, FAUCET_AMOUNT);
+
+        emit FaucetClaimed(user, FAUCET_AMOUNT);
+    }
+
+    /**
+     * @notice Register a smart wallet for a user
+     * @param walletAddress Address of the smart wallet
+     * @param userAddress Address of the user
+     */
+    function registerWallet(address walletAddress, address userAddress) external {
+        require(walletAddress != address(0), "Invalid wallet address");
+        require(userAddress != address(0), "Invalid user address");
+        require(walletToUser[walletAddress] == address(0), "Wallet already registered");
+        require(msg.sender == walletAddress || msg.sender == userAddress, "Not authorized");
+
+        walletToUser[walletAddress] = userAddress;
+    }
+
+    /**
+     * @notice Execute faucet claim for a user via smart wallet
+     * @param user Address of the user
+     */
+    function executeFor(address user) external whenNotPaused nonReentrant {
+        require(walletToUser[msg.sender] == user, "Wallet not authorized for user");
+
+        require(
+            !hasClaimedFaucet[user] ||
+            block.timestamp >= lastFaucetClaim[user] + FAUCET_COOLDOWN,
+            "Faucet cooldown active"
+        );
+        require(
+            totalSupply() + FAUCET_AMOUNT <= maxSupply,
+            "Max supply exceeded"
+        );
+
+        hasClaimedFaucet[user] = true;
+        lastFaucetClaim[user] = block.timestamp;
+
+        _mint(user, FAUCET_AMOUNT);
+
+        emit FaucetClaimed(user, FAUCET_AMOUNT);
     }
 
     /**
@@ -193,70 +236,6 @@ contract PortfolioToken is
         }
         
         return (false, nextClaimTime - block.timestamp);
-    }
-
-    /**
-     * @notice Register secp256r1 public key for biometric authentication
-     * @param publicKeyX X coordinate of public key
-     * @param publicKeyY Y coordinate of public key
-     */
-    function registerSecp256r1Key(bytes32 publicKeyX, bytes32 publicKeyY) external {
-        require(P256.isValidPublicKey(publicKeyX, publicKeyY), "Invalid public key");
-        
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        require(secp256r1ToAddress[publicKeyHash] == address(0), "Public key already registered");
-        
-        secp256r1ToAddress[publicKeyHash] = msg.sender;
-        emit BiometricKeyRegistered(msg.sender, publicKeyX, publicKeyY);
-    }
-
-    /**
-     * @notice Claim tokens from faucet using biometric signature (EIP-7951)
-     * @param r Signature r component
-     * @param s Signature s component
-     * @param publicKeyX Public key X coordinate
-     * @param publicKeyY Public key Y coordinate
-     */
-    function claimFaucetWithBiometric(
-        bytes32 r,
-        bytes32 s,
-        bytes32 publicKeyX,
-        bytes32 publicKeyY
-    ) external whenNotPaused nonReentrant {
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        address user = secp256r1ToAddress[publicKeyHash];
-        require(user != address(0), "Public key not registered");
-        
-        // Generate message hash
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            "claimFaucet",
-            block.chainid,
-            address(this),
-            user
-        ));
-        
-        // Verify secp256r1 signature
-        require(P256.verify(messageHash, r, s, publicKeyX, publicKeyY), "Invalid signature");
-        
-        // Check cooldown
-        require(
-            !hasClaimedFaucet[user] || 
-            block.timestamp >= lastFaucetClaim[user] + FAUCET_COOLDOWN,
-            "Faucet cooldown active"
-        );
-        
-        // Check max supply
-        require(
-            totalSupply() + FAUCET_AMOUNT <= maxSupply,
-            "Max supply exceeded"
-        );
-        
-        hasClaimedFaucet[user] = true;
-        lastFaucetClaim[user] = block.timestamp;
-        
-        _mint(user, FAUCET_AMOUNT);
-        
-        emit FaucetClaimed(user, FAUCET_AMOUNT);
     }
 
     // burn() and burnFrom() are inherited from ERC20Burnable

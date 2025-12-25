@@ -5,8 +5,6 @@ import "./Homie.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/cryptography/P256.sol";
-import "./libraries/Secp256r1Verifier.sol";
 import "./UserInteractionTracker.sol";
 
 /**
@@ -35,13 +33,7 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     
     uint256 public minVoteCost = 1 * 10**18; // Minimum 1 token
     uint256 public maxVoteCost = 1000 * 10**18; // Maximum 1000 tokens
-    
-    // Biometric authentication support (EIP-7951)
-    mapping(bytes32 => address) public secp256r1ToAddress;
 
-    // Replay protection: nonces for biometric transactions
-    mapping(address => uint256) public nonces;
-    
     // Smart wallet registry: wallet address => user address
     mapping(address => address) public walletToUser;
     
@@ -56,8 +48,6 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
     );
 
     event VoteCostUpdated(uint256 oldCost, uint256 newCost);
-    event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
-    event BiometricVoteCast(address indexed user, string indexed projectId, uint256 gasUsed, bool usedPrecompile);
 
     constructor(address _portfolioToken, address _interactionTracker) {
         portfolioToken = PortfolioToken(_portfolioToken);
@@ -259,131 +249,6 @@ contract ProjectVoting is AccessControl, Pausable, ReentrancyGuard {
         return votes[index];
     }
 
-    /**
-     * @notice Register secp256r1 public key for biometric authentication
-     * @param publicKeyX X coordinate of public key
-     * @param publicKeyY Y coordinate of public key
-     */
-    function registerSecp256r1Key(bytes32 publicKeyX, bytes32 publicKeyY) external {
-        require(P256.isValidPublicKey(publicKeyX, publicKeyY), "Invalid public key");
-        
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        require(secp256r1ToAddress[publicKeyHash] == address(0), "Public key already registered");
-        
-        secp256r1ToAddress[publicKeyHash] = msg.sender;
-        emit BiometricKeyRegistered(msg.sender, publicKeyX, publicKeyY);
-    }
-
-    /**
-     * @notice Vote for a project using biometric signature (EIP-7951)
-     * @dev DEPRECATED: Use smart wallet executeFor instead
-     * @param projectId The project identifier to vote for
-     * @param r Signature r component
-     * @param s Signature s component
-     * @param publicKeyX Public key X coordinate
-     * @param publicKeyY Public key Y coordinate
-     * @param nonce User's current nonce for replay protection
-     */
-    function voteWithBiometric(
-        string memory projectId,
-        bytes32 r,
-        bytes32 s,
-        bytes32 publicKeyX,
-        bytes32 publicKeyY,
-        uint256 nonce
-    ) external whenNotPaused nonReentrant {
-        require(bytes(projectId).length > 0, "Project ID cannot be empty");
-
-        bytes32 publicKeyHash = keccak256(abi.encodePacked(publicKeyX, publicKeyY));
-        address user = secp256r1ToAddress[publicKeyHash];
-        require(user != address(0), "Public key not registered");
-
-        // Verify and increment nonce for replay protection
-        require(nonce == nonces[user], "Invalid nonce");
-        nonces[user]++;
-
-        // Generate message hash with nonce
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            "vote",
-            block.chainid,
-            address(this),
-            user,
-            projectId,
-            nonce
-        ));
-
-        // Verify secp256r1 signature using hybrid verifier
-        // Automatically uses EIP-7951 precompile (6.9k gas) if available, falls back to P256.sol (100k gas)
-        uint256 gasBefore = gasleft();
-        require(
-            Secp256r1Verifier.verify(messageHash, r, s, publicKeyX, publicKeyY),
-            "Invalid signature"
-        );
-        uint256 gasUsed = gasBefore - gasleft();
-        
-        require(!hasVoted[user][projectId], "Already voted for this project");
-        require(
-            portfolioToken.balanceOf(user) >= voteCost,
-            "Insufficient tokens"
-        );
-        
-        // Burn tokens for voting
-        portfolioToken.burnFrom(user, voteCost);
-        
-        projectVotes[projectId]++;
-        hasVoted[user][projectId] = true;
-        totalVotesByAddress[user]++;
-        
-        votes.push(Vote({
-            voter: user,
-            projectId: projectId,
-            timestamp: block.timestamp,
-            tokensBurned: voteCost
-        }));
-        
-        // Record interaction in tracker (vote cost already burned above)
-        if (address(interactionTracker) != address(0)) {
-            interactionTracker.recordInteraction(
-                user,
-                UserInteractionTracker.InteractionType.PROJECT_VOTE,
-                voteCost
-            );
-        }
-
-        // Emit events
-        emit VoteCast(user, projectId, block.timestamp, voteCost);
-        emit BiometricVoteCast(user, projectId, gasUsed, Secp256r1Verifier.isPrecompileAvailable());
-    }
-
-    /**
-     * @notice Get current verification method and estimated gas cost
-     * @dev Useful for frontend to display gas estimates to users
-     * @return method "precompile" if EIP-7951 is available, "p256-library" otherwise
-     * @return estimatedGas Approximate gas cost for biometric verification
-     * @return gasSavings Percentage of gas saved with precompile (e.g., 93 = 93%)
-     */
-    function getBiometricVerificationInfo()
-        external
-        view
-        returns (
-            string memory method,
-            uint256 estimatedGas,
-            uint256 gasSavings
-        )
-    {
-        (method, estimatedGas) = Secp256r1Verifier.getVerificationMethod();
-        gasSavings = Secp256r1Verifier.getGasSavingsPercentage();
-    }
-
-    /**
-     * @notice Check if EIP-7951 precompile is available on this chain
-     * @dev Returns true on Fusaka-enabled chains (Base after Dec 3, 2024)
-     * @return available True if precompile exists and works correctly
-     */
-    function isEIP7951Available() external view returns (bool available) {
-        return Secp256r1Verifier.isPrecompileAvailable();
-    }
-    
     /**
      * @notice Get all votes cast by a user
      * @param voter Address of the voter
