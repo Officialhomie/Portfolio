@@ -8,7 +8,8 @@
 
 import { useState, useEffect } from 'react';
 import { type Address } from 'viem';
-import { useSmartWallet } from '@/contexts/SmartWalletContext';
+import { usePrivyWallet } from '@/hooks/usePrivyWallet';
+import { useBalance } from 'wagmi';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatAddress } from '@/lib/utils';
@@ -18,11 +19,14 @@ export function SmartWalletInfo() {
   const {
     smartWalletAddress,
     eoaAddress,
-    balance,
     isSmartWalletDeployed,
     isSmartWalletReady,
-    estimatedGasSavings,
-  } = useSmartWallet();
+  } = usePrivyWallet();
+
+  // Get balance for smart wallet
+  const { data: balanceData } = useBalance({
+    address: smartWalletAddress as `0x${string}`,
+  });
 
   const [copied, setCopied] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -60,8 +64,8 @@ export function SmartWalletInfo() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const formatBalance = (bal: bigint | null) => {
-    if (bal === null) return '0';
+  const formatBalance = (bal: bigint | undefined) => {
+    if (!bal) return '0';
     const eth = Number(bal) / 1e18;
     return eth.toFixed(6);
   };
@@ -121,7 +125,7 @@ export function SmartWalletInfo() {
             <label className="text-sm font-medium text-muted-foreground">Balance</label>
             <div className="p-4 bg-secondary rounded-lg">
               <div className="text-2xl font-bold">
-                {formatBalance(balance)} ETH
+                {formatBalance(balanceData?.value)} ETH
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Available for transactions
@@ -194,20 +198,18 @@ export function SmartWalletInfo() {
             </div>
           </div>
 
-          {/* Gas Savings */}
+          {/* Gas Savings - Not available in Privy */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">
               Gas Efficiency
             </label>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <div className="text-2xl font-bold text-green-500">
-                  {estimatedGasSavings}%
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Gas Savings vs EOA
-                </p>
+            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <div className="text-lg font-bold text-green-500">
+                Automatic
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Privy handles gas optimization automatically
+              </p>
             </div>
           </div>
 
@@ -270,12 +272,17 @@ export function SmartWalletInfo() {
  * Compact wallet display (for navbar)
  */
 export function SmartWalletBadge() {
-  const { smartWalletAddress, isSmartWalletReady, balance } = useSmartWallet();
+  const { smartWalletAddress, isSmartWalletReady } = usePrivyWallet();
+
+  // Get balance for smart wallet
+  const { data: balanceData } = useBalance({
+    address: smartWalletAddress as `0x${string}`,
+  });
 
   if (!smartWalletAddress) return null;
 
-  const formatBalance = (bal: bigint | null) => {
-    if (bal === null) return '0';
+  const formatBalance = (bal: bigint | undefined) => {
+    if (!bal) return '0';
     const eth = Number(bal) / 1e18;
     return eth < 0.0001 ? '< 0.0001' : eth.toFixed(4);
   };
@@ -284,7 +291,7 @@ export function SmartWalletBadge() {
     <div className="flex items-center gap-2">
       <div className="flex flex-col items-end">
         <span className="text-xs text-muted-foreground">
-          {formatBalance(balance)} ETH
+          {formatBalance(balanceData?.value)} ETH
         </span>
         <span className="font-mono text-xs font-medium">
           {formatAddress(smartWalletAddress)}
