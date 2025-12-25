@@ -27,13 +27,6 @@ interface EthereumProvider {
   removeListener(event: string, handler: (...args: unknown[]) => void): void;
 }
 
-// Extend Window interface to include ethereum
-declare global {
-  interface Window {
-    ethereum?: EthereumProvider;
-  }
-}
-
 // CDP Configuration for Base chains
 const CDP_CONFIG: Record<number, { paymasterUrl: string; rpcUrl: string }> = {
   [base.id]: {
@@ -179,7 +172,7 @@ export class CDPBiometricSmartAccount {
       const { createWalletClient, custom } = await import('viem');
 
       // Type assertion: window.ethereum is checked above for existence
-      const ethereumProvider = window.ethereum as EthereumProvider;
+      const ethereumProvider = window.ethereum as any;
 
       const walletClient = createWalletClient({
         chain: this.chain,

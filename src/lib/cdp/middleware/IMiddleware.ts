@@ -28,3 +28,4 @@ export interface IMiddleware {
   after?(result: TransactionResult): Awaitable<TransactionResult>;
 }
 
+

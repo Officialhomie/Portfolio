@@ -3,6 +3,6 @@
  */
 
 export type { ISmartAccount } from './ISmartAccount';
-export { BiometricSmartAccount } from './BiometricSmartAccount';
-export { BiometricSmartAccount as PasskeyAccount } from './BiometricSmartAccount';
-
+export { PasskeyAccount } from './PasskeyAccount';
+// Note: EOASmartAccount is currently empty and may need implementation
+// export { EOASmartAccount } from './EOASmartAccount';
