@@ -114,7 +114,7 @@ export function usePrivyWallet() {
       const txHash = await sendTransactionAsync({
         to: call.to,
         data: call.data,
-        value: call.value || 0n,
+        value: call.value || BigInt(0),
       });
 
       setIsSendingTransaction(false);
@@ -155,7 +155,7 @@ export function usePrivyWallet() {
         const txHash = await sendTransactionAsync({
           to: call.to,
           data: call.data,
-          value: call.value || 0n,
+          value: call.value || BigInt(0),
         });
         lastHash = txHash;
       }
