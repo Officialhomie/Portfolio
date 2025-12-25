@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './error-suppression'; // Import early to suppress errors before React loads
 import './globals.css';
-import { PrivyProviderWrapper } from '@/providers/privy-provider';
+import { Web3Provider } from '@/providers/web3-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { baseSans, baseMono } from '@/lib/fonts/base-font';
 import { ClientErrorHandler } from '@/components/providers/client-error-handler';
@@ -38,9 +38,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <PrivyProviderWrapper>
+            <Web3Provider>
               {children}
-            </PrivyProviderWrapper>
+            </Web3Provider>
           </ThemeProvider>
         </ClientErrorHandler>
       </body>
