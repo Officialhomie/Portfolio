@@ -199,7 +199,6 @@ contract UserInteractionTrackerTest is Test {
     }
 
     function testTierUpgradeEvent() public {
-        vm.prank(authorizedContract);
         vm.expectEmit(true, false, false, false);
         emit TierUpgraded(user1, 0, 1);
 
@@ -234,9 +233,10 @@ contract UserInteractionTrackerTest is Test {
         token.transfer(address(1), balance); // Send to dead address
 
         // Try to record interaction requiring token burn
+        uint256 cost = tracker.visitorBookSignCost();
         vm.prank(authorizedContract);
         vm.expectRevert("Insufficient tokens for interaction");
-        tracker.recordInteraction(user1, UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN, tracker.visitorBookSignCost());
+        tracker.recordInteraction(user1, UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN, cost);
     }
 
     function testNoTokenBurning() public {
