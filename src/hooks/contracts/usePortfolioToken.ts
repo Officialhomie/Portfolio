@@ -158,11 +158,18 @@ export function useClaimFaucet() {
   const { refetch, isWalletRegistered, needsWalletRegistration } = usePortfolioToken();
   const contractAddress = getTokenAddress(chainId);
   const { sendTransaction, isSendingTransaction, error: privyError, smartWalletAddress, eoaAddress: privyEOA } = usePrivyWallet();
-  const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
+  const { writeContract, data: writeTxHash, isPending: isWritePending, error: writeError } = useWriteContract();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   
+  // Update txHash when writeContract succeeds
+  useEffect(() => {
+    if (writeTxHash) {
+      setTxHash(writeTxHash);
+    }
+  }, [writeTxHash]);
+
   // Wait for EOA transaction receipt
   const { isLoading: isWaitingTx, isSuccess: isTxSuccess, data: receipt } = useWaitForTransactionReceipt({
     hash: txHash || undefined,
@@ -281,17 +288,15 @@ export function useClaimFaucet() {
         console.log('   EOA Address:', address);
         
         // Use wagmi's writeContract to call claimFaucet directly
-        const hash = await writeContract({
+        writeContract({
           address: contractAddress,
           abi: PORTFOLIO_TOKEN_ABI,
           functionName: 'claimFaucet',
           args: [],
         });
-        
+
         console.log('✅ Transaction submitted!');
-        console.log('   TX Hash:', hash);
-        
-        setTxHash(hash);
+        // The hash will be available in writeTxHash from the hook
         
         // Wait for transaction receipt
         // Note: We'll handle success in useEffect watching receipt
