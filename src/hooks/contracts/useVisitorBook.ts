@@ -175,11 +175,18 @@ export function useSignVisitorBook() {
   const { refetch: refetchVisitors } = useTotalVisitors();
   const { refetch: refetchHasVisited } = useHasVisited();
   const { sendTransaction, isSendingTransaction, error: privyError, smartWalletAddress } = usePrivyWallet();
-  const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
+  const { writeContract, data: writeTxHash, isPending: isWritePending, error: writeError } = useWriteContract();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   
+  // Update txHash when writeContract succeeds
+  useEffect(() => {
+    if (writeTxHash) {
+      setTxHash(writeTxHash);
+    }
+  }, [writeTxHash]);
+
   // Wait for EOA transaction receipt
   const { isLoading: isWaitingTx, isSuccess: isTxSuccess, data: receipt } = useWaitForTransactionReceipt({
     hash: txHash || undefined,
@@ -261,17 +268,15 @@ export function useSignVisitorBook() {
         
         // Use wagmi's writeContract to call signVisitorBook directly
         // The contract will use msg.sender as the visitor address
-        const hash = await writeContract({
+        writeContract({
           address: contractAddress,
           abi: VISITOR_BOOK_ABI,
           functionName: 'signVisitorBook',
           args: [message],
         });
-        
+
         console.log('✅ Transaction submitted!');
-        console.log('   TX Hash:', hash);
-        
-        setTxHash(hash);
+        // The hash will be available in writeTxHash from the hook
         
       } catch (err) {
         console.error('Sign visitor book failed:', err);

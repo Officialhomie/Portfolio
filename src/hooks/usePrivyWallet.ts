@@ -76,7 +76,7 @@ export function usePrivyWallet() {
         eoaAddress,
         smartWalletAddress,
         isSmartWalletReady: !!smartWalletAddress,
-        isSmartWalletDeployed: smartWallets[0]?.deployed ?? false,
+        isSmartWalletDeployed: !!smartWallets[0]?.address,
         wagmiAddress,
         privyUserWallet: privy.user?.wallet?.address,
       });
@@ -202,7 +202,7 @@ export function usePrivyWallet() {
     isConnected: privy.authenticated,
     isReady: privy.ready,
     isSmartWalletReady: !!smartWalletAddress,
-    isSmartWalletDeployed: smartWallets[0]?.deployed ?? false,
+    isSmartWalletDeployed: !!smartWallets[0]?.address,
 
     // Transaction state
     isSendingTransaction,
