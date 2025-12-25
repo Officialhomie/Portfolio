@@ -9,7 +9,6 @@
 import { useState, useEffect } from 'react';
 import { type Address } from 'viem';
 import { useSmartWallet } from '@/contexts/SmartWalletContext';
-import { useFusakaDetection } from '@/hooks/useFusakaDetection';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatAddress } from '@/lib/utils';
@@ -25,7 +24,6 @@ export function SmartWalletInfo() {
     estimatedGasSavings,
   } = useSmartWallet();
 
-  const fusaka = useFusakaDetection();
   const [copied, setCopied] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [deploymentStatus, setDeploymentStatus] = useState<{
@@ -210,41 +208,9 @@ export function SmartWalletInfo() {
                   Gas Savings vs EOA
                 </p>
               </div>
-              {fusaka?.hasPrecompile && (
-                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-500">
-                    ~{fusaka.estimatedGas} gas
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Per Signature
-                  </p>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Biometric Info */}
-          {fusaka?.hasPrecompile && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">
-                Biometric Authentication
-              </label>
-              <div className="p-4 bg-secondary rounded-lg space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">EIP-7951 Precompile</span>
-                  <Badge variant="default" className="bg-green-500">Enabled</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Signature Type</span>
-                  <code className="text-xs bg-background px-2 py-1 rounded">secp256r1</code>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Authentication</span>
-                  <span className="text-xs">Face ID / Touch ID</span>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* EOA Info (for debugging) */}
           {eoaAddress && (
@@ -270,11 +236,7 @@ export function SmartWalletInfo() {
             <ul className="space-y-2 text-sm">
               <li className="flex items-start gap-2">
                 <span className="text-green-500 mt-0.5">✓</span>
-                <span>Biometric signatures (Face ID/Touch ID) - no seed phrase needed</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-0.5">✓</span>
-                <span>75.6% lower gas costs vs traditional wallets</span>
+                <span>Gasless transactions via Pimlico Paymaster</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-500 mt-0.5">✓</span>
@@ -282,11 +244,11 @@ export function SmartWalletInfo() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-500 mt-0.5">✓</span>
-                <span>EIP-7951 precompile support for ultra-low gas</span>
+                <span>ERC-4337 account abstraction standard</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-500 mt-0.5">✓</span>
-                <span>ERC-4337 account abstraction standard</span>
+                <span>Counterfactual deployment - address known before deployment</span>
               </li>
             </ul>
           </div>
@@ -295,9 +257,7 @@ export function SmartWalletInfo() {
           <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
             <p className="text-sm font-medium text-amber-500 mb-1">Security Notice</p>
             <p className="text-xs text-muted-foreground">
-              Your biometric credentials are stored securely in your device's secure enclave.
-              They never leave your device. This wallet is tied to your current device - if you
-              switch devices, you'll need to register biometric authentication again.
+              Your smart wallet is controlled by your connected EOA wallet. Keep your EOA wallet secure.
             </p>
           </div>
         </div>

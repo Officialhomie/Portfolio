@@ -1,31 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "./BiometricSmartAccount.sol";
+import "./SmartAccount.sol";
 import "./interfaces/IEntryPoint.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 /**
- * @title PasskeyAccountFactory
- * @notice Factory for deploying PasskeyAccount contracts with CREATE2
+ * @title SmartAccountFactory
+ * @notice Factory for deploying SmartAccount contracts with CREATE2
  * @dev Uses CREATE2 for deterministic addresses (counterfactual deployment)
  *
  * Key Features:
  * - Deterministic account addresses
  * - Users get their address before deployment
  * - Accounts only deployed on first transaction
- * - Compatible with CDP Paymaster
+ * - Compatible with Pimlico Paymaster
+ * - EOA owners only
  *
  * @author Web3 Portfolio Platform
  */
-contract PasskeyAccountFactory {
+contract SmartAccountFactory {
     /*//////////////////////////////////////////////////////////////
                                STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice The PasskeyAccount implementation contract
-    PasskeyAccount public immutable accountImplementation;
+    /// @notice The SmartAccount implementation contract
+    SmartAccount public immutable accountImplementation;
 
     /// @notice The ERC-4337 EntryPoint
     IEntryPoint public immutable entryPoint;
@@ -50,7 +51,7 @@ contract PasskeyAccountFactory {
      */
     constructor(IEntryPoint _entryPoint) {
         entryPoint = _entryPoint;
-        accountImplementation = new PasskeyAccount(_entryPoint);
+        accountImplementation = new SmartAccount(_entryPoint);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -58,38 +59,43 @@ contract PasskeyAccountFactory {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Create a new PasskeyAccount
+     * @notice Create a new SmartAccount
      * @dev Uses CREATE2 for deterministic addresses
      *
      * The account will be deployed as an ERC1967 proxy pointing to the implementation.
      * This allows for upgradeable accounts while keeping deployment costs low.
      *
-     * @param owner The initial owner bytes (passkey public key or Ethereum address)
+     * @param owner The initial owner bytes (32 bytes: padded EOA address)
      * @param salt The salt for CREATE2 (use 0 for first account per owner)
      * @return account The deployed account address
      */
     function createAccount(
         bytes calldata owner,
         uint256 salt
-    ) external returns (PasskeyAccount account) {
+    ) external returns (SmartAccount account) {
+        // Validate owner length (must be 32 bytes for EOA)
+        if (owner.length != 32) {
+            revert("Invalid owner length: must be 32 bytes for EOA");
+        }
+
         address addr = getAddress(owner, salt);
 
         // Check if already deployed
         uint256 codeSize = addr.code.length;
         if (codeSize > 0) {
-            return PasskeyAccount(payable(addr));
+            return SmartAccount(payable(addr));
         }
 
         // Encode initialization call
         bytes memory initializeCall = abi.encodeWithSelector(
-            PasskeyAccount.initialize.selector,
+            SmartAccount.initialize.selector,
             owner
         );
 
         // Deploy proxy with CREATE2
         bytes32 salt2 = _getSalt(owner, salt);
 
-        account = PasskeyAccount(payable(
+        account = SmartAccount(payable(
             new ERC1967Proxy{salt: salt2}(
                 address(accountImplementation),
                 initializeCall
@@ -106,7 +112,7 @@ contract PasskeyAccountFactory {
      * This allows users to know their account address before deployment,
      * which is essential for receiving funds before first transaction.
      *
-     * @param owner The owner bytes
+     * @param owner The owner bytes (32 bytes: padded EOA address)
      * @param salt The salt value
      * @return The deterministic account address
      */
@@ -114,8 +120,13 @@ contract PasskeyAccountFactory {
         bytes calldata owner,
         uint256 salt
     ) public view returns (address) {
+        // Validate owner length
+        if (owner.length != 32) {
+            revert("Invalid owner length: must be 32 bytes for EOA");
+        }
+
         bytes memory initializeCall = abi.encodeWithSelector(
-            PasskeyAccount.initialize.selector,
+            SmartAccount.initialize.selector,
             owner
         );
 

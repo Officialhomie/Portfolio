@@ -10,9 +10,9 @@ import {ProjectVoting} from "../contracts/ProjectVoting.sol";
 import {VisitNFT} from "../contracts/VisitNFT.sol";
 import {PortfolioToken} from "../contracts/Homie.sol";
 
-// NEW: ERC-4337 + Fusaka R1 Contracts
-import {PasskeyAccountFactory} from "../contracts/BiometricSmartAccountFactory.sol";
-import {PasskeyAccount} from "../contracts/BiometricSmartAccount.sol";
+// NEW: ERC-4337 Smart Account Contracts
+import {SmartAccountFactory} from "../contracts/SmartAccountFactory.sol";
+import {SmartAccount} from "../contracts/SmartAccount.sol";
 import {IEntryPoint} from "../contracts/interfaces/IEntryPoint.sol";
 
 /**
@@ -84,9 +84,9 @@ contract DeployAll is Script {
         console.log("---------------------------------------------------------------------------------");
         console.log("EntryPoint:", ENTRYPOINT_ADDRESS);
 
-        // 6. PasskeyAccount Factory (deploys implementation automatically)
-        console.log("Deploying PasskeyAccountFactory...");
-        PasskeyAccountFactory accountFactory = new PasskeyAccountFactory(
+        // 6. SmartAccount Factory (deploys implementation automatically)
+        console.log("Deploying SmartAccountFactory...");
+        SmartAccountFactory accountFactory = new SmartAccountFactory(
             IEntryPoint(ENTRYPOINT_ADDRESS)
         );
         console.log("  Factory:", address(accountFactory));
@@ -182,8 +182,8 @@ contract DeployAll is Script {
             console.log("forge verify-contract %s contracts/VisitNFT.sol:VisitNFT --chain-id %s", address(visitNFT), block.chainid);
 
             console.log("\n# ERC-4337 Contracts");
-            console.log("forge verify-contract %s contracts/BiometricSmartAccountFactory.sol:PasskeyAccountFactory --chain-id %s --constructor-args $(cast abi-encode 'constructor(address)' %s)", address(accountFactory), block.chainid, ENTRYPOINT_ADDRESS);
-            console.log("forge verify-contract %s contracts/BiometricSmartAccount.sol:PasskeyAccount --chain-id %s --constructor-args $(cast abi-encode 'constructor(address)' %s)", accountImplementation, block.chainid, ENTRYPOINT_ADDRESS);
+            console.log("forge verify-contract %s contracts/SmartAccountFactory.sol:SmartAccountFactory --chain-id %s --constructor-args $(cast abi-encode 'constructor(address)' %s)", address(accountFactory), block.chainid, ENTRYPOINT_ADDRESS);
+            console.log("forge verify-contract %s contracts/SmartAccount.sol:SmartAccount --chain-id %s --constructor-args $(cast abi-encode 'constructor(address)' %s)", accountImplementation, block.chainid, ENTRYPOINT_ADDRESS);
 
             console.log("\n=================================================================================");
         }

@@ -18,7 +18,7 @@ import {
   http,
 } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
-import { createBiometricSigner } from './secp256r1-signer';
+// Biometric signer deprecated - using EOA signer only
 
 // EIP-1193 Ethereum Provider type
 interface EthereumProvider {
@@ -115,22 +115,8 @@ export class CDPBiometricSmartAccount {
         console.log('   Paymaster URL:', config.paymasterUrl.substring(0, 50) + '...');
       }
 
-      // Create biometric signer
-      console.log('📝 Creating biometric signer...');
-      this.signer = await createBiometricSigner();
-
-      if (!this.signer) {
-        throw new Error('Failed to create biometric signer');
-      }
-
-      // Test signer
-      const signerAddress = await this.signer.getAddress();
-      console.log('✅ Biometric signer created');
-      console.log('   Signer address:', signerAddress);
-
-      // For now, use signer address as smart account address
-      // In production, you'd compute the counterfactual smart account address
-      this.smartAccountAddress = signerAddress;
+      // Deprecated: This file is no longer used - use SmartWalletContext instead
+      throw new Error('CDPBiometricSmartAccount is deprecated. Use SmartWalletContext with EOA signer instead.');
 
       console.log('✅ CDP Smart Account initialized successfully');
       console.log('   Smart Account Address:', this.smartAccountAddress);
@@ -335,12 +321,8 @@ export async function createCDPBiometricSmartAccount(
  * Check if CDP smart account is available
  */
 export async function isCDPSmartAccountAvailable(): Promise<boolean> {
-  try {
-    const signer = await createBiometricSigner();
-    return Boolean(signer);
-  } catch {
-    return false;
-  }
+  // Deprecated: This function is no longer used
+  return false;
 }
 
 // Alias exports for compatibility

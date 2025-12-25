@@ -4,26 +4,25 @@
  * Custom Connect Button Component
  * Shows SMART WALLET address when connected (not EOA)
  * The EOA is hidden from the user - they only interact with their smart wallet
+ * Uses Privy's LoginButton to show all login methods (email, Google, etc.)
  */
 
-import { useAccount, useDisconnect } from 'wagmi';
-import { AppKitConnectButton } from '@reown/appkit/react';
+import { useAccount } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
-import { formatAddress } from '@/lib/utils/format';
-import { LogOut, Sparkles } from 'lucide-react';
-import { useSmartWallet } from '@/contexts/SmartWalletContext';
+import { LogOut, Wallet } from 'lucide-react';
+import { usePrivyWallet } from '@/hooks/usePrivyWallet';
 import { SmartWalletInfo } from './smart-wallet-info';
 
 export function ConnectButton() {
-  const { isConnected, chain } = useAccount();
+  const { isConnected } = useAccount();
   const {
     smartWalletAddress,
     isSmartWalletReady,
-    isCreatingSmartWallet,
-    balance
-  } = useSmartWallet();
-  const { disconnect } = useDisconnect();
+    isSendingTransaction,
+    connect,
+    disconnect
+  } = usePrivyWallet();
   const [mounted, setMounted] = useState(false);
 
   // Handle hydration
@@ -40,20 +39,20 @@ export function ConnectButton() {
     );
   }
 
-  // If connected, show smart wallet (NOT EOA!)
+  // If connected, show smart wallet info
   if (isConnected) {
-    // Show loading state while creating smart wallet
-    if (isCreatingSmartWallet) {
+    // Show loading state while initializing
+    if (isSendingTransaction && !smartWalletAddress) {
       return (
         <div className="flex items-center gap-2">
           <div className="wallet-badge">
             <div className="wallet-status-dot animate-pulse bg-yellow-500"></div>
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-mono font-semibold text-foreground dark:text-white leading-tight">
-                Creating Wallet...
+                Initializing...
               </span>
               <span className="text-[10px] text-muted-foreground leading-tight">
-                Setting up biometric
+                Setting up wallet
               </span>
             </div>
           </div>
@@ -61,14 +60,8 @@ export function ConnectButton() {
       );
     }
 
-    // Show smart wallet address (NEVER show EOA)
+    // Show smart wallet address if available
     if (smartWalletAddress && isSmartWalletReady) {
-      const formatBalance = (bal: bigint | null) => {
-        if (bal === null) return '0';
-        const eth = Number(bal) / 1e18;
-        return eth < 0.0001 ? '< 0.0001' : eth.toFixed(4);
-      };
-
       return (
         <div className="flex items-center gap-2">
           {/* Smart Wallet Info Dropdown */}
@@ -89,20 +82,10 @@ export function ConnectButton() {
       );
     }
 
-    // Fallback: show setup required
+    // Fallback: show connected state
     return (
       <div className="flex items-center gap-2">
-        <div className="wallet-badge">
-          <div className="wallet-status-dot bg-amber-500"></div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs font-mono font-semibold text-foreground dark:text-white leading-tight">
-              Setup Required
-            </span>
-            <span className="text-[10px] text-muted-foreground leading-tight truncate">
-              Enable biometric auth
-            </span>
-          </div>
-        </div>
+        <SmartWalletInfo />
         <Button
           variant="ghost"
           onClick={() => disconnect()}
@@ -117,7 +100,18 @@ export function ConnectButton() {
     );
   }
 
-  // Use AppKit button for connection
-  return <AppKitConnectButton />;
+  // Use Privy's login() method which shows a modal with all login methods
+  // (email, Google, wallet, etc.) - configured in PrivyProvider
+  // The modal will automatically show all enabled login methods from the config
+  return (
+    <Button
+      onClick={() => connect()}
+      variant="default"
+      className="gap-2"
+    >
+      <Wallet className="w-4 h-4" />
+      Connect Wallet
+    </Button>
+  );
 }
 

@@ -14,7 +14,6 @@ export * from './core/errors';
 // Signers
 // ============================================================================
 export type { ISigner, SignerOptions, SignerFactory } from './signers';
-export { WebAuthnSigner } from './signers';
 export { EOASigner } from './signers';
 
 // ============================================================================
@@ -68,7 +67,6 @@ export { SmartWalletContainer } from './container';
 import type { Address, Hex, PublicClient, Chain } from 'viem';
 import { createPublicClient, http } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
-import { WebAuthnSigner } from './signers';
 import type { ISigner } from './signers';
 import { PasskeyAccount } from './account';
 import type { ISmartAccount } from './account';
@@ -86,7 +84,7 @@ import { getChainConfig, ENTRYPOINT_ADDRESS, PIMLICO_BUNDLER_URLS, CDP_BUNDLER_U
  */
 export interface SmartWalletConfig {
   chainId: number;
-  signer?: 'webauthn' | 'eoa' | ISigner;
+  signer?: 'eoa' | ISigner; // 'webauthn' deprecated - use EOA only
   paymaster?: boolean;
   factory?: Address;
   bundler?: string;
@@ -112,15 +110,12 @@ export async function createSmartWallet(config: SmartWalletConfig): Promise<{
     transport: http(chainConfig.rpcUrl),
   });
 
-  // Create signer
+  // Create signer - EOA only (biometric/WebAuthn deprecated)
   let signer: ISigner;
   if (typeof config.signer === 'object' && 'type' in config.signer) {
     signer = config.signer;
-  } else if (config.signer === 'webauthn' || !config.signer) {
-    const webAuthnSigner = new WebAuthnSigner();
-    await webAuthnSigner.initialize();
-    signer = webAuthnSigner;
   } else {
+    // Always use EOA signer (biometric/WebAuthn deprecated)
     const { EOASigner } = await import('./signers');
     // CRITICAL FIX: Pass EOA address if provided, so signer doesn't need to query window.ethereum
     const eoaSigner = new EOASigner(config.eoaAddress);
@@ -227,7 +222,7 @@ export async function createSmartWallet(config: SmartWalletConfig): Promise<{
   );
 
   // Create executor
-  const baseExecutor = new SmartAccountExecutor(account, signer, builder, bundler);
+  const baseExecutor = new SmartAccountExecutor(account, signer, builder, bundler, config.chainId);
 
   // Wrap with middleware
   const executor = new MiddlewareExecutor(baseExecutor)

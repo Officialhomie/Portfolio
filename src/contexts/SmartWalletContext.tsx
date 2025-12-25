@@ -5,7 +5,7 @@
  * Uses the new modular executor pattern with CDP Paymaster integration
  *
  * Architecture:
- * - WebAuthn biometric authentication
+ * - EOA-based smart wallet authentication
  * - ERC-4337 UserOperations (not direct transactions)
  * - CDP Bundler + Paymaster for gas sponsorship
  * - Fusaka EIP-7951 R1 precompile for 93% gas savings
@@ -14,7 +14,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { type Address, type Hex } from 'viem';
 import { useAccount } from 'wagmi';
-import { useBiometricAuth } from '@/hooks/useBiometric';
 
 // Import new composable architecture
 import { createSmartWallet, type Call, type TransactionResult } from '@/lib/cdp';
@@ -53,7 +52,6 @@ const SmartWalletContext = createContext<SmartWalletContextValue | null>(null);
 
 export function SmartWalletProvider({ children }: { children: ReactNode }) {
   const { address: eoaAddress, isConnected, chainId } = useAccount();
-  const { isEnabled: isBiometricEnabled } = useBiometricAuth();
 
   // Smart Wallet State (new composable architecture)
   const [account, setAccount] = useState<ISmartAccount | null>(null);
@@ -83,7 +81,6 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
     console.log('🔍 createSmartWalletInstance called');
     console.log('   chainId:', chainId);
     console.log('   eoaAddress:', eoaAddress);
-    console.log('   isBiometricEnabled:', isBiometricEnabled);
 
     // Guard: Prevent duplicate initialization
     if (isInitializingRef.current) {
@@ -102,11 +99,8 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // CRITICAL FIX: Use EOA signer when EOA is connected
-    // This ensures each EOA gets its own unique smart wallet
-    // Only use WebAuthn if no EOA is connected (biometric-only mode)
-    const useEOASigner = Boolean(eoaAddress);
-    const signerType = useEOASigner ? 'eoa' : 'webauthn';
+    // Use EOA signer (biometric/WebAuthn deprecated)
+    const signerType = 'eoa';
 
     // Guard: Don't re-create if already exists AND EOA hasn't changed
     if (executor && smartWalletAddress && eoaAddress === lastEOARef.current) {
@@ -123,7 +117,7 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       console.log('🔄 Creating smart wallet with new architecture...');
       console.log('   Chain ID:', chainId);
       console.log('   EOA Address:', eoaAddress);
-      console.log('   Signer:', signerType, useEOASigner ? '(EOA-based)' : '(WebAuthn)');
+      console.log('   Signer:', signerType, '(EOA-based)');
       console.log('   Paymaster: Enabled (Pimlico - supports deployment sponsorship)');
 
       // Create wallet using new composable architecture
@@ -201,7 +195,7 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       setIsCreatingSmartWallet(false);
       isInitializingRef.current = false;
     }
-  }, [chainId, eoaAddress, isConnected, isBiometricEnabled, executor, smartWalletAddress]);
+  }, [chainId, eoaAddress, isConnected, executor, smartWalletAddress]);
 
   /**
    * Refresh balance
@@ -228,7 +222,7 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       console.log('   account exists:', !!account);
 
       if (!executor) {
-        throw new Error('Smart wallet not ready. Please complete biometric setup.');
+        throw new Error('Smart wallet not ready. Please wait for wallet initialization.');
       }
 
       if (!account) {
@@ -243,7 +237,7 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
         console.log('   To:', tx.to);
         console.log('   Value:', tx.value?.toString() || '0');
         console.log('   Data length:', tx.data?.length || 0);
-        console.log('   🎯 Flow: Build UserOp → Sign with biometric → CDP sponsors → Submit');
+        console.log('   🎯 Flow: Build UserOp → Sign with EOA → Pimlico sponsors → Submit');
 
         // Execute via executor (handles entire UserOp flow)
         // Note: execute() takes a single Call, not an array
@@ -317,7 +311,7 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
   /**
    * Auto-create smart wallet when EOA is connected
    * CRITICAL FIX: Recreate wallet when EOA address changes
-   * Also listens for storage events to detect when biometric is enabled
+   * Monitors wallet connection state and creates smart wallet when EOA is connected
    */
   useEffect(() => {
     let cancelled = false;
@@ -350,43 +344,22 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
         lastEOARef.current = eoaAddress;
       }
 
-      // For EOA-based wallets, we don't need biometric
-      // For WebAuthn-only mode, check biometric configuration
-      if (!isConnected || !chainId) {
-        // If no EOA, check for biometric-only mode
-        if (!eoaAddress) {
-      const { isBiometricConfigured } = await import('@/lib/biometric/auth');
-      const actuallyConfigured = await isBiometricConfigured();
-      
+      // EOA-based wallets only (biometric deprecated)
+      if (!isConnected || !chainId || !eoaAddress) {
+        return; // Need EOA connection to create wallet
+      }
+
+      // EOA is connected - proceed with EOA-based wallet creation
+      // CRITICAL FIX: Prevent infinite retries on persistent errors
       if (
-        !chainId ||
-        !isBiometricEnabled ||
-            !actuallyConfigured ||
-        executor ||
+        (executor && !eoaChanged) || // Already have wallet for this EOA
         isCreatingSmartWallet ||
-        isInitializingRef.current
+        isInitializingRef.current ||
+        (errorCountRef.current > 3 && lastErrorRef.current) // Stop after 3 consecutive errors
       ) {
-            return;
-          }
-        } else {
-          return; // No chainId or not connected
+        if (errorCountRef.current > 3) {
+          console.warn('⚠️ Stopping wallet creation attempts after multiple failures');
         }
-      } else if (eoaAddress) {
-        // EOA is connected - proceed with EOA-based wallet creation
-        // CRITICAL FIX: Prevent infinite retries on persistent errors
-        if (
-          (executor && !eoaChanged) || // Already have wallet for this EOA
-          isCreatingSmartWallet ||
-          isInitializingRef.current ||
-          (errorCountRef.current > 3 && lastErrorRef.current) // Stop after 3 consecutive errors
-        ) {
-          if (errorCountRef.current > 3) {
-            console.warn('⚠️ Stopping wallet creation attempts after multiple failures');
-          }
-          return;
-        }
-      } else {
-        // No EOA and not connected - can't create wallet
         return;
       }
 
@@ -395,7 +368,6 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
 
         // CRITICAL FIX: For EOA-based wallets, just check EOA connection
-        // For biometric-only mode, check biometric configuration
         if (eoaAddress && isConnected && chainId) {
           // EOA is connected - create wallet
           if (
@@ -420,33 +392,6 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
               }
             }
           }
-        } else {
-          // Biometric-only mode - check biometric configuration
-          const { isBiometricConfigured } = await import('@/lib/biometric/auth');
-        const finalCheck = await isBiometricConfigured();
-        if (
-          chainId &&
-          isBiometricEnabled &&
-          finalCheck &&
-          !executor &&
-          !isCreatingSmartWallet &&
-            !isInitializingRef.current &&
-            errorCountRef.current <= 3 // Stop after 3 consecutive errors
-        ) {
-          try {
-              // Reset error count on new attempt
-              errorCountRef.current = 0;
-              lastErrorRef.current = null;
-            await createSmartWalletInstance();
-              // Reset error tracking on success
-              errorCountRef.current = 0;
-              lastErrorRef.current = null;
-          } catch (error) {
-            if (!cancelled) {
-              console.error('Smart wallet creation attempt failed:', error);
-              }
-            }
-          }
         }
       }, 500); // Increased debounce to 500ms
     };
@@ -466,22 +411,7 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       }
     }, 3000); // Check every 3 seconds (event-driven is faster anyway)
 
-    // Listen for custom biometric setup event (same-tab)
-    const handleBiometricSetup = () => {
-      console.log('🔔 Biometric setup complete - creating smart wallet...');
-      attemptCreate();
-    };
-
-    // Listen for storage events (cross-tab)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'biometric_credential_id' || e.key === 'biometric_public_key') {
-        console.log('🔄 Biometric storage changed (cross-tab), re-attempting wallet creation...');
-        attemptCreate();
-      }
-    };
-
-    window.addEventListener('biometric-setup-complete', handleBiometricSetup);
-    window.addEventListener('storage', handleStorageChange);
+    // Listen for storage events (cross-tab) - removed biometric-specific listeners
 
     return () => {
       cancelled = true;
@@ -491,14 +421,11 @@ export function SmartWalletProvider({ children }: { children: ReactNode }) {
       if (checkInterval) {
         clearInterval(checkInterval);
       }
-      window.removeEventListener('biometric-setup-complete', handleBiometricSetup);
-      window.removeEventListener('storage', handleStorageChange);
     };
   }, [
     isConnected,
     chainId,
     eoaAddress,
-    isBiometricEnabled,
     executor,
     isCreatingSmartWallet,
     createSmartWalletInstance,

@@ -7,8 +7,8 @@ import {ProjectNFT} from "../contracts/ProjectNFT.sol";
 import {ProjectVoting} from "../contracts/ProjectVoting.sol";
 import {VisitNFT} from "../contracts/VisitNFT.sol";
 import {PortfolioToken} from "../contracts/Homie.sol";
-import {BiometricWalletFactory} from "../contracts/BiometricWalletFactory.sol";
-import {DeploymentPaymaster} from "../contracts/DeploymentPaymaster.sol";
+import {SmartAccountFactory} from "../contracts/SmartAccountFactory.sol";
+import {IEntryPoint} from "../contracts/interfaces/IEntryPoint.sol";
 
 contract DeployScript is Script {
     function run() external {
@@ -37,16 +37,11 @@ contract DeployScript is Script {
         VisitNFT visitNFT = new VisitNFT();
         console.log("VisitNFT deployed at:", address(visitNFT));
 
-        // 6. Deploy Deployment Paymaster (for sponsoring wallet deployments)
-        DeploymentPaymaster paymaster = new DeploymentPaymaster(msg.sender);
-        console.log("DeploymentPaymaster deployed at:", address(paymaster));
-        
-        // Fund paymaster (optional - can be done later)
-        // paymaster.fundPaymaster{value: 0.1 ether}();
-
-        // 7. Deploy Biometric Wallet Factory (with paymaster address)
-        BiometricWalletFactory walletFactory = new BiometricWalletFactory(address(paymaster));
-        console.log("BiometricWalletFactory deployed at:", address(walletFactory));
+        // 6. Deploy Smart Account Factory (ERC-4337 EntryPoint required)
+        // EntryPoint address: 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 (standard ERC-4337 EntryPoint)
+        IEntryPoint entryPoint = IEntryPoint(0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789);
+        SmartAccountFactory smartAccountFactory = new SmartAccountFactory(entryPoint);
+        console.log("SmartAccountFactory deployed at:", address(smartAccountFactory));
 
         vm.stopBroadcast();
 
@@ -56,8 +51,7 @@ contract DeployScript is Script {
         console.log("ProjectNFT:", address(projectNFT));
         console.log("ProjectVoting:", address(projectVoting));
         console.log("VisitNFT:", address(visitNFT));
-        console.log("DeploymentPaymaster:", address(paymaster));
-        console.log("BiometricWalletFactory:", address(walletFactory));
+        console.log("SmartAccountFactory:", address(smartAccountFactory));
         console.log("\nUpdate these addresses in:");
         console.log("- src/lib/contracts/addresses.ts");
         console.log("- .env file (if used)");

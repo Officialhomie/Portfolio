@@ -9,17 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePortfolioToken, useClaimFaucet } from '@/hooks/contracts/usePortfolioToken';
-import { useSmartWallet } from '@/contexts/SmartWalletContext';
+import { usePrivyWallet } from '@/hooks/usePrivyWallet';
 import { useAccount } from 'wagmi';
-import { Loader2, AlertCircle, Fingerprint, CheckCircle, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
 import { TokenBalanceDisplay } from '@/components/wallet/token-balance-display';
 
 export function FaucetClaim() {
   const { isConnected } = useAccount();
   const { balance, canClaimFaucet, timeUntilClaim, faucetAmount, isLoading: balanceLoading } = usePortfolioToken();
   const { claimFaucet, isPending, isConfirming, isSuccess, error: claimError, txHash } = useClaimFaucet();
-  const { smartWalletAddress, isSmartWalletReady, isCreatingSmartWallet } = useSmartWallet();
+  const { smartWalletAddress, isSmartWalletReady } = usePrivyWallet();
 
   const handleClaim = async () => {
     try {
@@ -30,8 +29,6 @@ export function FaucetClaim() {
   };
 
   const isLoading = isPending || isConfirming || balanceLoading;
-  const isCheckingWallet = isCreatingSmartWallet;
-  const needsBiometricSetup = !isSmartWalletReady;
   
   // Format time until claim
   const formatTimeUntilClaim = (seconds: number): string => {
@@ -74,26 +71,6 @@ export function FaucetClaim() {
               Connect your wallet to claim tokens
             </p>
           </div>
-        ) : isCheckingWallet ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : needsBiometricSetup ? (
-          <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950/20">
-            <Fingerprint className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <AlertTitle className="text-blue-800 dark:text-blue-200">Biometric Setup Required</AlertTitle>
-            <AlertDescription className="text-blue-700 dark:text-blue-300">
-              <p className="mb-3">
-                To claim tokens, you need to set up biometric authentication first. 
-                This will create a secure smart wallet for you.
-              </p>
-              <Link href="/biometric">
-                <Button size="sm" className="w-full">
-                  Set Up Biometric Authentication
-                </Button>
-              </Link>
-            </AlertDescription>
-          </Alert>
         ) : claimError ? (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />

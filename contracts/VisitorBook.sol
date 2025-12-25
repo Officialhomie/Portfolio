@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/P256.sol";
 import "./libraries/Secp256r1Verifier.sol";
+import "./UserInteractionTracker.sol";
 
 /**
  * @title VisitorBook
@@ -44,6 +45,9 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
     // Smart wallet registry: wallet address => user address
     mapping(address => address) public walletToUser;
     
+    // User interaction tracker for hierarchy system
+    UserInteractionTracker public interactionTracker;
+    
     event VisitorSigned(
         address indexed visitor,
         string message,
@@ -56,9 +60,24 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
     event BiometricKeyRegistered(address indexed user, bytes32 publicKeyX, bytes32 publicKeyY);
     event BiometricTransactionExecuted(address indexed user, string operation, uint256 gasUsed, bool usedPrecompile);
 
-    constructor() EIP712("VisitorBook", "1") {
+    constructor(address _interactionTracker) EIP712("VisitorBook", "1") {
+        if (_interactionTracker != address(0)) {
+            interactionTracker = UserInteractionTracker(_interactionTracker);
+        }
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MODERATOR_ROLE, msg.sender);
+    }
+    
+    /**
+     * @notice Set interaction tracker address (admin only)
+     * @param _interactionTracker Address of the UserInteractionTracker contract
+     */
+    function setInteractionTracker(address _interactionTracker) 
+        external 
+        onlyRole(DEFAULT_ADMIN_ROLE) 
+    {
+        require(_interactionTracker != address(0), "Invalid tracker address");
+        interactionTracker = UserInteractionTracker(_interactionTracker);
     }
 
     /**
@@ -90,6 +109,24 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
         
         hasVisited[user] = true;
         visitCount[user]++;
+        
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.visitorBookSignCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
+                    0
+                );
+            }
+        }
         
         emit VisitorSigned(user, message, block.timestamp, visitCount[user]);
     }
@@ -130,6 +167,24 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
         
         hasVisited[user] = true;
         visitCount[user]++;
+        
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.visitorBookSignCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
+                    0
+                );
+            }
+        }
         
         emit VisitorSigned(user, message, block.timestamp, visitCount[user]);
     }
@@ -172,16 +227,36 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
         
         usedSignatures[hash] = true;
         
+        address user = msg.sender;
+        
         visitors.push(Visitor({
-            visitor: msg.sender,
+            visitor: user,
             message: message,
             timestamp: block.timestamp
         }));
         
-        hasVisited[msg.sender] = true;
-        visitCount[msg.sender]++;
+        hasVisited[user] = true;
+        visitCount[user]++;
         
-        emit VisitorSigned(msg.sender, message, block.timestamp, visitCount[msg.sender]);
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.visitorBookSignCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
+                    0
+                );
+            }
+        }
+        
+        emit VisitorSigned(user, message, block.timestamp, visitCount[user]);
     }
 
     /**
@@ -356,6 +431,24 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
         
         hasVisited[user] = true;
         visitCount[user]++;
+        
+        // Record interaction and burn tokens if tracker is set
+        if (address(interactionTracker) != address(0)) {
+            uint256 burnAmount = interactionTracker.visitorBookSignCost();
+            if (burnAmount > 0) {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
+                    burnAmount
+                );
+            } else {
+                interactionTracker.recordInteraction(
+                    user,
+                    UserInteractionTracker.InteractionType.VISITOR_BOOK_SIGN,
+                    0
+                );
+            }
+        }
 
         emit VisitorSigned(user, message, timestamp, visitCount[user]);
         emit BiometricTransactionExecuted(user, "signVisitorBook", gasUsed, Secp256r1Verifier.isPrecompileAvailable());
@@ -388,6 +481,58 @@ contract VisitorBook is AccessControl, Pausable, ReentrancyGuard, EIP712 {
      */
     function isEIP7951Available() external view returns (bool available) {
         return Secp256r1Verifier.isPrecompileAvailable();
+    }
+
+    /**
+     * @notice Get all messages for a specific user
+     * @param user Address of the user
+     * @return Array of Visitor structs for that user
+     */
+    function getUserMessages(address user) external view returns (Visitor[] memory) {
+        uint256 userVisitCount = visitCount[user];
+        if (userVisitCount == 0) {
+            return new Visitor[](0);
+        }
+        
+        Visitor[] memory userVisitors = new Visitor[](userVisitCount);
+        uint256 index = 0;
+        
+        for (uint256 i = 0; i < visitors.length; i++) {
+            if (visitors[i].visitor == user) {
+                userVisitors[index] = visitors[i];
+                index++;
+            }
+        }
+        
+        return userVisitors;
+    }
+
+    /**
+     * @notice Get user's latest message
+     * @param user Address of the user
+     * @return Latest Visitor struct, or empty struct if user hasn't visited
+     */
+    function getUserLatestMessage(address user) external view returns (Visitor memory) {
+        if (visitCount[user] == 0) {
+            return Visitor({
+                visitor: address(0),
+                message: "",
+                timestamp: 0
+            });
+        }
+        
+        // Find the most recent message
+        Visitor memory latest;
+        uint256 latestTimestamp = 0;
+        
+        for (uint256 i = 0; i < visitors.length; i++) {
+            if (visitors[i].visitor == user && visitors[i].timestamp > latestTimestamp) {
+                latest = visitors[i];
+                latestTimestamp = visitors[i].timestamp;
+            }
+        }
+        
+        return latest;
     }
 }
 

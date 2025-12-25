@@ -11,7 +11,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ConnectButton } from '@/components/wallet/connect-button';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, FolderKanban, Vote, BookOpen, Droplet, Fingerprint } from 'lucide-react';
+import { Menu, X, Home, FolderKanban, Vote, BookOpen, Droplet } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 
@@ -21,7 +21,6 @@ const navigation = [
   { name: 'Voting', href: '/voting', icon: Vote },
   { name: 'Visitor Book', href: '/visitor-book', icon: BookOpen },
   { name: 'Faucet', href: '/faucet', icon: Droplet },
-  { name: 'Biometric', href: '/biometric', icon: Fingerprint },
 ];
 
 export function Header() {

@@ -4,29 +4,26 @@ pragma solidity ^0.8.24;
 import "./interfaces/IAccount.sol";
 import "./interfaces/IEntryPoint.sol";
 import "./interfaces/UserOperation.sol";
-import "./libraries/WebAuthnLib.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 /**
- * @title BiometricSmartAccount
- * @notice ERC-4337 compliant smart account with WebAuthn passkey support
+ * @title SmartAccount
+ * @notice ERC-4337 compliant smart account for EOA owners
  * @dev Features:
- *      - Multi-owner support (passkeys + Ethereum addresses)
- *      - WebAuthn/FIDO2 biometric authentication (Face ID, Touch ID)
- *      - EIP-7951 secp256r1 precompile integration (93% gas savings)
- *      - CDP Paymaster compatible
+ *      - EOA owner support (Ethereum addresses only)
+ *      - ECDSA signature validation
+ *      - Pimlico Paymaster compatible
  *      - Upgradeable via UUPS pattern
  *
- * Owner Types:
- *      1. Passkey Owner (64 bytes): [uint256 x, uint256 y] - secp256r1 public key
- *      2. Address Owner (32 bytes): [address owner] - Ethereum address
+ * Owner Format:
+ *      Address Owner (32 bytes): [address owner] - Ethereum address (padded to 32 bytes)
  *
  * @author Web3 Portfolio Platform
  */
-contract BiometricSmartAccount is IAccount, Initializable, UUPSUpgradeable {
+contract SmartAccount is IAccount, Initializable, UUPSUpgradeable {
     using ECDSA for bytes32;
 
     /*//////////////////////////////////////////////////////////////
@@ -100,9 +97,13 @@ contract BiometricSmartAccount is IAccount, Initializable, UUPSUpgradeable {
     /**
      * @notice Initialize the account with first owner
      * @dev Can only be called once. Called by the factory during deployment.
-     * @param initialOwner The initial owner bytes (passkey or address)
+     * @param initialOwner The initial owner bytes (32 bytes: padded EOA address)
      */
     function initialize(bytes calldata initialOwner) external initializer {
+        // Validate owner length (must be 32 bytes for EOA)
+        if (initialOwner.length != 32) {
+            revert InvalidOwnerBytesLength(initialOwner);
+        }
         _addOwner(initialOwner);
     }
 
@@ -116,10 +117,8 @@ contract BiometricSmartAccount is IAccount, Initializable, UUPSUpgradeable {
      *
      * Validation Steps:
      * 1. Decode SignatureWrapper from userOp.signature
-     * 2. Get owner bytes at ownerIndex
-     * 3. Verify signature based on owner type:
-     *    - 64 bytes: WebAuthn passkey → verify via WebAuthnLib
-     *    - 32 bytes: Ethereum address → verify via ECDSA
+     * 2. Get owner bytes at ownerIndex (must be 32 bytes for EOA)
+     * 3. Verify ECDSA signature
      *
      * @param userOp The user operation to validate
      * @param userOpHash Hash of the user operation
@@ -155,7 +154,7 @@ contract BiometricSmartAccount is IAccount, Initializable, UUPSUpgradeable {
 
     /**
      * @notice Internal signature validation
-     * @dev Supports both WebAuthn passkeys and Ethereum addresses
+     * @dev Supports EOA addresses only (32 bytes)
      *
      * @param hash The hash that was signed
      * @param signature The packed SignatureWrapper
@@ -175,21 +174,13 @@ contract BiometricSmartAccount is IAccount, Initializable, UUPSUpgradeable {
 
         bytes memory ownerBytes = owners[sigWrapper.ownerIndex];
 
-        // Check if owner exists (non-zero)
-        if (ownerBytes.length == 0) {
+        // Check if owner exists and is correct length (must be 32 bytes for EOA)
+        if (ownerBytes.length == 0 || ownerBytes.length != 32) {
             return false;
         }
 
-        // Validate based on owner type
-        if (ownerBytes.length == 32) {
-            // Ethereum address owner
-            return _validateAddressSignature(ownerBytes, hash, sigWrapper.signatureData);
-        } else if (ownerBytes.length == 64) {
-            // WebAuthn passkey owner
-            return _validatePasskeySignature(ownerBytes, hash, sigWrapper.signatureData);
-        }
-
-        return false;
+        // Validate EOA signature
+        return _validateAddressSignature(ownerBytes, hash, sigWrapper.signatureData);
     }
 
     /**
@@ -215,36 +206,6 @@ contract BiometricSmartAccount is IAccount, Initializable, UUPSUpgradeable {
         return recovered == owner;
     }
 
-    /**
-     * @notice Validate WebAuthn passkey signature
-     * @param ownerBytes The owner bytes (64 bytes containing x, y coordinates)
-     * @param hash The message hash (userOpHash)
-     * @param signatureData The WebAuthn assertion data
-     * @return True if valid
-     */
-    function _validatePasskeySignature(
-        bytes memory ownerBytes,
-        bytes32 hash,
-        bytes memory signatureData
-    ) internal view returns (bool) {
-        // Decode public key coordinates
-        (uint256 x, uint256 y) = abi.decode(ownerBytes, (uint256, uint256));
-
-        // Decode WebAuthn assertion
-        WebAuthnLib.WebAuthnAuth memory auth = abi.decode(
-            signatureData,
-            (WebAuthnLib.WebAuthnAuth)
-        );
-
-        // Verify using WebAuthn library (uses EIP-7951 precompile)
-        return WebAuthnLib.verify({
-            challenge: abi.encode(hash),
-            requireUV: false, // Don't require user verification (allow device unlock)
-            webAuthnAuth: auth,
-            x: x,
-            y: y
-        });
-    }
 
     /*//////////////////////////////////////////////////////////////
                           EXECUTION FUNCTIONS
@@ -316,7 +277,7 @@ contract BiometricSmartAccount is IAccount, Initializable, UUPSUpgradeable {
     /**
      * @notice Add a new owner
      * @dev Can only be called by this contract (via execute)
-     * @param owner The owner bytes (passkey or address)
+     * @param owner The owner bytes (32 bytes: padded EOA address)
      */
     function addOwner(bytes calldata owner) external {
         _requireFromEntryPointOrOwner();
@@ -325,11 +286,11 @@ contract BiometricSmartAccount is IAccount, Initializable, UUPSUpgradeable {
 
     /**
      * @notice Internal add owner logic
-     * @param owner The owner bytes
+     * @param owner The owner bytes (must be 32 bytes for EOA)
      */
     function _addOwner(bytes calldata owner) internal {
-        // Validate owner length
-        if (owner.length != 32 && owner.length != 64) {
+        // Validate owner length (must be 32 bytes for EOA only)
+        if (owner.length != 32) {
             revert InvalidOwnerBytesLength(owner);
         }
 
