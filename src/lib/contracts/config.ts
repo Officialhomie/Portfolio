@@ -10,11 +10,8 @@ import {
   PROJECT_VOTING_ABI,
   VISIT_NFT_ABI,
   VISITOR_BOOK_ABI,
-  BIOMETRIC_WALLET_ABI,
-  BIOMETRIC_WALLET_FACTORY_ABI,
-  DEPLOYMENT_PAYMASTER_ABI,
 } from './abis';
-import { CONTRACT_ADDRESSES, getContractAddress, type ContractName } from './addresses';
+import { CONTRACT_ADDRESSES, getContractAddress } from './addresses';
 
 /**
  * Contract configurations with ABIs and addresses
@@ -55,21 +52,9 @@ export const CONTRACTS = {
       [baseSepolia.id]: CONTRACT_ADDRESSES[baseSepolia.id].VisitorBook,
     },
   },
-  PasskeyAccountFactory: {
-    abi: BIOMETRIC_WALLET_FACTORY_ABI,
-    addresses: {
-      [base.id]: CONTRACT_ADDRESSES[base.id].PasskeyAccountFactory,
-      [baseSepolia.id]: CONTRACT_ADDRESSES[baseSepolia.id].PasskeyAccountFactory,
-    },
-  },
-  DeploymentPaymaster: {
-    abi: DEPLOYMENT_PAYMASTER_ABI,
-    addresses: {
-      [base.id]: CONTRACT_ADDRESSES[base.id].DeploymentPaymaster,
-      [baseSepolia.id]: CONTRACT_ADDRESSES[baseSepolia.id].DeploymentPaymaster,
-    },
-  },
 } as const;
+
+export type ContractName = keyof typeof CONTRACTS;
 
 /**
  * Get contract configuration for a specific chain
@@ -85,5 +70,5 @@ export function getContract(contractName: ContractName, chainId: number) {
 /**
  * Export individual contract configs
  */
-export { CONTRACT_ADDRESSES, getContractAddress, type ContractName };
+export { CONTRACT_ADDRESSES, getContractAddress };
 export { PORTFOLIO_TOKEN_ABI, PROJECT_NFT_ABI, PROJECT_VOTING_ABI, VISIT_NFT_ABI, VISITOR_BOOK_ABI };
