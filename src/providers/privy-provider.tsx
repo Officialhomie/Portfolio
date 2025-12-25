@@ -62,17 +62,9 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
       config={{
         // Embedded wallets - create automatically for users without wallets
         embeddedWallets: {
-          createOnLogin: 'users-without-wallets',
-          requireUserPasswordOnCreate: false,
-          noPromptOnSignature: false,
-        },
-        // Smart wallets - enable ERC-4337 account abstraction with gas sponsorship
-        smartWallets: {
-          enabled: true,
-          chainType: 'eip155',
-          // Gas sponsorship is configured in Privy Dashboard
-          // Go to: https://dashboard.privy.io -> Gas Sponsorship tab
-          // Enable sponsorship for Base and Base Sepolia chains
+          ethereum: {
+            createOnLogin: 'users-without-wallets',
+          },
         },
         // Login methods - all enabled for maximum flexibility
         loginMethods: [
@@ -80,7 +72,7 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
           'wallet',     // External wallet connection (MetaMask, Coinbase Wallet, etc.)
           'sms',        // SMS OTP
           'google',     // Google OAuth
-          'x',          // X (Twitter) OAuth
+          'twitter',   // Twitter OAuth
           'github',     // GitHub OAuth
           'apple',      // Apple Sign In
           'discord',    // Discord OAuth
@@ -88,20 +80,13 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
         // Appearance
         appearance: {
           theme: themeMode,
-          accentColor: 'hsl(var(--primary))',
+          accentColor: '#8B5CF6', // Purple color
           logo: '/IMG_6745.JPG', // Use relative path to avoid hydration mismatch
         },
         // Legal
         legal: {
           termsAndConditionsUrl: 'https://onetruehomie.com/terms',
           privacyPolicyUrl: 'https://onetruehomie.com/privacy',
-        },
-        // Metadata
-        metadata: {
-          name: 'OneTrueHomie - Web3 Portfolio',
-          description: "OneTrueHomie's Decentralized Developer Portfolio Platform on Base L2",
-          url: process.env.NEXT_PUBLIC_SITE_URL || 'https://onetruehomie.com',
-          icons: ['/IMG_6745.JPG'], // Use relative path to avoid hydration mismatch
         },
       }}
     >
