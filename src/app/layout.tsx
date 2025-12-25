@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import './error-suppression'; // Import early to suppress errors before React loads
 import './globals.css';
-import { Web3Provider } from '@/providers/web3-provider';
+import { PrivyProviderWrapper } from '@/providers/privy-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
-import { SmartWalletProvider } from '@/contexts/SmartWalletContext';
 import { baseSans, baseMono } from '@/lib/fonts/base-font';
 import { ClientErrorHandler } from '@/components/providers/client-error-handler';
 
@@ -39,11 +38,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Web3Provider>
-              <SmartWalletProvider>
-                {children}
-              </SmartWalletProvider>
-            </Web3Provider>
+            <PrivyProviderWrapper>
+              {children}
+            </PrivyProviderWrapper>
           </ThemeProvider>
         </ClientErrorHandler>
       </body>
