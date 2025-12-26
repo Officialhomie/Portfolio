@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Page Layout Component
  * Wraps pages with Header and Footer

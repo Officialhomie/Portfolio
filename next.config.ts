@@ -7,7 +7,19 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   // Exclude problematic packages from server components
-  serverExternalPackages: ['thread-stream', 'why-is-node-running', '@walletconnect/ethereum-provider'],
+  serverExternalPackages: [
+    'thread-stream',
+    'why-is-node-running',
+    '@walletconnect/ethereum-provider',
+    'pino',
+    'pino-pretty',
+    'lokijs',
+    'encoding',
+    '@privy-io/react-auth',
+    '@reown/appkit',
+    '@walletconnect/universal-provider',
+    '@walletconnect/logger',
+  ],
   images: {
     remotePatterns: [
       {
@@ -24,10 +36,22 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Turbopack configuration (for dev mode)
+  // Turbopack configuration (for dev and production builds in Next.js 16)
   turbopack: {
     resolveAlias: {
       '@react-native-async-storage/async-storage': './src/lib/utils/noop.ts',
+      'why-is-node-running': './src/lib/utils/noop.ts',
+    },
+    rules: {
+      // Exclude test files from bundling
+      '*/node_modules/**/*.test.{js,ts,mjs}': {
+        loaders: [],
+        as: '*.js',
+      },
+      '*/node_modules/**/test/**': {
+        loaders: [],
+        as: '*.js',
+      },
     },
   },
   // Webpack configuration (for production build)

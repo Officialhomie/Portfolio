@@ -11,8 +11,7 @@ import { createConfig, WagmiProvider } from '@privy-io/wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { base, baseSepolia } from 'wagmi/chains';
 import { http } from 'wagmi';
-import { useState } from 'react';
-import { useTheme } from 'next-themes';
+import { useState, useEffect } from 'react';
 
 // Get Privy App ID from environment
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
@@ -38,7 +37,6 @@ const wagmiConfig = createConfig({
 });
 
 export function PrivyProviderWrapper({ children }: { children: React.ReactNode }) {
-  const { resolvedTheme } = useTheme();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -54,7 +52,31 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
       })
   );
 
-  const themeMode = resolvedTheme === 'dark' ? 'dark' : 'light';
+  // Detect theme on the client side to avoid SSR mismatch
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
+
+  useEffect(() => {
+    // Check for theme preference on mount (client-side only)
+    const isDark = document.documentElement.classList.contains('dark');
+    setThemeMode(isDark ? 'dark' : 'light');
+
+    // Watch for theme changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDark = document.documentElement.classList.contains('dark');
+          setThemeMode(isDark ? 'dark' : 'light');
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <PrivyProvider
