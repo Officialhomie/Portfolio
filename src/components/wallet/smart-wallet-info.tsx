@@ -14,49 +14,31 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatAddress } from '@/lib/utils';
 import { verifyAccountDeployment, getBaseScanUrl } from '@/lib/utils/verify-deployment';
+import { LoginMethodBadge } from './login-method-badge';
 
 export function SmartWalletInfo() {
   const {
     smartWalletAddress,
     eoaAddress,
+    activeWallet,
     isSmartWalletDeployed,
     isSmartWalletReady,
+    isCheckingDeployment,
   } = usePrivyWallet();
 
-  // Get balance for smart wallet
+  // Use smart wallet if available, otherwise use EOA
+  const displayAddress = smartWalletAddress || eoaAddress;
+  const isSmartWallet = !!smartWalletAddress;
+
+  // Get balance for the display wallet
   const { data: balanceData } = useBalance({
-    address: smartWalletAddress as `0x${string}`,
+    address: displayAddress as `0x${string}`,
   });
 
   const [copied, setCopied] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [deploymentStatus, setDeploymentStatus] = useState<{
-    deployed: boolean;
-    codeLength: number;
-    details: string;
-  } | null>(null);
 
-  // Verify deployment status on mount and when address changes
-  useEffect(() => {
-    if (smartWalletAddress) {
-      verifyDeployment();
-    }
-  }, [smartWalletAddress]);
-
-  const verifyDeployment = async () => {
-    if (!smartWalletAddress) return;
-    setVerifying(true);
-    try {
-      const status = await verifyAccountDeployment(smartWalletAddress, 8453);
-      setDeploymentStatus(status);
-    } catch (error) {
-      console.error('Error verifying deployment:', error);
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  if (!smartWalletAddress) return null;
+  // Show wallet info if we have any wallet address
+  if (!displayAddress) return null;
 
   const handleCopy = (address: Address) => {
     navigator.clipboard.writeText(address);
@@ -75,14 +57,21 @@ export function SmartWalletInfo() {
       <DialogTrigger asChild>
         <button className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors">
           <div className="flex flex-col items-start">
-            <span className="text-xs text-muted-foreground">Smart Wallet</span>
+            <span className="text-xs text-muted-foreground">
+              {isSmartWallet ? 'Smart Wallet' : 'Wallet'}
+            </span>
             <span className="font-mono text-sm font-medium">
-              {formatAddress(smartWalletAddress)}
+              {formatAddress(displayAddress)}
             </span>
           </div>
-          {isSmartWalletReady && (
+          {isSmartWallet && isSmartWalletReady && (
             <Badge variant="default" className="bg-green-500 text-white">
               Active
+            </Badge>
+          )}
+          {!isSmartWallet && (
+            <Badge variant="secondary" className="text-xs">
+              EOA
             </Badge>
           )}
         </button>
@@ -91,32 +80,45 @@ export function SmartWalletInfo() {
       <DialogContent className="max-w-2xl bg-black">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span>Smart Wallet Information</span>
-            {isSmartWalletReady && (
+            <span>{isSmartWallet ? 'Smart Wallet' : 'Wallet'} Information</span>
+            {isSmartWallet && isSmartWalletReady && (
               <Badge variant="default" className="bg-green-500">Ready</Badge>
+            )}
+            {!isSmartWallet && (
+              <Badge variant="secondary">EOA</Badge>
             )}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Smart Wallet Address */}
+          {/* Login Method */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">
-              Smart Wallet Address
+              Authenticated With
+            </label>
+            <LoginMethodBadge />
+          </div>
+
+          {/* Wallet Address */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">
+              {isSmartWallet ? 'Smart Wallet Address' : 'Wallet Address'}
             </label>
             <div className="flex items-center gap-2">
               <code className="flex-1 p-3 bg-secondary rounded-lg font-mono text-sm break-all">
-                {smartWalletAddress}
+                {displayAddress}
               </code>
               <button
-                onClick={() => handleCopy(smartWalletAddress)}
+                onClick={() => handleCopy(displayAddress)}
                 className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
               >
                 {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              This is your smart contract wallet. All transactions are signed with Face ID/Touch ID.
+              {isSmartWallet
+                ? 'This is your smart contract wallet. Transactions can be sponsored with gasless features.'
+                : 'This is your externally owned account (EOA). You control the private keys for this wallet.'}
             </p>
           </div>
 
@@ -133,133 +135,150 @@ export function SmartWalletInfo() {
             </div>
           </div>
 
-          {/* Deployment Status */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-muted-foreground">
-              Deployment Status
-            </label>
-              <button
-                onClick={verifyDeployment}
-                disabled={verifying}
-                className="text-xs text-primary hover:underline disabled:opacity-50"
-              >
-                {verifying ? 'Checking...' : 'Refresh'}
-              </button>
-            </div>
+          {/* Deployment Status - Only show for smart wallets */}
+          {isSmartWallet && (
             <div className="space-y-2">
-            <div className="flex items-center gap-2">
-                <Badge 
-                  variant={
-                    (deploymentStatus?.deployed || isSmartWalletDeployed) 
-                      ? 'default' 
-                      : 'secondary'
-                  }
-                  className={
-                    (deploymentStatus?.deployed || isSmartWalletDeployed)
-                      ? 'bg-green-500 text-white'
-                      : ''
-                  }
-                >
-                  {(deploymentStatus?.deployed || isSmartWalletDeployed) 
-                    ? '✅ Deployed' 
-                    : '⏳ Not Deployed'}
-              </Badge>
-                {deploymentStatus && (
-                <span className="text-xs text-muted-foreground">
-                    Code: {deploymentStatus.codeLength} bytes
-                </span>
-              )}
+              <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-muted-foreground">
+                Deployment Status
+              </label>
+                {isCheckingDeployment && (
+                  <span className="text-xs text-muted-foreground">
+                    Checking on-chain...
+                  </span>
+                )}
               </div>
-              {deploymentStatus && (
-                <p className="text-xs text-muted-foreground">
-                  {deploymentStatus.details}
-                </p>
-              )}
-              {!isSmartWalletDeployed && !deploymentStatus?.deployed && (
-                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <p className="text-xs text-blue-500 mb-1">
-                    💡 Account will be deployed automatically on first transaction
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    The first transaction (e.g., claiming from faucet) will deploy your smart account
-                    and execute the action in one step. Pimlico will sponsor the gas costs!
-                  </p>
+              <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                  <Badge
+                    variant={isSmartWalletDeployed ? 'default' : 'secondary'}
+                    className={isSmartWalletDeployed ? 'bg-green-500 text-white' : 'bg-amber-500 text-white'}
+                  >
+                    {isCheckingDeployment
+                      ? '🔍 Checking...'
+                      : isSmartWalletDeployed
+                      ? '✅ Deployed'
+                      : '⏳ Not Deployed (Counterfactual)'}
+                </Badge>
                 </div>
-              )}
-              <a
-                href={getBaseScanUrl(smartWalletAddress, 8453)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-              >
-                View on BaseScan →
-              </a>
-            </div>
-          </div>
-
-          {/* Gas Savings - Not available in Privy */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">
-              Gas Efficiency
-            </label>
-            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <div className="text-lg font-bold text-green-500">
-                Automatic
+                <p className="text-xs text-muted-foreground">
+                  {isCheckingDeployment
+                    ? 'Verifying deployment on Base blockchain...'
+                    : isSmartWalletDeployed
+                    ? 'Smart account contract is deployed on-chain and ready for transactions.'
+                    : 'Smart account address is reserved but contract is not yet deployed.'}
+                </p>
+                {!isSmartWalletDeployed && !isCheckingDeployment && (
+                  <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <p className="text-xs text-blue-500 mb-1">
+                      💡 Account will be deployed automatically on first transaction
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Your smart account uses counterfactual deployment - the address is known before deployment.
+                      The first transaction (e.g., claiming from faucet) will deploy your smart account
+                      and execute the action in one UserOperation. This is normal and gas-efficient!
+                    </p>
+                  </div>
+                )}
+                <a
+                  href={getBaseScanUrl(displayAddress, 8453)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  View on BaseScan →
+                </a>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Privy handles gas optimization automatically
-              </p>
             </div>
-          </div>
+          )}
+
+          {/* Gas Efficiency - Only for smart wallets */}
+          {isSmartWallet && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">
+                Gas Efficiency
+              </label>
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <div className="text-lg font-bold text-green-500">
+                  Gasless Transactions
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Smart wallet transactions can be sponsored - no ETH needed for gas!
+                </p>
+              </div>
+            </div>
+          )}
 
 
-          {/* EOA Info (for debugging) */}
-          {eoaAddress && (
+          {/* EOA Info (for debugging) - Only show when there's both smart wallet and EOA */}
+          {isSmartWallet && eoaAddress && smartWalletAddress !== eoaAddress && (
             <details className="space-y-2">
               <summary className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-                Advanced: Connected EOA (Hidden from user)
+                Advanced: Embedded Wallet (EOA)
               </summary>
               <div className="p-3 bg-secondary/50 rounded-lg mt-2">
                 <code className="text-xs break-all">{eoaAddress}</code>
                 <p className="text-xs text-muted-foreground mt-2">
-                  This is your original wallet (EOA). It's used internally to create your smart wallet,
+                  This is your embedded wallet (EOA). It's used internally to create your smart wallet,
                   but all transactions are sent from the smart wallet above.
                 </p>
               </div>
             </details>
           )}
 
-          {/* Features */}
+          {/* Features - Show different features based on wallet type */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">
-              Smart Wallet Features
+              {isSmartWallet ? 'Smart Wallet Features' : 'Wallet Features'}
             </label>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-0.5">✓</span>
-                <span>Gasless transactions via Pimlico Paymaster</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-0.5">✓</span>
-                <span>Batch transactions - sign multiple actions at once</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-0.5">✓</span>
-                <span>ERC-4337 account abstraction standard</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-0.5">✓</span>
-                <span>Counterfactual deployment - address known before deployment</span>
-              </li>
-            </ul>
+            {isSmartWallet ? (
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>Gasless transactions via paymaster sponsorship</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>Batch transactions - sign multiple actions at once</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>ERC-4337 account abstraction standard</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span>Counterfactual deployment - address known before deployment</span>
+                </li>
+              </ul>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Full control of private keys</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Compatible with all EVM chains</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Standard Ethereum transactions</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-amber-500 mt-0.5">⚠</span>
+                  <span>Requires ETH for gas fees</span>
+                </li>
+              </ul>
+            )}
           </div>
 
           {/* Security Notice */}
           <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
             <p className="text-sm font-medium text-amber-500 mb-1">Security Notice</p>
             <p className="text-xs text-muted-foreground">
-              Your smart wallet is controlled by your connected EOA wallet. Keep your EOA wallet secure.
+              {isSmartWallet
+                ? 'Your smart wallet is secured by Privy. Keep your login credentials safe and enable 2FA for maximum security.'
+                : 'You control the private keys for this wallet. Never share your seed phrase or private keys with anyone.'}
             </p>
           </div>
         </div>

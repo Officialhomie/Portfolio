@@ -7,6 +7,7 @@
  */
 
 import { PrivyProvider } from '@privy-io/react-auth';
+import { SmartWalletsProvider } from '@privy-io/react-auth/smart-wallets';
 import { createConfig, WagmiProvider } from '@privy-io/wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { base, baseSepolia } from 'wagmi/chains';
@@ -82,12 +83,17 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
     <PrivyProvider
       appId={privyAppId || ''}
       config={{
-        // Embedded wallets - create automatically for users without wallets
+        // Embedded wallets - create for all users (including EOA users)
+        // This ensures even users connecting with MetaMask get an embedded wallet
+        // which can be used to create a smart wallet
         embeddedWallets: {
           ethereum: {
-            createOnLogin: 'users-without-wallets',
+            createOnLogin: 'all-users', // Changed from 'users-without-wallets' to 'all-users'
           },
         },
+        // Supported chains for the app
+        supportedChains: [base, baseSepolia],
+        defaultChain: base,
         // Login methods - all enabled for maximum flexibility
         loginMethods: [
           'email',      // Email OTP (one-time passcode)
@@ -99,11 +105,12 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
           'apple',      // Apple Sign In
           'discord',    // Discord OAuth
         ],
-        // Appearance
+        // Appearance - configure wallet list to show Base Account (Coinbase Smart Wallet)
         appearance: {
           theme: themeMode,
           accentColor: '#8B5CF6', // Purple color
           logo: '/IMG_6745.JPG', // Use relative path to avoid hydration mismatch
+          walletList: ['base_account', 'coinbase_wallet', 'metamask', 'rainbow', 'wallet_connect'], // Support for smart wallets
         },
         // Legal
         legal: {
@@ -114,7 +121,9 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
     >
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
-          {children}
+          <SmartWalletsProvider>
+            {children}
+          </SmartWalletsProvider>
         </WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>

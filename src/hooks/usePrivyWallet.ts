@@ -7,7 +7,8 @@
  */
 
 import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { useAccount, useSendTransaction, useWalletClient } from 'wagmi';
+import { useSmartWallets } from '@privy-io/react-auth/smart-wallets';
+import { useAccount, useSendTransaction, useWalletClient, usePublicClient } from 'wagmi';
 import { type Address, type Hex } from 'viem';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 
@@ -31,41 +32,107 @@ export interface TransactionResult {
 export function usePrivyWallet() {
   const privy = usePrivy();
   const { wallets } = useWallets();
+  const { client: smartWalletClient, getClientForChain } = useSmartWallets();
   const { address: wagmiAddress, chainId } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
   const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
   const [isSendingTransaction, setIsSendingTransaction] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [isSmartWalletDeployed, setIsSmartWalletDeployed] = useState(false);
+  const [isCheckingDeployment, setIsCheckingDeployment] = useState(false);
 
-  // In Privy v3, smart wallets are embedded wallets created by Privy
-  // Embedded wallets have connectorType === 'embedded' and walletClientType === 'privy'
-  const smartWallets = useMemo(() => {
-    const filtered = wallets.filter(wallet => {
-      // Smart wallets are embedded wallets created by Privy
-      return wallet.connectorType === 'embedded' && wallet.walletClientType === 'privy';
-    });
-    
+  // Debug: Log smart wallet client configuration
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (smartWalletClient) {
+        console.log('🔧 Smart Wallet Client Configuration:', {
+          account: smartWalletClient.account?.address,
+          chain: smartWalletClient.chain,
+          hasPaymaster: !!smartWalletClient.paymaster,
+          // @ts-ignore
+          paymasterUrl: smartWalletClient.paymaster?.transport?.url,
+          // @ts-ignore
+          bundlerUrl: smartWalletClient.transport?.url,
+        });
+      } else if (privy.authenticated) {
+        console.warn('⚠️ No Smart Wallet Client - Check Privy Dashboard Configuration:', {
+          authenticated: privy.authenticated,
+          hasUser: !!privy.user,
+          linkedAccounts: privy.user?.linkedAccounts?.length || 0,
+          linkedAccountTypes: privy.user?.linkedAccounts?.map((acc: any) => acc.type) || [],
+        });
+      }
+    }
+  }, [smartWalletClient, privy.authenticated, privy.user]);
+
+  // In Privy v3, smart wallets appear in user.linkedAccounts with type 'smart_wallet'
+  // We get the smart wallet address from the linkedAccounts, not from wallets array
+  const smartWalletAddress = useMemo(() => {
+    if (!privy.user) return null;
+
+    // Find smart wallet in linked accounts
+    const smartWallet = privy.user.linkedAccounts.find(
+      (account: any) => account.type === 'smart_wallet'
+    ) as { address?: string } | undefined;
+
     // Debug logging
-    if (typeof window !== 'undefined' && wallets.length > 0) {
-      console.log('🔍 Privy Wallet Debug:', {
-        totalWallets: wallets.length,
-        smartWallets: filtered.length,
-        allWallets: wallets.map(w => ({
-          address: w.address,
-          connectorType: w.connectorType,
-          walletClientType: w.walletClientType,
+    if (typeof window !== 'undefined' && privy.authenticated) {
+      console.log('🔍 Privy Smart Wallet Debug:', {
+        authenticated: privy.authenticated,
+        linkedAccounts: privy.user.linkedAccounts.map((acc: any) => ({
+          type: acc.type,
+          address: (acc as any).address || 'N/A',
         })),
+        smartWalletFound: !!smartWallet,
+        smartWalletAddress: smartWallet?.address,
+        smartWalletClientReady: !!smartWalletClient,
       });
     }
-    
-    return filtered;
-  }, [wallets]);
+
+    return (smartWallet?.address as Address) || null;
+  }, [privy.user, privy.authenticated, smartWalletClient]);
 
   // Get EOA address (embedded wallet or connected wallet)
   const eoaAddress = privy.user?.wallet?.address as Address | undefined || wagmiAddress;
 
-  // Get smart wallet address (first smart wallet if available)
-  const smartWalletAddress = smartWallets[0]?.address as Address | undefined;
+  // Check if smart wallet is actually deployed on-chain
+  useEffect(() => {
+    const checkDeployment = async () => {
+      if (!smartWalletAddress || !publicClient) {
+        setIsSmartWalletDeployed(false);
+        return;
+      }
+
+      setIsCheckingDeployment(true);
+      try {
+        // Get the bytecode at the smart wallet address
+        const code = await publicClient.getBytecode({
+          address: smartWalletAddress as `0x${string}`,
+        });
+
+        // If code exists and is not '0x', the contract is deployed
+        const deployed = !!code && code !== '0x';
+        setIsSmartWalletDeployed(deployed);
+
+        if (typeof window !== 'undefined') {
+          console.log('🔍 Smart Wallet Deployment Check:', {
+            address: smartWalletAddress,
+            codeLength: code?.length || 0,
+            isDeployed: deployed,
+            code: code?.slice(0, 20) + '...' || '0x',
+          });
+        }
+      } catch (error) {
+        console.error('Error checking smart wallet deployment:', error);
+        setIsSmartWalletDeployed(false);
+      } finally {
+        setIsCheckingDeployment(false);
+      }
+    };
+
+    checkDeployment();
+  }, [smartWalletAddress, publicClient]);
 
   // Debug logging for wallet addresses
   useEffect(() => {
@@ -75,13 +142,15 @@ export function usePrivyWallet() {
         isReady: privy.ready,
         eoaAddress,
         smartWalletAddress,
-        isSmartWalletReady: !!smartWalletAddress,
-        isSmartWalletDeployed: !!smartWallets[0]?.address,
+        isSmartWalletReady: !!smartWalletAddress && !!smartWalletClient,
+        isSmartWalletDeployed,
+        isCheckingDeployment,
+        smartWalletClientReady: !!smartWalletClient,
         wagmiAddress,
         privyUserWallet: privy.user?.wallet?.address,
       });
     }
-  }, [privy.authenticated, privy.ready, eoaAddress, smartWalletAddress, smartWallets, wagmiAddress, privy.user?.wallet?.address]);
+  }, [privy.authenticated, privy.ready, eoaAddress, smartWalletAddress, smartWalletClient, isSmartWalletDeployed, isCheckingDeployment, wagmiAddress, privy.user?.wallet?.address]);
 
   // Get the active wallet (smart wallet preferred, fallback to EOA)
   const activeWallet = smartWalletAddress || eoaAddress;
@@ -188,8 +257,8 @@ export function usePrivyWallet() {
   /**
    * Disconnect wallet (logout)
    */
-  const disconnect = useCallback(() => {
-    privy.logout();
+  const disconnect = useCallback(async () => {
+    return privy.logout();
   }, [privy]);
 
   return {
@@ -201,8 +270,9 @@ export function usePrivyWallet() {
     // State
     isConnected: privy.authenticated,
     isReady: privy.ready,
-    isSmartWalletReady: !!smartWalletAddress,
-    isSmartWalletDeployed: !!smartWallets[0]?.address,
+    isSmartWalletReady: !!smartWalletAddress && !!smartWalletClient,
+    isSmartWalletDeployed, // Now uses actual on-chain check
+    isCheckingDeployment,
 
     // Transaction state
     isSendingTransaction,
@@ -217,6 +287,9 @@ export function usePrivyWallet() {
 
     // Privy instance (for advanced usage)
     privy,
+
+    // Smart wallet client (for advanced usage)
+    smartWalletClient,
 
     // Error
     error,

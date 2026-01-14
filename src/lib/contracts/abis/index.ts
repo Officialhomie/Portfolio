@@ -11,7 +11,7 @@ import VisitorBookABI from './VisitorBook.json';
 import type { Abi } from 'viem';
 
 // Export ABIs with proper typing using const assertion
-export const PORTFOLIO_TOKEN_ABI = (PortfolioTokenABI as { abi: Abi }).abi;
+export const PORTFOLIO_TOKEN_ABI = PortfolioTokenABI as Abi;
 export const PROJECT_NFT_ABI = (ProjectNFTABI as { abi: Abi }).abi;
 export const PROJECT_VOTING_ABI = (ProjectVotingABI as { abi: Abi }).abi;
 export const VISIT_NFT_ABI = (VisitNFTABI as { abi: Abi }).abi;

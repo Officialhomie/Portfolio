@@ -58,9 +58,8 @@ contract CompleteIntegrationTest is Test {
         smartAccountFactory = new SmartAccountFactory(entryPoint);
 
         // Deploy core ecosystem
-        token = new PortfolioToken(); // No tracker initially
+        token = new PortfolioToken();
         tracker = new UserInteractionTracker(address(token));
-        token = new PortfolioToken(); // Update with tracker
 
         projectNFT = new ProjectNFT(address(tracker));
         visitNFT = new VisitNFT(address(tracker));
@@ -81,6 +80,18 @@ contract CompleteIntegrationTest is Test {
         token.mint(user2, INITIAL_TOKENS);
 
         vm.stopPrank();
+
+        // Users approve tracker to burn their tokens
+        vm.prank(user1);
+        token.approve(address(tracker), type(uint256).max);
+        vm.prank(user2);
+        token.approve(address(tracker), type(uint256).max);
+
+        // Users approve voting contract to burn their tokens
+        vm.prank(user1);
+        token.approve(address(projectVoting), type(uint256).max);
+        vm.prank(user2);
+        token.approve(address(projectVoting), type(uint256).max);
 
         // Setup smart wallet for user1
         bytes memory ownerBytes = abi.encodePacked(bytes12(0), user1);

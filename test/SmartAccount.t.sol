@@ -802,10 +802,7 @@ contract RevertingTarget {
     function revertCall() external pure {
         revert("Always reverts");
     }
-}
-
-// Event definitions for testing
+}// Event definitions for testing
 event Executed(address indexed target, uint256 value, bytes data);
 event OwnerAdded(uint256 indexed ownerIndex, bytes owner);
 event OwnerRemoved(uint256 indexed ownerIndex, bytes32 ownerHash);
-

@@ -7,8 +7,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { formatUnits, parseUnits, encodeFunctionData, type Address } from 'viem';
-import { base, baseSepolia } from 'wagmi/chains';
+import { formatUnits, parseUnits, encodeFunctionData } from 'viem';
+import { base } from 'wagmi/chains';
 import { PORTFOLIO_TOKEN_ABI } from '@/lib/contracts/abis';
 import { CONTRACT_ADDRESSES } from '@/lib/contracts/addresses';
 import { usePrivyWallet } from '@/hooks/usePrivyWallet';
@@ -49,40 +49,35 @@ export function usePortfolioToken() {
     },
   });
 
-  // Get smart wallet address for registration check
-  const { smartWalletAddress, eoaAddress: privyEOA } = usePrivyWallet();
-  
-  // Only fetch balance and canClaimFaucet when address is available
-  // CRITICAL: Always use EOA address for balance and canClaimFaucet checks
-  // Tokens are minted to EOA address (via walletToUser mapping if wallet is registered)
+  // Get active wallet address (smart wallet preferred, EOA as fallback)
+  const { activeWallet } = usePrivyWallet();
+
+  // Use the active wallet for ALL operations
+  // If user logged in with email → smart wallet address
+  // If user connected external wallet → that wallet address
+  // Tokens are minted to whoever calls the contract (msg.sender)
+  const walletToUse = activeWallet || address;
+
+  // Only fetch balance and canClaimFaucet when wallet address is available
   const { data: userData, isLoading: userLoading, refetch: refetchUser } = useReadContracts({
     contracts: [
       {
         address: contractAddress,
         abi: PORTFOLIO_TOKEN_ABI,
         functionName: 'balanceOf',
-        args: address ? [address] : undefined, // EOA address - tokens are minted here
+        args: walletToUse ? [walletToUse] : undefined, // Active wallet - tokens are here
         chainId: chainId || base.id,
       },
       {
         address: contractAddress,
         abi: PORTFOLIO_TOKEN_ABI,
         functionName: 'canClaimFaucet',
-        args: address ? [address] : undefined, // EOA address - checks claim eligibility for EOA
+        args: walletToUse ? [walletToUse] : undefined, // Active wallet - check eligibility
         chainId: chainId || base.id,
       },
-      // Check if smart wallet is registered (if smart wallet exists)
-      // walletToUser is a public mapping, so we can read it directly
-      ...(smartWalletAddress && address ? [{
-        address: contractAddress,
-        abi: PORTFOLIO_TOKEN_ABI,
-        functionName: 'walletToUser',
-        args: [smartWalletAddress],
-        chainId: chainId || base.id,
-      }] : []),
     ],
     query: {
-      enabled: !!address,
+      enabled: !!walletToUse,
       staleTime: 30_000, // 30 seconds
       refetchInterval: 60_000, // Refetch every minute to update countdown
     },
@@ -98,31 +93,12 @@ export function usePortfolioToken() {
   const totalSupplyRaw = (data?.[0]?.result as bigint) || 0n;
   const faucetAmountRaw = (data?.[1]?.result as bigint) || parseUnits('100', 18);
   const balanceRaw = (data?.[2]?.result as bigint) || 0n;
-  
+
   // canClaimFaucet returns (bool canClaim, uint256 timeUntilClaim)
   const canClaimResult = data?.[3]?.result as [boolean, bigint] | undefined;
   const canClaimFaucet = canClaimResult?.[0] ?? false;
   const timeUntilClaimRaw = canClaimResult?.[1] ?? 0n;
   const timeUntilClaim = Number(timeUntilClaimRaw);
-  
-  // Check if smart wallet is registered (walletToUser mapping)
-  // If registered, walletToUser[smartWalletAddress] should equal EOA address
-  const registeredUserAddress = data?.[4]?.result as Address | undefined;
-  const isWalletRegistered = smartWalletAddress && address 
-    ? registeredUserAddress?.toLowerCase() === address.toLowerCase()
-    : true; // If no smart wallet, consider it "registered" (direct EOA calls)
-  
-  // Log registration status for debugging
-  if (smartWalletAddress && address && registeredUserAddress) {
-    console.log('🔍 Wallet registration check:');
-    console.log('   Smart Wallet:', smartWalletAddress);
-    console.log('   EOA Address:', address);
-    console.log('   Registered User:', registeredUserAddress);
-    console.log('   Is Registered:', isWalletRegistered);
-    if (!isWalletRegistered && registeredUserAddress !== '0x0000000000000000000000000000000000000000') {
-      console.warn('⚠️ Wallet registered to different EOA! Expected:', address, 'Got:', registeredUserAddress);
-    }
-  }
 
   return {
     // Formatted values
@@ -141,12 +117,11 @@ export function usePortfolioToken() {
     isLoading,
     refetch,
 
-    // Wallet registration status
-    isWalletRegistered, // Whether smart wallet is registered with PortfolioToken
-    needsWalletRegistration: smartWalletAddress && !isWalletRegistered, // True if wallet needs registration
-
     // Contract info
     contractAddress,
+
+    // Wallet info (for debugging)
+    walletAddress: walletToUse,
   };
 }
 
@@ -155,14 +130,14 @@ export function usePortfolioToken() {
  */
 export function useClaimFaucet() {
   const { chainId, address } = useAccount();
-  const { refetch, isWalletRegistered, needsWalletRegistration } = usePortfolioToken();
+  const { refetch } = usePortfolioToken();
   const contractAddress = getTokenAddress(chainId);
-  const { sendTransaction, isSendingTransaction, error: privyError, smartWalletAddress, eoaAddress: privyEOA } = usePrivyWallet();
+  const { sendTransaction, isSendingTransaction, error: privyError, smartWalletAddress, activeWallet } = usePrivyWallet();
   const { writeContract, data: writeTxHash, isPending: isWritePending, error: writeError } = useWriteContract();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  
+
   // Update txHash when writeContract succeeds
   useEffect(() => {
     if (writeTxHash) {
@@ -170,101 +145,51 @@ export function useClaimFaucet() {
     }
   }, [writeTxHash]);
 
-  // Wait for EOA transaction receipt
+  // Wait for transaction receipt
   const { isLoading: isWaitingTx, isSuccess: isTxSuccess, data: receipt } = useWaitForTransactionReceipt({
     hash: txHash || undefined,
   });
 
   const claimFaucet = async () => {
     console.log('🎯 useClaimFaucet.claimFaucet() called');
-    console.log('   EOA address:', address);
-    console.log('   chainId:', chainId);
-    console.log('   smartWalletAddress:', smartWalletAddress);
-    console.log('   Wallet registered:', isWalletRegistered);
-    console.log('   Needs registration:', needsWalletRegistration);
-    
-    if (!address || !chainId) {
+    console.log('   Active Wallet:', activeWallet);
+    console.log('   Smart Wallet:', smartWalletAddress);
+    console.log('   Chain ID:', chainId);
+
+    if (!activeWallet || !chainId) {
       throw new Error('Wallet not connected');
     }
+
+    // Build transaction data for claimFaucet()
+    // Tokens will be minted directly to msg.sender (the caller)
+    const data = encodeFunctionData({
+      abi: PORTFOLIO_TOKEN_ABI,
+      functionName: 'claimFaucet',
+      args: [],
+    });
 
     // If smart wallet is available, use it (preferred method)
     if (smartWalletAddress) {
       console.log('✅ Using smart wallet for claim');
-
-      // CRITICAL: Check if wallet is registered before claiming
-      // If not registered, tokens will be minted to smart wallet address instead of EOA
-      // This causes balance mismatch: balance is read from EOA, but tokens are in smart wallet
-      if (needsWalletRegistration) {
-        console.warn('⚠️ Smart wallet not registered with PortfolioToken!');
-        console.warn('   Registering wallet before claiming...');
-        console.warn('   This ensures tokens are minted to your EOA address, not the smart wallet');
-        
-        // Register wallet first via Privy transaction
-        const registerData = encodeFunctionData({
-          abi: PORTFOLIO_TOKEN_ABI,
-          functionName: 'registerWallet',
-          args: [smartWalletAddress, address],
-        });
-        
-        console.log('📝 Registering wallet with PortfolioToken...');
-        console.log('   Smart Wallet:', smartWalletAddress);
-        console.log('   EOA Address:', address);
-        
-        try {
-          await sendTransaction({
-            to: contractAddress,
-            data: registerData,
-            value: 0n,
-          });
-          
-          console.log('✅ Wallet registered successfully');
-          // Wait a bit for the registration to be mined and indexed
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          // Refetch to update registration status
-          await refetch();
-        } catch (regError) {
-          console.error('❌ Wallet registration failed:', regError);
-          throw new Error(`Failed to register wallet: ${regError instanceof Error ? regError.message : 'Unknown error'}. Please try again.`);
-        }
-      }
+      console.log('   Tokens will be minted to:', smartWalletAddress);
 
       try {
-        console.log('✅ Pre-flight checks passed, starting transaction...');
         setIsConfirming(true);
-        
-        // Build transaction data - smart wallet calls claimFaucet() directly
-        // Contract will use walletToUser[msg.sender] to get the user (EOA address)
-        // Tokens will be minted to EOA address if wallet is registered
-        const data = encodeFunctionData({
-          abi: PORTFOLIO_TOKEN_ABI,
-          functionName: 'claimFaucet',
-          args: [],
-        });
-        
-        console.log('📋 Claim details:');
-        console.log('   Smart Wallet:', smartWalletAddress);
-        console.log('   Will mint to EOA:', address);
-        console.log('   Wallet registered:', isWalletRegistered);
 
-        console.log('📦 Transaction data encoded, calling sendTransaction...');
-        console.log('   Contract:', contractAddress);
-        console.log('   Data length:', data.length);
-
-        // Execute via Privy transaction
+        // Execute via Privy smart wallet transaction
         const result = await sendTransaction({
           to: contractAddress,
           data,
           value: 0n,
         });
 
-        console.log('✅ Transaction complete!');
+        console.log('✅ Smart wallet transaction complete!');
         console.log('   UserOp Hash:', result.userOpHash);
         console.log('   TX Hash:', result.txHash);
 
         setTxHash(result.txHash);
         setIsSuccess(true);
-        
+
         // Refetch balance after a short delay to allow transaction to be mined
         setTimeout(() => {
           refetch();
