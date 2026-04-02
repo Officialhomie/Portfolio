@@ -11,7 +11,8 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ConnectButton } from '@/components/wallet/connect-button';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, FolderKanban, Vote, BookOpen, Droplet } from 'lucide-react';
+import { Menu, X, Home, FolderKanban, Vote, BookOpen, Droplet, Github } from 'lucide-react';
+import { FaXTwitter } from 'react-icons/fa6';
 import { cn } from '@/lib/utils/cn';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 
@@ -96,6 +97,28 @@ export function Header() {
 
           {/* Right Section */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <a
+              href="https://twitter.com/officialhomie_"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex"
+              aria-label="X (Twitter)"
+            >
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
+                <FaXTwitter className="h-4 w-4" />
+              </Button>
+            </a>
+            <a
+              href="https://github.com/Officialhomie"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex"
+              aria-label="GitHub"
+            >
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
+                <Github className="h-4 w-4" />
+              </Button>
+            </a>
             {/* Theme Toggle */}
             <ThemeToggle />
             
@@ -164,6 +187,20 @@ export function Header() {
               );
             })}
 
+            <div className="flex gap-2 pt-2 sm:hidden justify-center">
+              <a href="https://twitter.com/officialhomie_" target="_blank" rel="noopener noreferrer" aria-label="X">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <FaXTwitter className="h-4 w-4" />
+                  X
+                </Button>
+              </a>
+              <a href="https://github.com/Officialhomie" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Github className="h-4 w-4" />
+                  GitHub
+                </Button>
+              </a>
+            </div>
             {/* Mobile Wallet Connect */}
             <div className="pt-2 sm:hidden">
               <ConnectButton />
