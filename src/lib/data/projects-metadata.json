@@ -1,6 +1,103 @@
 {
   "projects": [
     {
+      "id": "balance-tracker",
+      "name": "balance-tracker",
+      "description": "Go CLI on go-ethereum: ETH and ERC-20 balances plus recent transactions via JSON-RPC, bounded block scans, abigen bindings, and layered packages with tests.",
+      "external_url": "https://github.com/Officialhomie/balance-tracker",
+      "tech_stack": "Go, go-ethereum, Cobra, Solidity bindings",
+      "category": "Tools",
+      "status": "Live",
+      "year": 2026,
+      "featured": true,
+      "tags": ["cli", "rpc", "base", "ethereum"]
+    },
+    {
+      "id": "web3-systems-architect",
+      "name": "web3-systems-architect",
+      "description": "Autonomous validation for protocol engineering: production-ready skills for Solidity/Foundry, automation, CI/CD, and security-minded checks for elite teams.",
+      "external_url": "https://github.com/Officialhomie/web3-systems-architect",
+      "tech_stack": "Shell, Solidity, Foundry, automation",
+      "category": "Infrastructure",
+      "status": "Live",
+      "year": 2026,
+      "featured": true,
+      "tags": ["protocol", "foundry", "skills"]
+    },
+    {
+      "id": "aegis-agent",
+      "name": "aegis-agent",
+      "description": "Core autonomous agent stack in TypeScript—onchain-aware workflows and integrations.",
+      "external_url": "https://github.com/Officialhomie/aegis-agent",
+      "tech_stack": "TypeScript, viem, agents",
+      "category": "Agents",
+      "status": "Live",
+      "year": 2026,
+      "featured": true,
+      "tags": ["agents", "web3"]
+    },
+    {
+      "id": "aeg-control",
+      "name": "aeg-control",
+      "description": "Telegram consumer for the Aegis agent: grammy, viem, and EIP-712 delegation signing on Base.",
+      "external_url": "https://github.com/Officialhomie/aeg-control",
+      "tech_stack": "TypeScript, grammy, viem, Base",
+      "category": "Agents",
+      "status": "Live",
+      "year": 2026,
+      "featured": true,
+      "tags": ["telegram", "eip-712", "base"]
+    },
+    {
+      "id": "ohiix",
+      "name": "OhiiX",
+      "description": "XMTP AI agent messaging app—decentralized chat meets agent UX.",
+      "external_url": "https://github.com/Officialhomie/OhiiX",
+      "tech_stack": "TypeScript, XMTP, Next.js",
+      "category": "Agents",
+      "status": "Live",
+      "year": 2026,
+      "featured": true,
+      "tags": ["xmtp", "messaging", "ai"]
+    },
+    {
+      "id": "n8n-bootcamp-operating-system",
+      "name": "n8n-bootcamp-operating-system",
+      "description": "Bootcamp OS in n8n: registration, attendance, assignments, reminders, dashboard, GitHub monitoring, feedback, certificates, weekly reports, leaderboard.",
+      "external_url": "https://github.com/Officialhomie/n8n-bootcamp-operating-system",
+      "tech_stack": "n8n, automation, education",
+      "category": "Infrastructure",
+      "status": "Live",
+      "year": 2026,
+      "featured": true,
+      "tags": ["n8n", "education", "ops"]
+    },
+    {
+      "id": "decentralized-school-tree",
+      "name": "Decentralized School Tree",
+      "description": "Solidity platform for schools: enrollment, attendance, transparent finance, NFT certificates, revenue share, and RBAC.",
+      "image": "/images/projects/education-chain.png",
+      "external_url": "https://github.com/Officialhomie/Decentralized-School-Tree",
+      "tech_stack": "Solidity, Ethereum, Foundry, ethers.js",
+      "category": "Infrastructure",
+      "status": "Live",
+      "year": 2025,
+      "featured": true,
+      "tags": ["education", "nft", "solidity"]
+    },
+    {
+      "id": "triage",
+      "name": "Triage",
+      "description": "Hackathon CLI: scrape a URL with Firecrawl and narrate with ElevenLabs TTS.",
+      "external_url": "https://github.com/Officialhomie/Triage",
+      "tech_stack": "TypeScript, Firecrawl, ElevenLabs",
+      "category": "Tools",
+      "status": "Live",
+      "year": 2026,
+      "featured": true,
+      "tags": ["cli", "ai", "hackathon"]
+    },
+    {
       "id": "multisig-wallet",
       "name": "MultiSig Wallet",
       "description": "A multi-signature wallet application built with Thirdweb and Vite. Features secure multi-sig functionality with user-friendly onboarding using ConnectButton.",
@@ -11,7 +108,6 @@
       "category": "DeFi",
       "status": "Live",
       "year": 2024,
-      "featured": true,
       "tags": ["multisig", "wallet", "defi"]
     },
     {
@@ -35,17 +131,6 @@
       "tech_stack": "Next.js, TypeScript, Tailwind CSS",
       "category": "Tools",
       "status": "In Development",
-      "year": 2024
-    },
-    {
-      "id": "decentralized-school-tree",
-      "name": "EducationChain (Decentralized School Tree)",
-      "description": "Ethereum-based platform for educational institutions to manage student enrollment, attendance, and program administration with transparent financial tracking. Features NFT certificates, revenue sharing, and role-based access control.",
-      "image": "/images/projects/education-chain.png",
-      "external_url": "https://github.com/Officialhomie/Decentralized-School-Tree",
-      "tech_stack": "Solidity, Ethereum, Foundry, ethers.js",
-      "category": "Infrastructure",
-      "status": "Live",
       "year": 2024
     },
     {
@@ -82,7 +167,6 @@
       "category": "Social",
       "status": "Live",
       "year": 2025,
-      "featured": true,
       "tags": ["content-monetization", "web3", "base"]
     },
     {
@@ -96,7 +180,6 @@
       "category": "DeFi",
       "status": "Beta",
       "year": 2025,
-      "featured": true,
       "tags": ["uniswap-v4", "savings", "defi"]
     },
     {
