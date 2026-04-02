@@ -3,22 +3,55 @@ import './error-suppression'; // Import early to suppress errors before React lo
 import './globals.css';
 import { ClientProviders } from '@/components/providers/client-providers';
 import { ThemeProvider } from '@/providers/theme-provider';
-import { baseSans, baseMono } from '@/lib/fonts/base-font';
+import { baseSans } from '@/lib/fonts/base-font';
 import { ClientErrorHandler } from '@/components/providers/client-error-handler';
 
+const siteUrl = 'https://portfolio-tawny-pi-68.vercel.app';
+
+const title = 'OneTrueHomie — Blockchain Developer & Web3 Systems Architect';
+const description =
+  'Full-stack blockchain engineer (Lagos). Smart contracts, protocol tooling, agents on Base, Solidity/Foundry, TypeScript & Go — plus an on-chain portfolio with NFT projects, voting, and visitor book.';
+
 export const metadata: Metadata = {
-  title: 'OneTrueHomie - Web3 Portfolio',
-  description: 'OneTrueHomie\'s decentralized portfolio platform on Base L2 featuring NFT projects, token-gated voting, and on-chain visitor interactions.',
-  keywords: ['web3', 'portfolio', 'blockchain', 'base', 'nft', 'defi', 'OneTrueHomie'],
-  authors: [{ name: 'OneTrueHomie' }],
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: title,
+    template: '%s · OneTrueHomie',
+  },
+  description,
+  keywords: [
+    'OneTrueHomie',
+    'Officialhomie',
+    'Web3',
+    'blockchain developer',
+    'smart contracts',
+    'Solidity',
+    'Foundry',
+    'Base',
+    'EVM',
+    'portfolio',
+    'NFT',
+    'agents',
+  ],
+  authors: [{ name: 'OneTrueHomie', url: 'https://github.com/Officialhomie' }],
   icons: {
     icon: '/IMG_6745.JPG',
     apple: '/IMG_6745.JPG',
   },
   openGraph: {
-    title: 'OneTrueHomie - Web3 Portfolio',
-    description: 'OneTrueHomie\'s Decentralized Developer Portfolio on Base L2',
+    title,
+    description,
     type: 'website',
+    url: siteUrl,
+    siteName: 'OneTrueHomie Portfolio',
+    locale: 'en_NG',
+    images: [{ url: '/IMG_6745.JPG', width: 1200, height: 1200, alt: 'OneTrueHomie' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title,
+    description,
+    creator: '@officialhomie_',
     images: ['/IMG_6745.JPG'],
   },
 };
