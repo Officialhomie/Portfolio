@@ -13,6 +13,7 @@ import { GitHubProjectCard } from '@/components/projects/github-project-card';
 import { useFeaturedProjects } from '@/hooks/use-github-projects';
 import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 import { ArrowRight, BookOpen, Vote, Droplet, Github, ExternalLink } from 'lucide-react';
+import { FaXTwitter } from 'react-icons/fa6';
 import { cn } from '@/lib/utils/cn';
 
 export default function HomePage() {
@@ -32,13 +33,34 @@ export default function HomePage() {
           heroRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         )}
       >
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 gradient-text px-2 break-words">
-          OneTrueHomie's <span className="text-highlight-glow">Decentralized</span> Developer Portfolio
-        </h2>
-        <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto px-2 transition-all duration-700 delay-100 break-words">
-          Showcasing <span className="accent-highlight">Web3 projects</span> as NFTs, engaging with visitors through <span className="accent-highlight">on-chain guestbook</span>,
-          and letting the community vote on favorites using <span className="accent-highlight">blockchain technology</span> on Base L2.
+        <p className="text-xs sm:text-sm font-medium uppercase tracking-widest text-primary/90 mb-3 px-2">
+          Blockchain Developer · Smart Contract Engineer · Web3 Systems Architect
         </p>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 gradient-text px-2 break-words">
+          OneTrueHomie&apos;s <span className="text-highlight-glow">on-chain</span> portfolio
+        </h2>
+        <p className="text-sm sm:text-base text-muted-foreground mb-6 max-w-xl mx-auto px-2">
+          Lagos, Nigeria · Building on <span className="accent-highlight">Base</span> &amp; the EVM
+        </p>
+        <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 max-w-3xl mx-auto px-2 transition-all duration-700 delay-100 break-words leading-relaxed">
+          I work where <span className="accent-highlight">protocol design</span>, <span className="accent-highlight">smart contracts</span>, and{' '}
+          <span className="accent-highlight">product-grade tooling</span> meet—from Solidity/Foundry and agents to CLIs and robust RPC-aware apps.
+          This site is my <span className="accent-highlight">live portfolio</span>: projects as NFTs, a token-weighted vote, and an on-chain visitor book.
+        </p>
+        <div className="flex gap-2 sm:gap-3 justify-center flex-wrap px-2 mb-8 transition-all duration-700 delay-150">
+          <a href="https://twitter.com/officialhomie_" target="_blank" rel="noopener noreferrer">
+            <Button size="lg" variant="outline" className="gap-2 border-primary/40 hover:bg-primary/10">
+              <FaXTwitter className="w-4 h-4" />
+              @officialhomie_
+            </Button>
+          </a>
+          <a href="https://github.com/Officialhomie" target="_blank" rel="noopener noreferrer">
+            <Button size="lg" variant="outline" className="gap-2 border-primary/40 hover:bg-primary/10">
+              <Github className="w-4 h-4" />
+              GitHub
+            </Button>
+          </a>
+        </div>
         <div className="flex gap-2 sm:gap-4 justify-center flex-wrap px-2 transition-all duration-700 delay-200">
           <Link href="/projects">
             <Button size="lg" className="gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25 active:scale-95">
@@ -58,6 +80,26 @@ export default function HomePage() {
               Vote for Projects
             </Button>
           </Link>
+        </div>
+      </section>
+
+      {/* Focus areas — aligned with public GitHub profile */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-10 max-w-full overflow-x-hidden">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { title: 'Smart contracts', body: 'Solidity, Foundry-style workflows, hooks—testable boundaries and explicit invariants.' },
+            { title: 'Apps & integration', body: 'TypeScript, viem/wagmi, CLIs, and UIs that respect RPC limits and chain quirks.' },
+            { title: 'Systems & automation', body: 'Bootcamp OS in n8n, validation skills, tooling that speeds teams up safely.' },
+            { title: 'Onchain × AI', body: 'Agents, XMTP, Telegram control planes—signing, delegation, least privilege first.' },
+          ].map((item) => (
+            <div
+              key={item.title}
+              className="rounded-xl border-2 border-primary/25 bg-card/60 backdrop-blur-sm p-4 text-left hover:border-primary/45 transition-colors"
+            >
+              <h3 className="font-semibold text-foreground mb-2 text-sm sm:text-base">{item.title}</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-snug">{item.body}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -82,8 +124,17 @@ export default function HomePage() {
               <h3 className="text-3xl font-bold mb-2 gradient-text">
                 <span className="text-highlight-glow">Featured</span> Projects
               </h3>
-              <p className="text-muted-foreground">
-                Check out my latest and most <span className="accent-highlight">impactful Web3 projects</span>
+              <p className="text-muted-foreground max-w-2xl">
+                Same high-signal work highlighted on my{' '}
+                <a
+                  href="https://github.com/Officialhomie"
+                  className="text-primary underline-offset-4 hover:underline font-medium"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  GitHub profile
+                </a>
+                —agents, protocol tooling, education, and shipping on Base.
               </p>
             </div>
             <Link href="/projects">
@@ -93,8 +144,8 @@ export default function HomePage() {
               </Button>
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {featuredProjects.slice(0, 3).map((project, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+            {featuredProjects.slice(0, 8).map((project, index) => (
               <div
                 key={project.id}
                 className="transition-all duration-700"
